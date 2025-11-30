@@ -1,0 +1,699 @@
+# Billing Service 全面测试配置
+# 按照设计文档编写，包含正常场景、边界情况、异常场景等
+
+# API 基础 URL
+base_url: http://localhost:8107
+# 请求超时时间（秒）
+timeout: 30
+
+# 请求配置
+request:
+  headers:
+    Content-Type: application/json
+
+# 输出目录
+output_dir: ./test-reports
+# 是否详细输出
+verbose: true
+
+# 日志配置
+logging:
+  verbose: true
+  request_response: true
+  variable_processing: true
+
+# 全局变量定义
+variables:
+  # 测试用户ID
+  test_user_id: "test-user-001"
+  test_user_id_2: "test-user-002"
+  test_user_id_3: "test-user-003"
+  
+  # 服务名称
+  service_passport: "passport"
+  service_payment: "payment"
+  service_asset: "asset"
+  
+  # 测试金额
+  test_amount_small: 10.00
+  test_amount_medium: 100.00
+  test_amount_large: 1000.00
+  
+  # 边界值
+  zero: 0
+  negative: -1
+  large_number: 999999999
+  
+  # 无效数据
+  invalid_user_id: ""
+  invalid_service: "invalid_service"
+  invalid_amount: -100.00
+
+# 测试场景
+scenarios:
+  # ==================== 基础功能测试 ====================
+  
+  # 1. 获取账户信息 - 新用户（无余额无配额记录）
+  - name: 01-获取账户信息-新用户
+    description: 测试新用户获取账户信息，应该返回默认值
+    steps:
+      - name: 获取新用户账户信息
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.user_id: "{{.test_user_id}}"
+            $.balance: 0.0
+            $.quotas: "!null"
+        extract:
+          initial_balance: $.balance
+          quota_count: $.quotas.length
+
+  # 2. 获取账户信息 - 已有用户
+  - name: 02-获取账户信息-已有用户
+    description: 测试已有用户的账户信息查询
+    steps:
+      - name: 获取已有用户账户信息
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.user_id: "{{.test_user_id}}"
+            $.balance: "!null"
+            $.quotas: "!null"
+
+  # ==================== 充值流程测试 ====================
+  
+  # 3. 充值流程 - 正常场景
+  - name: 03-充值流程-正常场景
+    description: 测试充值的完整流程：发起充值 -> 支付回调 -> 验证余额
+    steps:
+      - name: 发起充值
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          amount: "{{.test_amount_medium}}"
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.order_id: "!null"
+            $.payment_url: "!null"
+        extract:
+          recharge_order_id: $.order_id
+          payment_url: $.payment_url
+
+      - name: 充值回调-支付成功
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [发起充值]
+        request_body:
+          order_id: "{{.recharge_order_id}}"
+          payment_order_id: "payment-order-{{uuid}}"
+          amount: "{{.test_amount_medium}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.success: true
+
+      - name: 验证余额已增加
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [充值回调-支付成功]
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.balance: "{{.test_amount_medium}}"
+
+  # 4. 充值流程 - 异常场景
+  - name: 04-充值流程-异常场景
+    description: 测试充值的异常情况
+    steps:
+      - name: 充值-无效用户ID
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        request_body:
+          user_id: ""
+          amount: "{{.test_amount_small}}"
+          payment_method: "alipay"
+        assert:
+          status: [400, 500]
+
+      - name: 充值-负数金额
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          amount: "{{.invalid_amount}}"
+          payment_method: "alipay"
+        assert:
+          status: [400, 500]
+
+      - name: 充值回调-支付失败
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        request_body:
+          order_id: "order-failed-{{uuid}}"
+          payment_order_id: "payment-failed-{{uuid}}"
+          amount: "{{.test_amount_small}}"
+          status: "failed"
+        assert:
+          status: 200
+          body:
+            $.success: false
+
+      - name: 充值回调-不存在的订单
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        request_body:
+          order_id: "non-existent-order-{{uuid}}"
+          payment_order_id: "payment-{{uuid}}"
+          amount: "{{.test_amount_small}}"
+          status: "success"
+        assert:
+          status: [200, 400, 500]
+
+  # ==================== 配额检查测试 ====================
+  
+  # 5. 配额检查 - 免费额度充足
+  - name: 05-配额检查-免费额度充足
+    description: 测试免费额度充足时的配额检查
+    steps:
+      - name: 检查配额-免费额度充足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 100
+        assert:
+          status: 200
+          body:
+            $.allowed: true
+            $.reason: "free"
+
+  # 6. 配额检查 - 免费额度不足但余额充足
+  - name: 06-配额检查-余额充足
+    description: 测试免费额度不足但余额充足时的配额检查
+    steps:
+      - name: 检查配额-余额充足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 20000
+        assert:
+          status: 200
+          body:
+            $.allowed: true
+            $.reason: "balance"
+
+  # 7. 配额检查 - 余额不足
+  - name: 07-配额检查-余额不足
+    description: 测试余额不足时的配额检查
+    steps:
+      - name: 检查配额-余额不足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id_2}}"
+          service_name: "{{.service_passport}}"
+          count: 20000
+        assert:
+          status: 200
+          body:
+            $.allowed: false
+            $.reason: "insufficient balance"
+
+  # 8. 配额检查 - 异常场景
+  - name: 08-配额检查-异常场景
+    description: 测试配额检查的异常情况
+    steps:
+      - name: 检查配额-无效服务名
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.invalid_service}}"
+          count: 1
+        assert:
+          status: [200, 400, 500]
+
+      - name: 检查配额-负数次数
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: -1
+        assert:
+          status: [400, 500]
+
+      - name: 检查配额-空用户ID
+        endpoint: /internal/v1/billing/check
+        method: POST
+        request_body:
+          user_id: ""
+          service_name: "{{.service_passport}}"
+          count: 1
+        assert:
+          status: [400, 500]
+
+  # ==================== 扣费逻辑测试 ====================
+  
+  # 9. 扣费 - 使用免费额度
+  - name: 09-扣费-使用免费额度
+    description: 测试使用免费额度扣费
+    steps:
+      - name: 扣费-使用免费额度
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 100
+          cost: 1.00
+        assert:
+          status: 200
+          body:
+            $.success: true
+            $.record_id: "!null"
+        extract:
+          free_deduct_record_id: $.record_id
+
+      - name: 验证免费额度已扣减
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [扣费-使用免费额度]
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.quotas[0].used_quota: "!null"
+
+      - name: 验证消费记录已生成
+        endpoint: /api/v1/billing/records
+        method: GET
+        dependencies: [扣费-使用免费额度]
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 10
+        assert:
+          status: 200
+          body:
+            $.records: "!null"
+            $.total: "!null"
+
+  # 10. 扣费 - 使用余额
+  - name: 10-扣费-使用余额
+    description: 测试使用余额扣费
+    steps:
+      - name: 扣费-使用余额
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_payment}}"
+          count: 50
+          cost: 5.00
+        assert:
+          status: 200
+          body:
+            $.success: true
+            $.record_id: "!null"
+        extract:
+          balance_deduct_record_id: $.record_id
+
+      - name: 验证余额已扣减
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [扣费-使用余额]
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.balance: "!null"
+
+  # 11. 扣费 - 混合扣费（免费额度+余额）
+  - name: 11-扣费-混合扣费
+    description: 测试混合扣费：先扣免费额度，不足时扣余额
+    steps:
+      - name: 扣费-混合扣费
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_asset}}"
+          count: 1500
+          cost: 75.00
+        assert:
+          status: 200
+          body:
+            $.success: true
+            $.record_id: "!null"
+        extract:
+          mixed_deduct_record_id: $.record_id
+
+      - name: 验证混合扣费记录
+        endpoint: /api/v1/billing/records
+        method: GET
+        dependencies: [扣费-混合扣费]
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 20
+        assert:
+          status: 200
+          body:
+            $.records: "!null"
+            $.total: "!null"
+
+  # 12. 扣费 - 余额不足
+  - name: 12-扣费-余额不足
+    description: 测试余额不足时的扣费失败
+    steps:
+      - name: 扣费-余额不足
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id_2}}"
+          service_name: "{{.service_passport}}"
+          count: 20000
+          cost: 200.00
+        assert:
+          status: [200, 400, 500]
+          body:
+            $.success: false
+
+  # 13. 扣费 - 异常场景
+  - name: 13-扣费-异常场景
+    description: 测试扣费的异常情况
+    steps:
+      - name: 扣费-无效服务名
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.invalid_service}}"
+          count: 1
+          cost: 0.01
+        assert:
+          status: [400, 500]
+
+      - name: 扣费-负数次数
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: -1
+          cost: 0.01
+        assert:
+          status: [400, 500]
+
+      - name: 扣费-负数金额
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 1
+          cost: -0.01
+        assert:
+          status: [400, 500]
+
+  # ==================== 消费流水查询测试 ====================
+  
+  # 14. 消费流水查询 - 正常场景
+  - name: 14-消费流水查询-正常场景
+    description: 测试消费流水查询功能
+    steps:
+      - name: 查询消费流水-第一页
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 10
+        assert:
+          status: 200
+          body:
+            $.records: "!null"
+            $.total: "!null"
+        extract:
+          total_records: $.total
+
+      - name: 查询消费流水-第二页
+        endpoint: /api/v1/billing/records
+        method: GET
+        dependencies: [查询消费流水-第一页]
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 2
+          page_size: 10
+        assert:
+          status: 200
+          body:
+            $.records: "!null"
+
+  # 15. 消费流水查询 - 边界场景
+  - name: 15-消费流水查询-边界场景
+    description: 测试消费流水查询的边界情况
+    steps:
+      - name: 查询消费流水-空用户
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: ""
+          page: 1
+          page_size: 10
+        assert:
+          status: [400, 500]
+
+      - name: 查询消费流水-负数页码
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: -1
+          page_size: 10
+        assert:
+          status: [200, 400, 500]
+
+      - name: 查询消费流水-超大页码
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 999999
+          page_size: 10
+        assert:
+          status: 200
+          body:
+            $.records.length: 0
+
+      - name: 查询消费流水-超大页面大小
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 10000
+        assert:
+          status: [200, 400, 500]
+
+  # ==================== 完整业务流程测试 ====================
+  
+  # 16. 完整业务流程 - 充值到扣费
+  - name: 16-完整业务流程-充值到扣费
+    description: 测试从充值到扣费的完整业务流程
+    steps:
+      - name: 获取初始账户信息
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+        assert:
+          status: 200
+        extract:
+          initial_balance_flow: $.balance
+
+      - name: 发起充值
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        dependencies: [获取初始账户信息]
+        request_body:
+          user_id: "{{.test_user_id_3}}"
+          amount: "{{.test_amount_large}}"
+          payment_method: "wechat"
+        assert:
+          status: 200
+        extract:
+          flow_order_id: $.order_id
+
+      - name: 充值回调
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [发起充值]
+        request_body:
+          order_id: "{{.flow_order_id}}"
+          payment_order_id: "payment-flow-{{uuid}}"
+          amount: "{{.test_amount_large}}"
+          status: "success"
+        assert:
+          status: 200
+
+      - name: 验证充值成功
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [充值回调]
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+        assert:
+          status: 200
+          body:
+            $.balance: "{{.test_amount_large}}"
+
+      - name: 执行扣费
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [验证充值成功]
+        request_body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.service_passport}}"
+          count: 5000
+          cost: 50.00
+        assert:
+          status: 200
+
+      - name: 验证扣费后余额
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [执行扣费]
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+        assert:
+          status: 200
+          body:
+            $.balance: "!null"
+
+      - name: 查询扣费记录
+        endpoint: /api/v1/billing/records
+        method: GET
+        dependencies: [执行扣费]
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+          page: 1
+          page_size: 10
+        assert:
+          status: 200
+          body:
+            $.records: "!null"
+            $.total: "!null"
+
+  # ==================== 并发测试 ====================
+  
+  # 17. 并发扣费测试
+  - name: 17-并发扣费测试
+    description: 测试并发扣费场景
+    steps:
+      - name: 并发扣费-请求1
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 10
+          cost: 0.10
+        assert:
+          status: [200, 400, 500]
+
+      - name: 并发扣费-请求2
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 10
+          cost: 0.10
+        assert:
+          status: [200, 400, 500]
+
+      - name: 并发扣费-请求3
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_passport}}"
+          count: 10
+          cost: 0.10
+        assert:
+          status: [200, 400, 500]
+
+  # ==================== 数据一致性测试 ====================
+  
+  # 18. 数据一致性测试
+  - name: 18-数据一致性测试
+    description: 测试数据的一致性
+    steps:
+      - name: 扣费前查询余额
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+        extract:
+          balance_before: $.balance
+
+      - name: 执行扣费
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [扣费前查询余额]
+        request_body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.service_payment}}"
+          count: 10
+          cost: 1.00
+        assert:
+          status: 200
+
+      - name: 扣费后立即查询余额
+        endpoint: /api/v1/billing/account
+        method: GET
+        dependencies: [执行扣费]
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.balance: "!null"
+
+      - name: 验证消费记录一致性
+        endpoint: /api/v1/billing/records
+        method: GET
+        dependencies: [执行扣费]
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 1
+        assert:
+          status: 200
+          body:
+            $.records[0].user_id: "{{.test_user_id}}"
+            $.records[0].service_name: "{{.service_payment}}"
+

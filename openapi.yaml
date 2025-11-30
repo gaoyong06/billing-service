@@ -1,0 +1,322 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: ""
+    version: 0.0.1
+paths:
+    /api/v1/billing/account:
+        get:
+            tags:
+                - BillingService
+            description: 获取账户资产信息 (余额 + 剩余配额)
+            operationId: BillingService_GetAccount
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetAccountReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/billing/recharge:
+        post:
+            tags:
+                - BillingService
+            description: 发起充值 (返回支付链接)
+            operationId: BillingService_Recharge
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RechargeRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RechargeReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/billing/records:
+        get:
+            tags:
+                - BillingService
+            description: 获取消费流水
+            operationId: BillingService_ListRecords
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListRecordsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /internal/v1/billing/callback:
+        post:
+            tags:
+                - BillingInternalService
+            description: 充值回调 (来自 Payment Service)
+            operationId: BillingInternalService_RechargeCallback
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RechargeCallbackRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RechargeCallbackReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /internal/v1/billing/check:
+        post:
+            tags:
+                - BillingInternalService
+            description: 检查并预扣费 (Check & Reserve)
+            operationId: BillingInternalService_CheckQuota
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CheckQuotaRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CheckQuotaReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /internal/v1/billing/deduct:
+        post:
+            tags:
+                - BillingInternalService
+            description: 确认扣费 (Commit)
+            operationId: BillingInternalService_DeductQuota
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeductQuotaRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeductQuotaReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+components:
+    schemas:
+        BillingRecord:
+            type: object
+            properties:
+                id:
+                    type: string
+                serviceName:
+                    type: string
+                type:
+                    type: integer
+                    format: int32
+                amount:
+                    type: number
+                    format: double
+                count:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+                    format: date-time
+        CheckQuotaReply:
+            type: object
+            properties:
+                allowed:
+                    type: boolean
+                reason:
+                    type: string
+        CheckQuotaRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                serviceName:
+                    type: string
+                count:
+                    type: integer
+                    format: int32
+        DeductQuotaReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                recordId:
+                    type: string
+        DeductQuotaRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                serviceName:
+                    type: string
+                count:
+                    type: integer
+                    format: int32
+                cost:
+                    type: number
+                    format: double
+        FreeQuota:
+            type: object
+            properties:
+                serviceName:
+                    type: string
+                totalQuota:
+                    type: integer
+                    format: int32
+                usedQuota:
+                    type: integer
+                    format: int32
+                resetMonth:
+                    type: string
+        GetAccountReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                balance:
+                    type: number
+                    format: double
+                quotas:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FreeQuota'
+        GoogleProtobufAny:
+            type: object
+            properties:
+                '@type':
+                    type: string
+                    description: The type of the serialized message.
+            additionalProperties: true
+            description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        ListRecordsReply:
+            type: object
+            properties:
+                records:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/BillingRecord'
+                total:
+                    type: integer
+                    format: int32
+        RechargeCallbackReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        RechargeCallbackRequest:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                paymentOrderId:
+                    type: string
+                amount:
+                    type: number
+                    format: double
+                status:
+                    type: string
+        RechargeReply:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                paymentUrl:
+                    type: string
+        RechargeRequest:
+            type: object
+            properties:
+                userId:
+                    type: string
+                amount:
+                    type: number
+                    format: double
+                paymentMethod:
+                    type: string
+        Status:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+                    format: int32
+                message:
+                    type: string
+                    description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+                details:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufAny'
+                    description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
+            description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
+tags:
+    - name: BillingInternalService
+      description: BillingInternalService 计费内部服务（面向 Gateway/Payment）
+    - name: BillingService
+      description: BillingService 计费服务（面向前端/开发者）

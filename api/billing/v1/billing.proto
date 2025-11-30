@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package billing.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "billing-service/api/billing/v1;v1";
+
+// BillingService 计费服务（面向前端/开发者）
+service BillingService {
+  // 获取账户资产信息 (余额 + 剩余配额)
+  rpc GetAccount(GetAccountRequest) returns (GetAccountReply) {
+    option (google.api.http) = {
+      get: "/api/v1/billing/account"
+    };
+  }
+
+  // 发起充值 (返回支付链接)
+  rpc Recharge(RechargeRequest) returns (RechargeReply) {
+    option (google.api.http) = {
+      post: "/api/v1/billing/recharge"
+      body: "*"
+    };
+  }
+
+  // 获取消费流水
+  rpc ListRecords(ListRecordsRequest) returns (ListRecordsReply) {
+    option (google.api.http) = {
+      get: "/api/v1/billing/records"
+    };
+  }
+}
+
+// BillingInternalService 计费内部服务（面向 Gateway/Payment）
+service BillingInternalService {
+  // 检查并预扣费 (Check & Reserve)
+  rpc CheckQuota(CheckQuotaRequest) returns (CheckQuotaReply) {
+    option (google.api.http) = {
+      post: "/internal/v1/billing/check"
+      body: "*"
+    };
+  }
+
+  // 确认扣费 (Commit)
+  rpc DeductQuota(DeductQuotaRequest) returns (DeductQuotaReply) {
+    option (google.api.http) = {
+      post: "/internal/v1/billing/deduct"
+      body: "*"
+    };
+  }
+
+  // 充值回调 (来自 Payment Service)
+  rpc RechargeCallback(RechargeCallbackRequest) returns (RechargeCallbackReply) {
+    option (google.api.http) = {
+      post: "/internal/v1/billing/callback"
+      body: "*"
+    };
+  }
+}
+
+message GetAccountRequest {
+  string user_id = 1;
+}
+
+message GetAccountReply {
+  string user_id = 1;
+  double balance = 2;
+  repeated FreeQuota quotas = 3;
+}
+
+message FreeQuota {
+  string service_name = 1;
+  int32 total_quota = 2;
+  int32 used_quota = 3;
+  string reset_month = 4;
+}
+
+message RechargeRequest {
+  string user_id = 1;
+  double amount = 2;
+  string payment_method = 3; // wechat, alipay
+}
+
+message RechargeReply {
+  string order_id = 1;
+  string payment_url = 2;
+}
+
+message ListRecordsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ListRecordsReply {
+  repeated BillingRecord records = 1;
+  int32 total = 2;
+}
+
+message BillingRecord {
+  string id = 1;
+  string service_name = 2;
+  int32 type = 3; // 1:免费额度, 2:余额扣费
+  double amount = 4;
+  int32 count = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message CheckQuotaRequest {
+  string user_id = 1;
+  string service_name = 2;
+  int32 count = 3;
+}
+
+message CheckQuotaReply {
+  bool allowed = 1;
+  string reason = 2;
+}
+
+message DeductQuotaRequest {
+  string user_id = 1;
+  string service_name = 2;
+  int32 count = 3;
+  double cost = 4;
+}
+
+message DeductQuotaReply {
+  bool success = 1;
+  string record_id = 2;
+}
+
+message RechargeCallbackRequest {
+  string order_id = 1;
+  string payment_order_id = 2;
+  double amount = 3;
+  string status = 4;
+}
+
+message RechargeCallbackReply {
+  bool success = 1;
+}
