@@ -89,6 +89,86 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/billing/stats/month:
+        get:
+            tags:
+                - BillingService
+            description: 获取本月调用统计
+            operationId: BillingService_GetStatsMonth
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: serviceName
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetStatsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/billing/stats/summary:
+        get:
+            tags:
+                - BillingService
+            description: 获取汇总统计（所有服务）
+            operationId: BillingService_GetStatsSummary
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetStatsSummaryReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/billing/stats/today:
+        get:
+            tags:
+                - BillingService
+            description: 获取今日调用统计
+            operationId: BillingService_GetStatsToday
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: serviceName
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetStatsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /internal/v1/billing/callback:
         post:
             tags:
@@ -247,6 +327,42 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/FreeQuota'
+        GetStatsReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                serviceName:
+                    type: string
+                totalCount:
+                    type: integer
+                    format: int32
+                totalCost:
+                    type: number
+                    format: double
+                freeCount:
+                    type: integer
+                    format: int32
+                paidCount:
+                    type: integer
+                    format: int32
+                period:
+                    type: string
+        GetStatsSummaryReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                totalCount:
+                    type: integer
+                    format: int32
+                totalCost:
+                    type: number
+                    format: double
+                services:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ServiceStats'
         GoogleProtobufAny:
             type: object
             properties:
@@ -299,6 +415,23 @@ components:
                     format: double
                 paymentMethod:
                     type: string
+        ServiceStats:
+            type: object
+            properties:
+                serviceName:
+                    type: string
+                totalCount:
+                    type: integer
+                    format: int32
+                totalCost:
+                    type: number
+                    format: double
+                freeCount:
+                    type: integer
+                    format: int32
+                paidCount:
+                    type: integer
+                    format: int32
         Status:
             type: object
             properties:

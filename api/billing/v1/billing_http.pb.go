@@ -20,12 +20,21 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 const OperationBillingServiceGetAccount = "/billing.v1.BillingService/GetAccount"
+const OperationBillingServiceGetStatsMonth = "/billing.v1.BillingService/GetStatsMonth"
+const OperationBillingServiceGetStatsSummary = "/billing.v1.BillingService/GetStatsSummary"
+const OperationBillingServiceGetStatsToday = "/billing.v1.BillingService/GetStatsToday"
 const OperationBillingServiceListRecords = "/billing.v1.BillingService/ListRecords"
 const OperationBillingServiceRecharge = "/billing.v1.BillingService/Recharge"
 
 type BillingServiceHTTPServer interface {
 	// GetAccount 获取账户资产信息 (余额 + 剩余配额)
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountReply, error)
+	// GetStatsMonth 获取本月调用统计
+	GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error)
+	// GetStatsSummary 获取汇总统计（所有服务）
+	GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error)
+	// GetStatsToday 获取今日调用统计
+	GetStatsToday(context.Context, *GetStatsTodayRequest) (*GetStatsReply, error)
 	// ListRecords 获取消费流水
 	ListRecords(context.Context, *ListRecordsRequest) (*ListRecordsReply, error)
 	// Recharge 发起充值 (返回支付链接)
@@ -37,6 +46,9 @@ func RegisterBillingServiceHTTPServer(s *http.Server, srv BillingServiceHTTPServ
 	r.GET("/api/v1/billing/account", _BillingService_GetAccount0_HTTP_Handler(srv))
 	r.POST("/api/v1/billing/recharge", _BillingService_Recharge0_HTTP_Handler(srv))
 	r.GET("/api/v1/billing/records", _BillingService_ListRecords0_HTTP_Handler(srv))
+	r.GET("/api/v1/billing/stats/today", _BillingService_GetStatsToday0_HTTP_Handler(srv))
+	r.GET("/api/v1/billing/stats/month", _BillingService_GetStatsMonth0_HTTP_Handler(srv))
+	r.GET("/api/v1/billing/stats/summary", _BillingService_GetStatsSummary0_HTTP_Handler(srv))
 }
 
 func _BillingService_GetAccount0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
@@ -99,9 +111,72 @@ func _BillingService_ListRecords0_HTTP_Handler(srv BillingServiceHTTPServer) fun
 	}
 }
 
+func _BillingService_GetStatsToday0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetStatsTodayRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceGetStatsToday)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetStatsToday(ctx, req.(*GetStatsTodayRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetStatsReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_GetStatsMonth0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetStatsMonthRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceGetStatsMonth)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetStatsMonth(ctx, req.(*GetStatsMonthRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetStatsReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_GetStatsSummary0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetStatsSummaryRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceGetStatsSummary)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetStatsSummary(ctx, req.(*GetStatsSummaryRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetStatsSummaryReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type BillingServiceHTTPClient interface {
 	// GetAccount 获取账户资产信息 (余额 + 剩余配额)
 	GetAccount(ctx context.Context, req *GetAccountRequest, opts ...http.CallOption) (rsp *GetAccountReply, err error)
+	// GetStatsMonth 获取本月调用统计
+	GetStatsMonth(ctx context.Context, req *GetStatsMonthRequest, opts ...http.CallOption) (rsp *GetStatsReply, err error)
+	// GetStatsSummary 获取汇总统计（所有服务）
+	GetStatsSummary(ctx context.Context, req *GetStatsSummaryRequest, opts ...http.CallOption) (rsp *GetStatsSummaryReply, err error)
+	// GetStatsToday 获取今日调用统计
+	GetStatsToday(ctx context.Context, req *GetStatsTodayRequest, opts ...http.CallOption) (rsp *GetStatsReply, err error)
 	// ListRecords 获取消费流水
 	ListRecords(ctx context.Context, req *ListRecordsRequest, opts ...http.CallOption) (rsp *ListRecordsReply, err error)
 	// Recharge 发起充值 (返回支付链接)
@@ -122,6 +197,48 @@ func (c *BillingServiceHTTPClientImpl) GetAccount(ctx context.Context, in *GetAc
 	pattern := "/api/v1/billing/account"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetAccount))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetStatsMonth 获取本月调用统计
+func (c *BillingServiceHTTPClientImpl) GetStatsMonth(ctx context.Context, in *GetStatsMonthRequest, opts ...http.CallOption) (*GetStatsReply, error) {
+	var out GetStatsReply
+	pattern := "/api/v1/billing/stats/month"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationBillingServiceGetStatsMonth))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetStatsSummary 获取汇总统计（所有服务）
+func (c *BillingServiceHTTPClientImpl) GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...http.CallOption) (*GetStatsSummaryReply, error) {
+	var out GetStatsSummaryReply
+	pattern := "/api/v1/billing/stats/summary"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationBillingServiceGetStatsSummary))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetStatsToday 获取今日调用统计
+func (c *BillingServiceHTTPClientImpl) GetStatsToday(ctx context.Context, in *GetStatsTodayRequest, opts ...http.CallOption) (*GetStatsReply, error) {
+	var out GetStatsReply
+	pattern := "/api/v1/billing/stats/today"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationBillingServiceGetStatsToday))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

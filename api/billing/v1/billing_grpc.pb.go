@@ -19,9 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BillingService_GetAccount_FullMethodName  = "/billing.v1.BillingService/GetAccount"
-	BillingService_Recharge_FullMethodName    = "/billing.v1.BillingService/Recharge"
-	BillingService_ListRecords_FullMethodName = "/billing.v1.BillingService/ListRecords"
+	BillingService_GetAccount_FullMethodName      = "/billing.v1.BillingService/GetAccount"
+	BillingService_Recharge_FullMethodName        = "/billing.v1.BillingService/Recharge"
+	BillingService_ListRecords_FullMethodName     = "/billing.v1.BillingService/ListRecords"
+	BillingService_GetStatsToday_FullMethodName   = "/billing.v1.BillingService/GetStatsToday"
+	BillingService_GetStatsMonth_FullMethodName   = "/billing.v1.BillingService/GetStatsMonth"
+	BillingService_GetStatsSummary_FullMethodName = "/billing.v1.BillingService/GetStatsSummary"
 )
 
 // BillingServiceClient is the client API for BillingService service.
@@ -36,6 +39,12 @@ type BillingServiceClient interface {
 	Recharge(ctx context.Context, in *RechargeRequest, opts ...grpc.CallOption) (*RechargeReply, error)
 	// 获取消费流水
 	ListRecords(ctx context.Context, in *ListRecordsRequest, opts ...grpc.CallOption) (*ListRecordsReply, error)
+	// 获取今日调用统计
+	GetStatsToday(ctx context.Context, in *GetStatsTodayRequest, opts ...grpc.CallOption) (*GetStatsReply, error)
+	// 获取本月调用统计
+	GetStatsMonth(ctx context.Context, in *GetStatsMonthRequest, opts ...grpc.CallOption) (*GetStatsReply, error)
+	// 获取汇总统计（所有服务）
+	GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...grpc.CallOption) (*GetStatsSummaryReply, error)
 }
 
 type billingServiceClient struct {
@@ -76,6 +85,36 @@ func (c *billingServiceClient) ListRecords(ctx context.Context, in *ListRecordsR
 	return out, nil
 }
 
+func (c *billingServiceClient) GetStatsToday(ctx context.Context, in *GetStatsTodayRequest, opts ...grpc.CallOption) (*GetStatsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStatsReply)
+	err := c.cc.Invoke(ctx, BillingService_GetStatsToday_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) GetStatsMonth(ctx context.Context, in *GetStatsMonthRequest, opts ...grpc.CallOption) (*GetStatsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStatsReply)
+	err := c.cc.Invoke(ctx, BillingService_GetStatsMonth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...grpc.CallOption) (*GetStatsSummaryReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStatsSummaryReply)
+	err := c.cc.Invoke(ctx, BillingService_GetStatsSummary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility.
@@ -88,6 +127,12 @@ type BillingServiceServer interface {
 	Recharge(context.Context, *RechargeRequest) (*RechargeReply, error)
 	// 获取消费流水
 	ListRecords(context.Context, *ListRecordsRequest) (*ListRecordsReply, error)
+	// 获取今日调用统计
+	GetStatsToday(context.Context, *GetStatsTodayRequest) (*GetStatsReply, error)
+	// 获取本月调用统计
+	GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error)
+	// 获取汇总统计（所有服务）
+	GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -106,6 +151,15 @@ func (UnimplementedBillingServiceServer) Recharge(context.Context, *RechargeRequ
 }
 func (UnimplementedBillingServiceServer) ListRecords(context.Context, *ListRecordsRequest) (*ListRecordsReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRecords not implemented")
+}
+func (UnimplementedBillingServiceServer) GetStatsToday(context.Context, *GetStatsTodayRequest) (*GetStatsReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStatsToday not implemented")
+}
+func (UnimplementedBillingServiceServer) GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStatsMonth not implemented")
+}
+func (UnimplementedBillingServiceServer) GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStatsSummary not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 func (UnimplementedBillingServiceServer) testEmbeddedByValue()                        {}
@@ -182,6 +236,60 @@ func _BillingService_ListRecords_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_GetStatsToday_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatsTodayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetStatsToday(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetStatsToday_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetStatsToday(ctx, req.(*GetStatsTodayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_GetStatsMonth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatsMonthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetStatsMonth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetStatsMonth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetStatsMonth(ctx, req.(*GetStatsMonthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_GetStatsSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatsSummaryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetStatsSummary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetStatsSummary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetStatsSummary(ctx, req.(*GetStatsSummaryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +308,18 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRecords",
 			Handler:    _BillingService_ListRecords_Handler,
+		},
+		{
+			MethodName: "GetStatsToday",
+			Handler:    _BillingService_GetStatsToday_Handler,
+		},
+		{
+			MethodName: "GetStatsMonth",
+			Handler:    _BillingService_GetStatsMonth_Handler,
+		},
+		{
+			MethodName: "GetStatsSummary",
+			Handler:    _BillingService_GetStatsSummary_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

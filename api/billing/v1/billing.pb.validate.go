@@ -1616,3 +1616,684 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RechargeCallbackReplyValidationError{}
+
+// Validate checks the field values on GetStatsTodayRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStatsTodayRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStatsTodayRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStatsTodayRequestMultiError, or nil if none found.
+func (m *GetStatsTodayRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStatsTodayRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for ServiceName
+
+	if len(errors) > 0 {
+		return GetStatsTodayRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStatsTodayRequestMultiError is an error wrapping multiple validation
+// errors returned by GetStatsTodayRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetStatsTodayRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStatsTodayRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStatsTodayRequestMultiError) AllErrors() []error { return m }
+
+// GetStatsTodayRequestValidationError is the validation error returned by
+// GetStatsTodayRequest.Validate if the designated constraints aren't met.
+type GetStatsTodayRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStatsTodayRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStatsTodayRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStatsTodayRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStatsTodayRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStatsTodayRequestValidationError) ErrorName() string {
+	return "GetStatsTodayRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStatsTodayRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStatsTodayRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStatsTodayRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStatsTodayRequestValidationError{}
+
+// Validate checks the field values on GetStatsMonthRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStatsMonthRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStatsMonthRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStatsMonthRequestMultiError, or nil if none found.
+func (m *GetStatsMonthRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStatsMonthRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for ServiceName
+
+	if len(errors) > 0 {
+		return GetStatsMonthRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStatsMonthRequestMultiError is an error wrapping multiple validation
+// errors returned by GetStatsMonthRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetStatsMonthRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStatsMonthRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStatsMonthRequestMultiError) AllErrors() []error { return m }
+
+// GetStatsMonthRequestValidationError is the validation error returned by
+// GetStatsMonthRequest.Validate if the designated constraints aren't met.
+type GetStatsMonthRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStatsMonthRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStatsMonthRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStatsMonthRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStatsMonthRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStatsMonthRequestValidationError) ErrorName() string {
+	return "GetStatsMonthRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStatsMonthRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStatsMonthRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStatsMonthRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStatsMonthRequestValidationError{}
+
+// Validate checks the field values on GetStatsSummaryRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStatsSummaryRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStatsSummaryRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStatsSummaryRequestMultiError, or nil if none found.
+func (m *GetStatsSummaryRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStatsSummaryRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	if len(errors) > 0 {
+		return GetStatsSummaryRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStatsSummaryRequestMultiError is an error wrapping multiple validation
+// errors returned by GetStatsSummaryRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetStatsSummaryRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStatsSummaryRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStatsSummaryRequestMultiError) AllErrors() []error { return m }
+
+// GetStatsSummaryRequestValidationError is the validation error returned by
+// GetStatsSummaryRequest.Validate if the designated constraints aren't met.
+type GetStatsSummaryRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStatsSummaryRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStatsSummaryRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStatsSummaryRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStatsSummaryRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStatsSummaryRequestValidationError) ErrorName() string {
+	return "GetStatsSummaryRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStatsSummaryRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStatsSummaryRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStatsSummaryRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStatsSummaryRequestValidationError{}
+
+// Validate checks the field values on GetStatsReply with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *GetStatsReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStatsReply with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in GetStatsReplyMultiError, or
+// nil if none found.
+func (m *GetStatsReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStatsReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for ServiceName
+
+	// no validation rules for TotalCount
+
+	// no validation rules for TotalCost
+
+	// no validation rules for FreeCount
+
+	// no validation rules for PaidCount
+
+	// no validation rules for Period
+
+	if len(errors) > 0 {
+		return GetStatsReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStatsReplyMultiError is an error wrapping multiple validation errors
+// returned by GetStatsReply.ValidateAll() if the designated constraints
+// aren't met.
+type GetStatsReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStatsReplyMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStatsReplyMultiError) AllErrors() []error { return m }
+
+// GetStatsReplyValidationError is the validation error returned by
+// GetStatsReply.Validate if the designated constraints aren't met.
+type GetStatsReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStatsReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStatsReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStatsReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStatsReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStatsReplyValidationError) ErrorName() string { return "GetStatsReplyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetStatsReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStatsReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStatsReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStatsReplyValidationError{}
+
+// Validate checks the field values on ServiceStats with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ServiceStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServiceStats with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ServiceStatsMultiError, or
+// nil if none found.
+func (m *ServiceStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServiceStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ServiceName
+
+	// no validation rules for TotalCount
+
+	// no validation rules for TotalCost
+
+	// no validation rules for FreeCount
+
+	// no validation rules for PaidCount
+
+	if len(errors) > 0 {
+		return ServiceStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// ServiceStatsMultiError is an error wrapping multiple validation errors
+// returned by ServiceStats.ValidateAll() if the designated constraints aren't met.
+type ServiceStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServiceStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServiceStatsMultiError) AllErrors() []error { return m }
+
+// ServiceStatsValidationError is the validation error returned by
+// ServiceStats.Validate if the designated constraints aren't met.
+type ServiceStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServiceStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServiceStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServiceStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServiceStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServiceStatsValidationError) ErrorName() string { return "ServiceStatsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ServiceStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServiceStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServiceStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServiceStatsValidationError{}
+
+// Validate checks the field values on GetStatsSummaryReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetStatsSummaryReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetStatsSummaryReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetStatsSummaryReplyMultiError, or nil if none found.
+func (m *GetStatsSummaryReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetStatsSummaryReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for TotalCount
+
+	// no validation rules for TotalCost
+
+	for idx, item := range m.GetServices() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetStatsSummaryReplyValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetStatsSummaryReplyValidationError{
+						field:  fmt.Sprintf("Services[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetStatsSummaryReplyValidationError{
+					field:  fmt.Sprintf("Services[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetStatsSummaryReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetStatsSummaryReplyMultiError is an error wrapping multiple validation
+// errors returned by GetStatsSummaryReply.ValidateAll() if the designated
+// constraints aren't met.
+type GetStatsSummaryReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetStatsSummaryReplyMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetStatsSummaryReplyMultiError) AllErrors() []error { return m }
+
+// GetStatsSummaryReplyValidationError is the validation error returned by
+// GetStatsSummaryReply.Validate if the designated constraints aren't met.
+type GetStatsSummaryReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetStatsSummaryReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetStatsSummaryReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetStatsSummaryReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetStatsSummaryReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetStatsSummaryReplyValidationError) ErrorName() string {
+	return "GetStatsSummaryReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetStatsSummaryReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStatsSummaryReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetStatsSummaryReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetStatsSummaryReplyValidationError{}

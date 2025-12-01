@@ -45,6 +45,34 @@ type BillingRecord struct {
 	CreatedAt   time.Time
 }
 
+// Stats 统计对象
+type Stats struct {
+	UserID      string
+	ServiceName string
+	TotalCount  int     // 总调用次数
+	TotalCost   float64 // 总费用（仅余额扣费部分）
+	FreeCount   int     // 免费额度使用次数
+	PaidCount   int     // 余额扣费次数
+	Period      string  // 统计周期：today 或 month
+}
+
+// ServiceStats 服务统计对象
+type ServiceStats struct {
+	ServiceName string
+	TotalCount  int
+	TotalCost   float64
+	FreeCount   int
+	PaidCount   int
+}
+
+// StatsSummary 汇总统计对象
+type StatsSummary struct {
+	UserID     string
+	TotalCount int
+	TotalCost  float64
+	Services   []*ServiceStats
+}
+
 // BillingRepo 定义数据层接口
 type BillingRepo interface {
 	// 余额相关
@@ -70,6 +98,11 @@ type BillingRepo interface {
 
 	// 重置相关
 	GetAllUserIDs(ctx context.Context) ([]string, error) // 获取所有用户ID
+
+	// 统计相关
+	GetStatsToday(ctx context.Context, userID, serviceName string) (*Stats, error)
+	GetStatsMonth(ctx context.Context, userID, serviceName string) (*Stats, error)
+	GetStatsSummary(ctx context.Context, userID string) (*StatsSummary, error)
 }
 
 // BillingUseCase 业务逻辑
@@ -295,4 +328,19 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// GetStatsToday 获取今日调用统计
+func (uc *BillingUseCase) GetStatsToday(ctx context.Context, userID, serviceName string) (*Stats, error) {
+	return uc.repo.GetStatsToday(ctx, userID, serviceName)
+}
+
+// GetStatsMonth 获取本月调用统计
+func (uc *BillingUseCase) GetStatsMonth(ctx context.Context, userID, serviceName string) (*Stats, error) {
+	return uc.repo.GetStatsMonth(ctx, userID, serviceName)
+}
+
+// GetStatsSummary 获取汇总统计（所有服务）
+func (uc *BillingUseCase) GetStatsSummary(ctx context.Context, userID string) (*StatsSummary, error) {
+	return uc.repo.GetStatsSummary(ctx, userID)
 }

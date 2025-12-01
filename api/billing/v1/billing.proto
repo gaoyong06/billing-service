@@ -30,6 +30,27 @@ service BillingService {
       get: "/api/v1/billing/records"
     };
   }
+
+  // 获取今日调用统计
+  rpc GetStatsToday(GetStatsTodayRequest) returns (GetStatsReply) {
+    option (google.api.http) = {
+      get: "/api/v1/billing/stats/today"
+    };
+  }
+
+  // 获取本月调用统计
+  rpc GetStatsMonth(GetStatsMonthRequest) returns (GetStatsReply) {
+    option (google.api.http) = {
+      get: "/api/v1/billing/stats/month"
+    };
+  }
+
+  // 获取汇总统计（所有服务）
+  rpc GetStatsSummary(GetStatsSummaryRequest) returns (GetStatsSummaryReply) {
+    option (google.api.http) = {
+      get: "/api/v1/billing/stats/summary"
+    };
+  }
 }
 
 // BillingInternalService 计费内部服务（面向 Gateway/Payment）
@@ -139,4 +160,44 @@ message RechargeCallbackRequest {
 
 message RechargeCallbackReply {
   bool success = 1;
+}
+
+// 统计相关消息
+message GetStatsTodayRequest {
+  string user_id = 1;
+  string service_name = 2; // 可选，不传则统计所有服务
+}
+
+message GetStatsMonthRequest {
+  string user_id = 1;
+  string service_name = 2; // 可选，不传则统计所有服务
+}
+
+message GetStatsSummaryRequest {
+  string user_id = 1;
+}
+
+message GetStatsReply {
+  string user_id = 1;
+  string service_name = 2; // 如果请求时指定了服务名称，这里返回；否则为空
+  int32 total_count = 3;   // 总调用次数
+  double total_cost = 4;   // 总费用（仅余额扣费部分）
+  int32 free_count = 5;    // 免费额度使用次数
+  int32 paid_count = 6;    // 余额扣费次数
+  string period = 7;       // 统计周期：today 或 month
+}
+
+message ServiceStats {
+  string service_name = 1; // 服务名称
+  int32 total_count = 2;   // 总调用次数
+  double total_cost = 3;   // 总费用
+  int32 free_count = 4;    // 免费额度使用次数
+  int32 paid_count = 5;    // 余额扣费次数
+}
+
+message GetStatsSummaryReply {
+  string user_id = 1;
+  int32 total_count = 2;   // 所有服务总调用次数
+  double total_cost = 3;   // 所有服务总费用
+  repeated ServiceStats services = 4; // 各服务统计
 }

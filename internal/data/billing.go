@@ -462,3 +462,146 @@ func (r *billingRepo) GetAllUserIDs(ctx context.Context) ([]string, error) {
 
 	return userIDs, nil
 }
+
+// GetStatsToday 获取今日调用统计
+func (r *billingRepo) GetStatsToday(ctx context.Context, userID, serviceName string) (*biz.Stats, error) {
+	// 获取今日开始时间
+	now := time.Now()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	todayEnd := todayStart.Add(24 * time.Hour)
+
+	// 构建查询条件
+	query := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
+		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, todayStart, todayEnd)
+
+	// 如果指定了服务名称，添加过滤条件
+	if serviceName != "" {
+		query = query.Where("service_name = ?", serviceName)
+	}
+
+	// 统计总调用次数和总费用
+	var result struct {
+		TotalCount int
+		TotalCost  float64
+		FreeCount  int
+		PaidCount  int
+	}
+
+	if err := query.Select(
+		"SUM(count) as total_count",
+		"SUM(CASE WHEN type = 2 THEN amount ELSE 0 END) as total_cost",
+		"SUM(CASE WHEN type = 1 THEN count ELSE 0 END) as free_count",
+		"SUM(CASE WHEN type = 2 THEN count ELSE 0 END) as paid_count",
+	).Scan(&result).Error; err != nil {
+		return nil, fmt.Errorf("get stats today failed: %w", err)
+	}
+
+	return &biz.Stats{
+		UserID:      userID,
+		ServiceName: serviceName,
+		TotalCount:  result.TotalCount,
+		TotalCost:   result.TotalCost,
+		FreeCount:   result.FreeCount,
+		PaidCount:   result.PaidCount,
+		Period:      "today",
+	}, nil
+}
+
+// GetStatsMonth 获取本月调用统计
+func (r *billingRepo) GetStatsMonth(ctx context.Context, userID, serviceName string) (*biz.Stats, error) {
+	// 获取本月开始时间
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	nextMonthStart := monthStart.AddDate(0, 1, 0)
+
+	// 构建查询条件
+	query := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
+		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart)
+
+	// 如果指定了服务名称，添加过滤条件
+	if serviceName != "" {
+		query = query.Where("service_name = ?", serviceName)
+	}
+
+	// 统计总调用次数和总费用
+	var result struct {
+		TotalCount int
+		TotalCost  float64
+		FreeCount  int
+		PaidCount  int
+	}
+
+	if err := query.Select(
+		"SUM(count) as total_count",
+		"SUM(CASE WHEN type = 2 THEN amount ELSE 0 END) as total_cost",
+		"SUM(CASE WHEN type = 1 THEN count ELSE 0 END) as free_count",
+		"SUM(CASE WHEN type = 2 THEN count ELSE 0 END) as paid_count",
+	).Scan(&result).Error; err != nil {
+		return nil, fmt.Errorf("get stats month failed: %w", err)
+	}
+
+	return &biz.Stats{
+		UserID:      userID,
+		ServiceName: serviceName,
+		TotalCount:  result.TotalCount,
+		TotalCost:   result.TotalCost,
+		FreeCount:   result.FreeCount,
+		PaidCount:   result.PaidCount,
+		Period:      "month",
+	}, nil
+}
+
+// GetStatsSummary 获取汇总统计（所有服务）
+func (r *billingRepo) GetStatsSummary(ctx context.Context, userID string) (*biz.StatsSummary, error) {
+	// 获取本月开始时间
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	nextMonthStart := monthStart.AddDate(0, 1, 0)
+
+	// 按服务名称分组统计
+	var serviceStats []struct {
+		ServiceName string
+		TotalCount  int
+		TotalCost   float64
+		FreeCount   int
+		PaidCount   int
+	}
+
+	if err := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
+		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart).
+		Select(
+			"service_name",
+			"SUM(count) as total_count",
+			"SUM(CASE WHEN type = 2 THEN amount ELSE 0 END) as total_cost",
+			"SUM(CASE WHEN type = 1 THEN count ELSE 0 END) as free_count",
+			"SUM(CASE WHEN type = 2 THEN count ELSE 0 END) as paid_count",
+		).
+		Group("service_name").
+		Scan(&serviceStats).Error; err != nil {
+		return nil, fmt.Errorf("get stats summary failed: %w", err)
+	}
+
+	// 转换为业务对象
+	services := make([]*biz.ServiceStats, 0, len(serviceStats))
+	totalCount := 0
+	totalCost := 0.0
+
+	for _, s := range serviceStats {
+		services = append(services, &biz.ServiceStats{
+			ServiceName: s.ServiceName,
+			TotalCount:  s.TotalCount,
+			TotalCost:   s.TotalCost,
+			FreeCount:   s.FreeCount,
+			PaidCount:   s.PaidCount,
+		})
+		totalCount += s.TotalCount
+		totalCost += s.TotalCost
+	}
+
+	return &biz.StatsSummary{
+		UserID:     userID,
+		TotalCount: totalCount,
+		TotalCost:  totalCost,
+		Services:   services,
+	}, nil
+}

@@ -126,3 +126,65 @@ func (s *BillingService) RechargeCallback(ctx context.Context, req *pb.RechargeC
 	}
 	return &pb.RechargeCallbackReply{Success: true}, nil
 }
+
+// GetStatsToday 获取今日调用统计
+func (s *BillingService) GetStatsToday(ctx context.Context, req *pb.GetStatsTodayRequest) (*pb.GetStatsReply, error) {
+	stats, err := s.uc.GetStatsToday(ctx, req.UserId, req.ServiceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetStatsReply{
+		UserId:      stats.UserID,
+		ServiceName: stats.ServiceName,
+		TotalCount:  int32(stats.TotalCount),
+		TotalCost:   stats.TotalCost,
+		FreeCount:   int32(stats.FreeCount),
+		PaidCount:   int32(stats.PaidCount),
+		Period:      stats.Period,
+	}, nil
+}
+
+// GetStatsMonth 获取本月调用统计
+func (s *BillingService) GetStatsMonth(ctx context.Context, req *pb.GetStatsMonthRequest) (*pb.GetStatsReply, error) {
+	stats, err := s.uc.GetStatsMonth(ctx, req.UserId, req.ServiceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetStatsReply{
+		UserId:      stats.UserID,
+		ServiceName: stats.ServiceName,
+		TotalCount:  int32(stats.TotalCount),
+		TotalCost:   stats.TotalCost,
+		FreeCount:   int32(stats.FreeCount),
+		PaidCount:   int32(stats.PaidCount),
+		Period:      stats.Period,
+	}, nil
+}
+
+// GetStatsSummary 获取汇总统计（所有服务）
+func (s *BillingService) GetStatsSummary(ctx context.Context, req *pb.GetStatsSummaryRequest) (*pb.GetStatsSummaryReply, error) {
+	summary, err := s.uc.GetStatsSummary(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	pbServices := make([]*pb.ServiceStats, 0, len(summary.Services))
+	for _, svc := range summary.Services {
+		pbServices = append(pbServices, &pb.ServiceStats{
+			ServiceName: svc.ServiceName,
+			TotalCount:  int32(svc.TotalCount),
+			TotalCost:   svc.TotalCost,
+			FreeCount:   int32(svc.FreeCount),
+			PaidCount:   int32(svc.PaidCount),
+		})
+	}
+
+	return &pb.GetStatsSummaryReply{
+		UserId:     summary.UserID,
+		TotalCount: int32(summary.TotalCount),
+		TotalCost:  summary.TotalCost,
+		Services:   pbServices,
+	}, nil
+}
