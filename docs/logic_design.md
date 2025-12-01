@@ -109,17 +109,42 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Cron as 定时任务
+    participant Cron as Cron 服务
     participant Billing as Billing Service
     participant DB as Database
 
     Cron->>Billing: 1. 触发重置 (ResetFreeQuotas)
-    Note right of Cron: 每月 1 日 00:00
+    Note right of Cron: 每月 1 日 00:00<br/>Cron: "0 0 0 1 * *"
     
     Billing->>DB: SELECT DISTINCT user_id FROM free_quota
+    Billing->>DB: SELECT DISTINCT user_id FROM user_balance
+    Note right of Billing: 合并两个表的用户ID<br/>确保所有用户都能获得免费额度
     
-    loop 遍历用户
-        Billing->>DB: INSERT INTO free_quota (ResetMonth=NextMonth, Used=0)
-        Note right of Billing: 插入下个月的新记录
+    Billing->>Billing: 计算下个月 (NextMonth)
+    Note right of Billing: 格式: 2024-12
+    
+    loop 遍历每个用户
+        loop 遍历每个服务 (passport/payment/asset)
+            Billing->>DB: SELECT * FROM free_quota<br/>WHERE user_id=? AND service=? AND reset_month=?
+            
+            alt 记录已存在
+                Note right of Billing: 跳过（幂等性保证）
+            else 记录不存在
+                Billing->>DB: INSERT INTO free_quota<br/>(user_id, service_name, total_quota, used_quota=0, reset_month)
+                Note right of Billing: 创建下个月的新记录
+            end
+        end
     end
+    
+    Billing-->>Cron: 返回统计信息 (count, userIDs)
+    Note right of Cron: 记录日志：成功数量、用户列表
 ```
+
+**设计说明**：
+- **执行时间**：每月 1 日 00:00 自动执行（Cron 表达式：`0 0 0 1 * *`）
+- **用户获取策略**：从 `free_quota` 和 `user_balance` 两个表获取所有用户ID，确保：
+  - 已有免费额度记录的用户能获得下个月的额度
+  - 只有余额但还没有免费额度记录的新用户也能获得免费额度
+- **幂等性保证**：如果下个月的记录已存在，自动跳过，避免重复创建
+- **错误处理**：单个用户或服务的失败不影响其他用户，记录警告日志后继续处理
+- **性能考虑**：使用批量查询和事务，支持大量用户的场景
