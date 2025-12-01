@@ -56,7 +56,8 @@ billing-service/
 ├── api/                    # API 定义 (proto 文件)
 │   └── billing/v1/
 ├── cmd/                    # 入口文件
-│   └── billing-service/
+│   ├── server/            # 主服务入口
+│   └── cron/              # Cron 定时任务服务入口
 ├── configs/                # 配置文件
 ├── docs/                   # 设计文档
 ├── internal/               # 内部代码
@@ -90,6 +91,43 @@ billing-service/
 - `service-spec.md` - 技术设计文档
 - `logic_design.md` - 业务逻辑设计
 - `sql/billing_service.sql` - 数据库设计
+
+## Cron 定时任务服务
+
+Billing Service 包含一个独立的 Cron 服务，用于执行定时任务。
+
+### 定时任务
+
+| 任务名称 | Cron 表达式 | 执行时间 | 功能描述 |
+|---------|------------|---------|---------|
+| 免费额度重置 | `0 0 0 1 * *` | 每月1日 00:00 | 为所有用户创建下个月的免费额度记录 |
+
+### Cron 服务启动
+
+```bash
+# 编译 Cron 服务
+make build-cron
+
+# 启动 Cron 服务
+make run-cron
+
+# 或者直接运行
+./bin/cron -conf ./configs/config.yaml
+```
+
+### 同时运行主服务和 Cron 服务
+
+```bash
+# 启动所有服务（cron 后台，server 前台）
+make run-all
+
+# 停止所有服务
+make stop-all
+```
+
+### 日志
+
+Cron 服务的日志会输出到标准输出，如果使用 `make run-all`，日志会保存到 `logs/cron.log`。
 
 ## License
 

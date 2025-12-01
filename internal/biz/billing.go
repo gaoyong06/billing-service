@@ -67,6 +67,9 @@ type BillingRepo interface {
 	// 订单相关
 	SaveRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error
 	GetRechargeOrder(ctx context.Context, orderID string) (string, error) // 返回 userID
+
+	// 重置相关
+	GetAllUserIDs(ctx context.Context) ([]string, error) // 获取所有用户ID
 }
 
 // BillingUseCase 业务逻辑
@@ -218,4 +221,78 @@ func (uc *BillingUseCase) RechargeCallback(ctx context.Context, orderID string, 
 	}
 
 	return uc.repo.Recharge(ctx, userID, amount)
+}
+
+// ResetFreeQuotas 重置所有用户的免费额度（每月1日执行）
+// 为所有用户创建下个月的免费额度记录
+func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, error) {
+	// 获取下个月
+	nextMonth := time.Now().AddDate(0, 1, 0).Format("2006-01")
+	
+	// 获取所有用户ID
+	userIDs, err := uc.repo.GetAllUserIDs(ctx)
+	if err != nil {
+		return 0, nil, fmt.Errorf("get all user IDs failed: %w", err)
+	}
+
+	if len(userIDs) == 0 {
+		uc.log.Info("No users found, skip reset")
+		return 0, []string{}, nil
+	}
+
+	successCount := 0
+	successUserIDs := []string{}
+
+	// 为每个用户创建下个月的免费额度
+	for _, userID := range userIDs {
+		for serviceName, totalQuota := range uc.conf.FreeQuotas {
+			// 检查是否已存在下个月的记录
+			existing, err := uc.repo.GetFreeQuota(ctx, userID, serviceName, nextMonth)
+			if err != nil {
+				uc.log.Warnf("GetFreeQuota failed for user=%s, service=%s, month=%s: %v", 
+					userID, serviceName, nextMonth, err)
+				continue
+			}
+
+			// 如果已存在，跳过
+			if existing != nil {
+				continue
+			}
+
+			// 创建新的免费额度记录
+			quota := &FreeQuota{
+				UserID:      userID,
+				ServiceName: serviceName,
+				TotalQuota:  int(totalQuota),
+				UsedQuota:   0,
+				ResetMonth:  nextMonth,
+			}
+
+			if err := uc.repo.CreateFreeQuota(ctx, quota); err != nil {
+				uc.log.Warnf("CreateFreeQuota failed for user=%s, service=%s, month=%s: %v",
+					userID, serviceName, nextMonth, err)
+				continue
+			}
+
+			successCount++
+			if !contains(successUserIDs, userID) {
+				successUserIDs = append(successUserIDs, userID)
+			}
+		}
+	}
+
+	uc.log.Infof("Reset free quotas completed: nextMonth=%s, totalUsers=%d, successUsers=%d",
+		nextMonth, len(userIDs), len(successUserIDs))
+
+	return successCount, successUserIDs, nil
+}
+
+// contains 检查字符串切片是否包含指定字符串
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

@@ -397,3 +397,42 @@ func (r *billingRepo) GetRechargeOrder(ctx context.Context, orderID string) (str
 
 	return userID, nil
 }
+
+// GetAllUserIDs 获取所有用户ID（用于重置免费额度）
+// 从 free_quota 和 user_balance 表中获取所有不重复的 user_id
+// 确保所有用户（包括新用户）都能获得免费额度
+func (r *billingRepo) GetAllUserIDs(ctx context.Context) ([]string, error) {
+	userIDMap := make(map[string]bool)
+
+	// 从 free_quota 表获取用户ID
+	var quotaUserIDs []string
+	if err := r.data.db.WithContext(ctx).
+		Model(&model.FreeQuota{}).
+		Distinct("user_id").
+		Pluck("user_id", &quotaUserIDs).Error; err != nil {
+		return nil, fmt.Errorf("get user IDs from free_quota failed: %w", err)
+	}
+	for _, userID := range quotaUserIDs {
+		userIDMap[userID] = true
+	}
+
+	// 从 user_balance 表获取用户ID（可能有些用户只有余额，还没有免费额度记录）
+	var balanceUserIDs []string
+	if err := r.data.db.WithContext(ctx).
+		Model(&model.UserBalance{}).
+		Distinct("user_id").
+		Pluck("user_id", &balanceUserIDs).Error; err != nil {
+		return nil, fmt.Errorf("get user IDs from user_balance failed: %w", err)
+	}
+	for _, userID := range balanceUserIDs {
+		userIDMap[userID] = true
+	}
+
+	// 转换为切片
+	userIDs := make([]string, 0, len(userIDMap))
+	for userID := range userIDMap {
+		userIDs = append(userIDs, userID)
+	}
+
+	return userIDs, nil
+}
