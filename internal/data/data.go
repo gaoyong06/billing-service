@@ -1,10 +1,9 @@
 package data
 
 import (
-	"fmt"
-	"time"
-
 	"billing-service/internal/conf"
+	"context"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
@@ -14,74 +13,51 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(
-	NewDB,
-	NewRedis,
-	NewData,
-	NewBillingRepo,
-)
+var ProviderSet = wire.NewSet(NewData, NewBillingRepo)
 
-// Data 数据层结构体
+// Data .
 type Data struct {
 	db  *gorm.DB
 	rdb *redis.Client
 }
 
-// NewDB 创建数据库连接
-func NewDB(c *conf.Bootstrap) (*gorm.DB, error) {
-	if c.Data == nil || c.Data.Database == nil {
-		return nil, fmt.Errorf("database config is nil")
-	}
-	db, err := gorm.Open(mysql.Open(c.Data.Database.Source), &gorm.Config{})
+// NewData .
+func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
+	log := log.NewHelper(logger)
+
+	// MySQL
+	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{})
 	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-// NewRedis 创建 Redis 连接
-func NewRedis(c *conf.Bootstrap) (*redis.Client, error) {
-	if c.Data == nil || c.Data.Redis == nil {
-		return nil, fmt.Errorf("redis config is nil")
+		return nil, nil, err
 	}
 
-	var readTimeout, writeTimeout time.Duration
-	if c.Data.Redis.ReadTimeout != nil {
-		readTimeout = c.Data.Redis.ReadTimeout.AsDuration()
-	}
-	if c.Data.Redis.WriteTimeout != nil {
-		writeTimeout = c.Data.Redis.WriteTimeout.AsDuration()
-	}
-
+	// Redis
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         c.Data.Redis.Addr,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
+		Addr:         c.Redis.Addr,
+		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
+		WriteTimeout: c.Redis.WriteTimeout.AsDuration(),
 	})
 
-	// 测试连接
-	if err := rdb.Ping(rdb.Context()).Err(); err != nil {
-		return nil, err
+	// Ping Redis to check connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
+		return nil, nil, err
 	}
 
-	return rdb, nil
-}
-
-// NewData 创建数据层实例
-func NewData(c *conf.Bootstrap, logger log.Logger, db *gorm.DB, rdb *redis.Client) (*Data, func(), error) {
-	cleanup := func() {
-		log.NewHelper(logger).Info("closing the data resources")
-		sqlDB, err := db.DB()
-		if err == nil {
-			sqlDB.Close()
-		}
-		if err := rdb.Close(); err != nil {
-			log.NewHelper(logger).Errorf("failed to close redis: %v", err)
-		}
-	}
-
-	return &Data{
+	d := &Data{
 		db:  db,
 		rdb: rdb,
-	}, cleanup, nil
+	}
+
+	cleanup := func() {
+		log.Info("closing the data resources")
+		if sqlDB, err := d.db.DB(); err == nil {
+			sqlDB.Close()
+		}
+		if err := d.rdb.Close(); err != nil {
+			log.Error(err)
+		}
+	}
+	return d, cleanup, nil
 }
