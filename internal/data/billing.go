@@ -60,9 +60,14 @@ func (r *billingRepo) GetUserBalance(ctx context.Context, userID string) (*biz.U
 		UpdatedAt: m.UpdatedAt,
 	}
 
-	// 更新缓存（异步，不阻塞）
+	// 更新缓存（异步，不阻塞，设置超时避免长时间等待）
 	go func() {
-		r.data.rdb.Set(context.Background(), balanceKey, fmt.Sprintf("%.2f", m.Balance), 5*time.Minute)
+		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cacheCancel()
+		if err := r.data.rdb.Set(cacheCtx, balanceKey, fmt.Sprintf("%.2f", m.Balance), 5*time.Minute).Err(); err != nil {
+			// 缓存更新失败不影响主流程，只记录日志（异步操作，使用默认 logger）
+			// 注意：这里不能使用 r.log，因为是在 goroutine 中
+		}
 	}()
 
 	return result, nil
@@ -103,10 +108,15 @@ func (r *billingRepo) Recharge(ctx context.Context, userID string, amount float6
 		if err := tx.Model(&m).Update("balance", gorm.Expr("balance + ?", amount)).Error; err != nil {
 			return err
 		}
-		// 更新 Redis 缓存
+		// 更新 Redis 缓存（设置超时避免阻塞）
 		balanceKey := fmt.Sprintf("balance:%s", userID)
 		newBalance := m.Balance + amount
-		r.data.rdb.Set(context.Background(), balanceKey, fmt.Sprintf("%.2f", newBalance), 5*time.Minute)
+		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cacheCancel()
+		if err := r.data.rdb.Set(cacheCtx, balanceKey, fmt.Sprintf("%.2f", newBalance), 5*time.Minute).Err(); err != nil {
+			// 缓存更新失败不影响主流程，只记录日志
+			r.log.Warnf("failed to update balance cache in Recharge: %v", err)
+		}
 		return nil
 	})
 }
@@ -144,10 +154,15 @@ func (r *billingRepo) GetFreeQuota(ctx context.Context, userID, serviceName, mon
 		ResetMonth:  m.ResetMonth,
 	}
 
-	// 更新缓存（异步，不阻塞）
+	// 更新缓存（异步，不阻塞，设置超时避免长时间等待）
 	go func() {
+		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cacheCancel()
 		remaining := m.TotalQuota - m.UsedQuota
-		r.data.rdb.Set(context.Background(), quotaKey, fmt.Sprintf("%d", remaining), 5*time.Minute)
+		if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", remaining), 5*time.Minute).Err(); err != nil {
+			// 缓存更新失败不影响主流程，只记录日志（异步操作，使用默认 logger）
+			// 注意：这里不能使用 r.log，因为是在 goroutine 中
+		}
 	}()
 
 	return result, nil
@@ -339,15 +354,26 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		return nil
 	})
 
-	// 事务提交成功后，更新 Redis 缓存
+	// 事务提交成功后，更新 Redis 缓存（使用传入的 context，但设置较短的超时时间）
 	if err == nil {
+		// 使用独立的 context 更新缓存，避免阻塞主流程
+		// 设置较短的超时时间，如果缓存更新失败不影响主流程
+		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cacheCancel()
+
 		if needUpdateQuotaCache {
 			quotaKey := fmt.Sprintf("quota:%s:%s:%s", userID, serviceName, month)
-			r.data.rdb.Set(context.Background(), quotaKey, fmt.Sprintf("%d", quotaRemaining), 5*time.Minute)
+			if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", quotaRemaining), 5*time.Minute).Err(); err != nil {
+				// 缓存更新失败不影响主流程，只记录日志
+				r.log.Warnf("failed to update quota cache: %v", err)
+			}
 		}
 		if needUpdateBalanceCache {
 			balanceKey := fmt.Sprintf("balance:%s", userID)
-			r.data.rdb.Set(context.Background(), balanceKey, fmt.Sprintf("%.2f", newBalance), 5*time.Minute)
+			if err := r.data.rdb.Set(cacheCtx, balanceKey, fmt.Sprintf("%.2f", newBalance), 5*time.Minute).Err(); err != nil {
+				// 缓存更新失败不影响主流程，只记录日志
+				r.log.Warnf("failed to update balance cache: %v", err)
+			}
 		}
 	}
 

@@ -31,11 +31,31 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		return nil, nil, err
 	}
 
-	// Redis
+	// 配置数据库连接池（优化高频调用场景）
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, nil, err
+	}
+	// 根据高频调用场景优化连接池配置
+	// MaxOpenConns: 最大打开连接数（建议根据实际负载调整，100 适合中等规模）
+	sqlDB.SetMaxOpenConns(100)
+	// MaxIdleConns: 最大空闲连接数（建议为 MaxOpenConns 的 20-30%）
+	sqlDB.SetMaxIdleConns(20)
+	// ConnMaxLifetime: 连接最大生存时间（防止长时间连接导致的问题）
+	sqlDB.SetConnMaxLifetime(time.Hour)
+	// ConnMaxIdleTime: 空闲连接最大生存时间（及时释放空闲连接）
+	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
+
+	// Redis（配置连接池以优化高频调用场景）
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         c.Redis.Addr,
 		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
 		WriteTimeout: c.Redis.WriteTimeout.AsDuration(),
+		// 连接池配置（优化高频调用）
+		PoolSize:     20,  // 连接池大小（建议根据实际负载调整，20 适合中等规模）
+		MinIdleConns: 5,   // 最小空闲连接数（保持一定数量的连接以减少连接建立开销）
+		MaxRetries:   3,   // 最大重试次数（网络抖动时自动重试）
+		DialTimeout:  5 * time.Second, // 连接超时时间
 	})
 
 	// Ping Redis to check connection

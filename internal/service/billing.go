@@ -102,6 +102,9 @@ func (s *BillingService) CheckQuota(ctx context.Context, req *pb.CheckQuotaReque
 func (s *BillingService) DeductQuota(ctx context.Context, req *pb.DeductQuotaRequest) (*pb.DeductQuotaReply, error) {
 	recordID, err := s.uc.DeductQuota(ctx, req.UserId, req.ServiceName, int(req.Count))
 	if err != nil {
+		// 记录错误日志，便于排查问题
+		s.log.Errorf("DeductQuota failed: user_id=%s, service=%s, count=%d, error=%v",
+			req.UserId, req.ServiceName, req.Count, err)
 		return &pb.DeductQuotaReply{Success: false}, err
 	}
 	return &pb.DeductQuotaReply{
