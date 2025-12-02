@@ -45,6 +45,17 @@ type BillingRecord struct {
 	CreatedAt   time.Time
 }
 
+// RechargeOrder 充值订单业务对象
+type RechargeOrder struct {
+	OrderID        string
+	UserID         string
+	Amount         float64
+	PaymentOrderID string
+	Status         string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
 // Stats 统计对象
 type Stats struct {
 	UserID      string
@@ -92,9 +103,12 @@ type BillingRepo interface {
 	// 事务操作
 	DeductQuota(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error)
 
-	// 订单相关
-	SaveRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error
-	GetRechargeOrder(ctx context.Context, orderID string) (string, error) // 返回 userID
+	// 订单相关（幂等性保证）
+	CreateRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error
+	GetRechargeOrderByID(ctx context.Context, orderID string) (*RechargeOrder, error)
+	GetRechargeOrderByPaymentID(ctx context.Context, paymentOrderID string) (*RechargeOrder, error)
+	UpdateRechargeOrderStatus(ctx context.Context, orderID, paymentOrderID, status string) error
+	RechargeWithIdempotency(ctx context.Context, orderID, paymentOrderID string, amount float64) error
 
 	// 重置相关
 	GetAllUserIDs(ctx context.Context) ([]string, error) // 获取所有用户ID
