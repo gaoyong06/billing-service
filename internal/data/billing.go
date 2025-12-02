@@ -290,7 +290,18 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 				Where("user_id = ?", userID).First(&balance).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return errors.New("insufficient balance: user balance not found")
+					// 用户余额记录不存在，自动创建（初始余额为 0）
+					balance = model.UserBalance{
+						UserBalanceID: uuid.New().String(),
+						UserID:        userID,
+						Balance:       0,
+						Version:       1,
+					}
+					if err := tx.Create(&balance).Error; err != nil {
+						return fmt.Errorf("create user balance failed: %w", err)
+					}
+					// 余额为 0，无法扣费
+					return errors.New("insufficient balance: balance is 0")
 				}
 				return fmt.Errorf("get balance failed: %w", err)
 			}

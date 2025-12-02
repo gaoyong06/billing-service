@@ -184,8 +184,35 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 		return false, "", err
 	}
 
-	// 如果没有记录，视为有额度（将在扣减时创建）
-	if quota == nil || quota.TotalQuota-quota.UsedQuota >= count {
+	// 如果没有记录，自动创建（新用户或新月份）
+	if quota == nil {
+		totalQuota, ok := uc.conf.FreeQuotas[serviceName]
+		if !ok {
+			return false, "unknown service", nil
+		}
+
+		// 创建免费额度记录
+		quota = &FreeQuota{
+			UserID:      userID,
+			ServiceName: serviceName,
+			TotalQuota:  int(totalQuota),
+			UsedQuota:   0,
+			ResetMonth:  month,
+		}
+		if err := uc.repo.CreateFreeQuota(ctx, quota); err != nil {
+			// 创建失败可能是并发导致的重复创建，尝试重新获取
+			quota, err = uc.repo.GetFreeQuota(ctx, userID, serviceName, month)
+			if err != nil {
+				return false, "", fmt.Errorf("create and get free quota failed: %w", err)
+			}
+			if quota == nil {
+				return false, "", fmt.Errorf("quota still not found after creation")
+			}
+		}
+	}
+
+	// 检查免费额度是否充足
+	if quota.TotalQuota-quota.UsedQuota >= count {
 		return true, "free", nil
 	}
 
@@ -194,8 +221,15 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	if err != nil {
 		return false, "", err
 	}
+
+	// 如果余额记录不存在，自动创建（初始余额为 0）
 	if balance == nil {
-		return false, "insufficient balance", nil
+		balance = &UserBalance{
+			UserID:  userID,
+			Balance: 0,
+		}
+		// 注意：这里不创建记录，只是用于检查
+		// 实际创建会在 DeductQuota 或 Recharge 时进行
 	}
 
 	price, ok := uc.conf.Prices[serviceName]
@@ -261,7 +295,7 @@ func (uc *BillingUseCase) RechargeCallback(ctx context.Context, orderID string, 
 func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, error) {
 	// 获取下个月
 	nextMonth := time.Now().AddDate(0, 1, 0).Format("2006-01")
-	
+
 	// 获取所有用户ID
 	userIDs, err := uc.repo.GetAllUserIDs(ctx)
 	if err != nil {
@@ -282,7 +316,7 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 			// 检查是否已存在下个月的记录
 			existing, err := uc.repo.GetFreeQuota(ctx, userID, serviceName, nextMonth)
 			if err != nil {
-				uc.log.Warnf("GetFreeQuota failed for user=%s, service=%s, month=%s: %v", 
+				uc.log.Warnf("GetFreeQuota failed for user=%s, service=%s, month=%s: %v",
 					userID, serviceName, nextMonth, err)
 				continue
 			}
