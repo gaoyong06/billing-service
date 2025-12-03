@@ -2,93 +2,20 @@ package biz
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"billing-service/internal/conf"
+	billingErrors "billing-service/internal/errors"
+	"billing-service/internal/metrics"
 
+	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/google/wire"
 )
 
-// ProviderSet is biz providers.
-var ProviderSet = wire.NewSet(
-	NewBillingConfig,
-	NewBillingUseCase,
-)
-
-// UserBalance 业务对象
-type UserBalance struct {
-	UserID    string
-	Balance   float64
-	Version   int
-	UpdatedAt time.Time
-}
-
-// FreeQuota 业务对象
-type FreeQuota struct {
-	UserID      string
-	ServiceName string
-	TotalQuota  int
-	UsedQuota   int
-	ResetMonth  string
-}
-
-// BillingRecord 业务对象
-type BillingRecord struct {
-	ID          string
-	UserID      string
-	ServiceName string
-	Type        int
-	Amount      float64
-	Count       int
-	CreatedAt   time.Time
-}
-
-// RechargeOrder 充值订单业务对象
-type RechargeOrder struct {
-	OrderID        string
-	UserID         string
-	Amount         float64
-	PaymentOrderID string
-	Status         string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
-
-// Stats 统计对象
-type Stats struct {
-	UserID      string
-	ServiceName string
-	TotalCount  int     // 总调用次数
-	TotalCost   float64 // 总费用（仅余额扣费部分）
-	FreeCount   int     // 免费额度使用次数
-	PaidCount   int     // 余额扣费次数
-	Period      string  // 统计周期：today 或 month
-}
-
-// ServiceStats 服务统计对象
-type ServiceStats struct {
-	ServiceName string
-	TotalCount  int
-	TotalCost   float64
-	FreeCount   int
-	PaidCount   int
-}
-
-// StatsSummary 汇总统计对象
-type StatsSummary struct {
-	UserID     string
-	TotalCount int
-	TotalCost  float64
-	Services   []*ServiceStats
-}
-
-// BillingRepo 定义数据层接口
+// BillingRepo 统一数据层接口（用于跨领域事务）
+// 包含所有领域的方法，主要用于 DeductQuota 等跨领域事务操作
 type BillingRepo interface {
 	// 余额相关
 	GetUserBalance(ctx context.Context, userID string) (*UserBalance, error)
-	UpdateBalance(ctx context.Context, userID string, amount float64, version int) error // 乐观锁更新
 	Recharge(ctx context.Context, userID string, amount float64) error
 
 	// 配额相关
@@ -111,7 +38,7 @@ type BillingRepo interface {
 	RechargeWithIdempotency(ctx context.Context, orderID, paymentOrderID string, amount float64) error
 
 	// 重置相关
-	GetAllUserIDs(ctx context.Context) ([]string, error) // 获取所有用户ID
+	GetAllUserIDs(ctx context.Context) ([]string, error)
 
 	// 统计相关
 	GetStatsToday(ctx context.Context, userID, serviceName string) (*Stats, error)
@@ -119,46 +46,48 @@ type BillingRepo interface {
 	GetStatsSummary(ctx context.Context, userID string) (*StatsSummary, error)
 }
 
-// BillingUseCase 业务逻辑
+// BillingUseCase 计费业务逻辑（组合 UseCase）
+// 负责协调各个领域 UseCase，处理跨领域的业务逻辑
 type BillingUseCase struct {
-	repo BillingRepo
-	log  *log.Helper
-	conf *BillingConfig
+	userBalanceUseCase   *UserBalanceUseCase
+	freeQuotaUseCase     *FreeQuotaUseCase
+	billingRecordUseCase *BillingRecordUseCase
+	rechargeOrderUseCase *RechargeOrderUseCase
+	statsUseCase         *StatsUseCase
+
+	repo    BillingRepo // 用于跨领域事务
+	conf    *BillingConfig
+	log     *log.Helper
+	metrics *metrics.BillingMetrics
 }
 
-type BillingConfig struct {
-	Prices     map[string]float64
-	FreeQuotas map[string]int32
-}
-
-// NewBillingConfig 从配置创建 BillingConfig
-func NewBillingConfig(c *conf.Bootstrap) *BillingConfig {
-	config := &BillingConfig{
-		Prices:     make(map[string]float64),
-		FreeQuotas: make(map[string]int32),
-	}
-	if c.Billing != nil {
-		for k, v := range c.Billing.Prices {
-			config.Prices[k] = v
-		}
-		for k, v := range c.Billing.FreeQuotas {
-			config.FreeQuotas[k] = v
-		}
-	}
-	return config
-}
-
-func NewBillingUseCase(repo BillingRepo, logger log.Logger, conf *BillingConfig) *BillingUseCase {
+// NewBillingUseCase 创建计费 UseCase
+func NewBillingUseCase(
+	userBalanceUseCase *UserBalanceUseCase,
+	freeQuotaUseCase *FreeQuotaUseCase,
+	billingRecordUseCase *BillingRecordUseCase,
+	rechargeOrderUseCase *RechargeOrderUseCase,
+	statsUseCase *StatsUseCase,
+	repo BillingRepo,
+	conf *BillingConfig,
+	logger log.Logger,
+) *BillingUseCase {
 	return &BillingUseCase{
-		repo: repo,
-		log:  log.NewHelper(logger),
-		conf: conf,
+		userBalanceUseCase:   userBalanceUseCase,
+		freeQuotaUseCase:     freeQuotaUseCase,
+		billingRecordUseCase: billingRecordUseCase,
+		rechargeOrderUseCase: rechargeOrderUseCase,
+		statsUseCase:         statsUseCase,
+		repo:                 repo,
+		conf:                 conf,
+		log:                  log.NewHelper(logger),
+		metrics:              metrics.GetMetrics(),
 	}
 }
 
-// GetAccount 获取账户信息
+// GetAccount 获取账户信息（组合多个领域）
 func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserBalance, []*FreeQuota, error) {
-	balance, err := uc.repo.GetUserBalance(ctx, userID)
+	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -169,7 +98,7 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 	month := time.Now().Format("2006-01")
 	var quotas []*FreeQuota
 	for service := range uc.conf.FreeQuotas {
-		q, err := uc.repo.GetFreeQuota(ctx, userID, service, month)
+		q, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, service, month)
 		if err != nil {
 			continue // 忽略错误或记录日志
 		}
@@ -188,13 +117,24 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 	return balance, quotas, nil
 }
 
-// CheckQuota 检查配额
+// CheckQuota 检查配额（跨领域逻辑）
 func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName string, count int) (bool, string, error) {
+	startTime := time.Now()
+	defer func() {
+		// 记录配额检查耗时
+		if uc.metrics != nil {
+			uc.metrics.QuotaCheckDuration.WithLabelValues(serviceName).Observe(time.Since(startTime).Seconds())
+		}
+	}()
+
 	month := time.Now().Format("2006-01")
 
 	// 1. 检查免费额度
-	quota, err := uc.repo.GetFreeQuota(ctx, userID, serviceName, month)
+	quota, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
 	if err != nil {
+		if uc.metrics != nil {
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "error").Inc()
+		}
 		return false, "", err
 	}
 
@@ -202,7 +142,7 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	if quota == nil {
 		totalQuota, ok := uc.conf.FreeQuotas[serviceName]
 		if !ok {
-			return false, "unknown service", nil
+			return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeUnknownService)
 		}
 
 		// 创建免费额度记录
@@ -213,25 +153,36 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 			UsedQuota:   0,
 			ResetMonth:  month,
 		}
-		if err := uc.repo.CreateFreeQuota(ctx, quota); err != nil {
+		if err := uc.freeQuotaUseCase.CreateQuota(ctx, quota); err != nil {
 			// 创建失败可能是并发导致的重复创建，尝试重新获取
-			quota, err = uc.repo.GetFreeQuota(ctx, userID, serviceName, month)
+			quota, err = uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
 			if err != nil {
-				return false, "", fmt.Errorf("create and get free quota failed: %w", err)
+				return false, "", pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeQuotaCreateFailed)
 			}
 			if quota == nil {
-				return false, "", fmt.Errorf("quota still not found after creation")
+				return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeQuotaNotFound)
 			}
 		}
 	}
 
 	// 检查免费额度是否充足
 	if quota.TotalQuota-quota.UsedQuota >= count {
+		// 记录配额检查成功（使用免费额度）
+		if uc.metrics != nil {
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "allowed").Inc()
+			// 检查配额是否即将用尽（剩余 < 20%）
+			remainingPercent := float64(quota.TotalQuota-quota.UsedQuota) / float64(quota.TotalQuota) * 100
+			if remainingPercent < 20 {
+				uc.metrics.QuotaLowAlert.WithLabelValues(serviceName).Set(1)
+			} else {
+				uc.metrics.QuotaLowAlert.WithLabelValues(serviceName).Set(0)
+			}
+		}
 		return true, "free", nil
 	}
 
 	// 2. 检查余额
-	balance, err := uc.repo.GetUserBalance(ctx, userID)
+	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
 		return false, "", err
 	}
@@ -248,60 +199,71 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 
 	price, ok := uc.conf.Prices[serviceName]
 	if !ok {
-		return false, "unknown service", nil
+		return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeUnknownService)
 	}
 
 	cost := price * float64(count)
 	if balance.Balance >= cost {
+		// 记录配额检查成功（使用余额）
+		if uc.metrics != nil {
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "allowed").Inc()
+			// 检查余额是否不足（余额 < 10 元）
+			if balance.Balance < 10 {
+				uc.metrics.BalanceLowAlert.Set(1)
+			} else {
+				uc.metrics.BalanceLowAlert.Set(0)
+			}
+		}
 		return true, "balance", nil
 	}
 
+	// 记录配额检查失败（余额不足）
+	if uc.metrics != nil {
+		uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "denied").Inc()
+		uc.metrics.BalanceLowAlert.Set(1) // 余额不足告警
+	}
 	return false, "insufficient balance", nil
 }
 
-// DeductQuota 扣减配额
+// DeductQuota 扣减配额（跨领域事务）
 func (uc *BillingUseCase) DeductQuota(ctx context.Context, userID, serviceName string, count int) (string, error) {
+	startTime := time.Now()
 	price := uc.conf.Prices[serviceName]
 	cost := price * float64(count)
 	month := time.Now().Format("2006-01")
 
-	return uc.repo.DeductQuota(ctx, userID, serviceName, count, cost, month)
+	recordID, err := uc.repo.DeductQuota(ctx, userID, serviceName, count, cost, month)
+
+	// 记录扣费指标
+	if uc.metrics != nil {
+		duration := time.Since(startTime).Seconds()
+		uc.metrics.DeductQuotaDuration.WithLabelValues(serviceName).Observe(duration)
+
+		if err == nil {
+			// 根据扣费类型记录（这里简化处理，实际应该从 repo 返回扣费类型）
+			// 由于 DeductQuota 返回的是 recordID，我们需要推断扣费类型
+			// 为了简化，这里先记录为 "mixed"，实际应该从业务逻辑中获取
+			uc.metrics.DeductQuotaTotal.WithLabelValues(serviceName, "mixed").Inc()
+			uc.metrics.DeductQuotaAmount.WithLabelValues(serviceName, "balance").Add(cost)
+		}
+	}
+
+	return recordID, err
 }
 
 // ListRecords 获取消费记录
 func (uc *BillingUseCase) ListRecords(ctx context.Context, userID string, page, pageSize int) ([]*BillingRecord, int64, error) {
-	return uc.repo.ListBillingRecords(ctx, userID, page, pageSize)
+	return uc.billingRecordUseCase.ListRecords(ctx, userID, page, pageSize)
 }
 
 // Recharge 充值
-func (uc *BillingUseCase) Recharge(ctx context.Context, userID string, amount float64) (string, string, error) {
-	// TODO: 调用 Payment Service 创建订单
-	// 这里仅模拟，实际应该调用 Payment Service 的 gRPC 接口
-	orderID := "order_" + userID + "_" + time.Now().Format("20060102150405")
-	payURL := "https://mock.payment.url?order_id=" + orderID
-
-	// 保存订单信息到 Redis（用于回调时查询 userID）
-	if err := uc.repo.SaveRechargeOrder(ctx, orderID, userID, amount); err != nil {
-		uc.log.Errorf("SaveRechargeOrder failed: %v", err)
-		// 不返回错误，因为订单可能已经创建成功
-	}
-
-	return orderID, payURL, nil
+func (uc *BillingUseCase) Recharge(ctx context.Context, userID string, amount float64, method int32, currency, returnURL, notifyURL string) (string, string, error) {
+	return uc.rechargeOrderUseCase.CreateRecharge(ctx, userID, amount, method, currency, returnURL, notifyURL)
 }
 
 // RechargeCallback 充值回调
 func (uc *BillingUseCase) RechargeCallback(ctx context.Context, orderID string, amount float64) error {
-	// 从 Redis 获取订单对应的 userID
-	userID, err := uc.repo.GetRechargeOrder(ctx, orderID)
-	if err != nil {
-		uc.log.Errorf("GetRechargeOrder failed: %v", err)
-		return err
-	}
-	if userID == "" {
-		return fmt.Errorf("order not found: %s", orderID)
-	}
-
-	return uc.repo.Recharge(ctx, userID, amount)
+	return uc.rechargeOrderUseCase.RechargeCallback(ctx, orderID, amount)
 }
 
 // ResetFreeQuotas 重置所有用户的免费额度（每月1日执行）
@@ -311,9 +273,9 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 	nextMonth := time.Now().AddDate(0, 1, 0).Format("2006-01")
 
 	// 获取所有用户ID
-	userIDs, err := uc.repo.GetAllUserIDs(ctx)
+	userIDs, err := uc.statsUseCase.GetAllUserIDs(ctx)
 	if err != nil {
-		return 0, nil, fmt.Errorf("get all user IDs failed: %w", err)
+		return 0, nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeGetAllUserIDsFailed)
 	}
 
 	if len(userIDs) == 0 {
@@ -328,7 +290,7 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 	for _, userID := range userIDs {
 		for serviceName, totalQuota := range uc.conf.FreeQuotas {
 			// 检查是否已存在下个月的记录
-			existing, err := uc.repo.GetFreeQuota(ctx, userID, serviceName, nextMonth)
+			existing, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, nextMonth)
 			if err != nil {
 				uc.log.Warnf("GetFreeQuota failed for user=%s, service=%s, month=%s: %v",
 					userID, serviceName, nextMonth, err)
@@ -349,7 +311,7 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 				ResetMonth:  nextMonth,
 			}
 
-			if err := uc.repo.CreateFreeQuota(ctx, quota); err != nil {
+			if err := uc.freeQuotaUseCase.CreateQuota(ctx, quota); err != nil {
 				uc.log.Warnf("CreateFreeQuota failed for user=%s, service=%s, month=%s: %v",
 					userID, serviceName, nextMonth, err)
 				continue
@@ -380,15 +342,15 @@ func contains(slice []string, item string) bool {
 
 // GetStatsToday 获取今日调用统计
 func (uc *BillingUseCase) GetStatsToday(ctx context.Context, userID, serviceName string) (*Stats, error) {
-	return uc.repo.GetStatsToday(ctx, userID, serviceName)
+	return uc.statsUseCase.GetStatsToday(ctx, userID, serviceName)
 }
 
 // GetStatsMonth 获取本月调用统计
 func (uc *BillingUseCase) GetStatsMonth(ctx context.Context, userID, serviceName string) (*Stats, error) {
-	return uc.repo.GetStatsMonth(ctx, userID, serviceName)
+	return uc.statsUseCase.GetStatsMonth(ctx, userID, serviceName)
 }
 
 // GetStatsSummary 获取汇总统计（所有服务）
 func (uc *BillingUseCase) GetStatsSummary(ctx context.Context, userID string) (*StatsSummary, error) {
-	return uc.repo.GetStatsSummary(ctx, userID)
+	return uc.statsUseCase.GetStatsSummary(ctx, userID)
 }

@@ -1,64 +1,698 @@
-config:
-  baseUrl: "http://localhost:8107"
-  variables:
-    userId: "user_test_001"
-    serviceName: "passport"
-  apiSpec: "/Users/gaoyong/Documents/work/xinyuan_tech/billing-service/api/billing/v1/billing.proto"
+# Billing Service 全面测试配置
+# 包含正常场景、边界情况、异常场景、幂等性测试、集成测试等
 
-tests:
-  # 1. 初始状态检查
-  - name: "1. Get Account - Initial State"
-    path: "/api/v1/billing/account"
-    method: "GET"
-    params:
-      user_id: "${userId}"
-    expect:
-      status: 200
-      body:
-        user_id: "${userId}"
-        balance: 0
+# API 规范文件路径（相对于配置文件目录）
+spec: ../../openapi.yaml
 
-  # 2. 充值流程
-  - name: "2. Recharge Account"
-    path: "/api/v1/billing/recharge"
-    method: "POST"
-    body:
-      user_id: "${userId}"
-      amount: 100.0
-      payment_method: "wechat"
-    expect:
-      status: 200
-      body:
-        payment_url: "contains:https://"
-    extract:
-      orderId: "order_id"
+# API 基础 URL
+base_url: http://localhost:8107
+# 请求超时时间（秒）
+timeout: 30
 
-  # 注意：由于充值回调是 Internal 接口，且通常通过 gRPC 调用，
-  # HTTP API 测试无法直接触发回调来增加余额。
-  # 在集成测试环境中，我们需要一个 Helper 接口或者直接操作 DB 来模拟充值成功。
-  # 或者，如果 Internal Service 开启了 HTTP Transcoding，我们可以尝试调用。
-  # 假设 Internal 接口未暴露 HTTP，这里的测试主要验证 Public API 的契约。
+# 请求配置
+request:
+  headers:
+    Content-Type: application/json
 
-  # 3. 查询流水 (初始为空)
-  - name: "3. List Records - Empty"
-    path: "/api/v1/billing/records"
-    method: "GET"
-    params:
-      user_id: "${userId}"
-      page: 1
-      page_size: 10
-    expect:
-      status: 200
-      body:
-        total: 0
+# 输出目录
+output_dir: ./test/reports
+# 是否详细输出
+verbose: true
 
-  # 4. 再次查询账户 (验证充值链接生成不影响余额)
-  - name: "4. Get Account - After Recharge Request"
-    path: "/api/v1/billing/account"
-    method: "GET"
-    params:
-      user_id: "${userId}"
-    expect:
-      status: 200
-      body:
-        balance: 0
+# 全局变量定义
+variables:
+  # 正常测试数据
+  test_user_id: "user_test_001"
+  test_user_id_2: "user_test_002"
+  test_user_id_3: "user_test_003"
+  
+  # 测试服务名称
+  test_service_passport: "passport"
+  test_service_payment: "payment"
+  test_service_asset: "asset"
+  
+  # 测试金额
+  test_amount_small: 10.0
+  test_amount_medium: 100.0
+  test_amount_large: 1000.0
+
+# 测试场景
+scenarios:
+  # ==================== 基础功能测试 ====================
+  
+  # 1. 健康检查
+  - name: 01-健康检查
+    description: 测试服务健康状态
+    steps:
+      - name: 检查服务健康
+        endpoint: /health
+        method: GET
+        assert:
+          status: 200
+          body:
+            $.data.status: UP
+            $.data.service: billing-service
+            $.success: true
+
+  # 2. 获取账户信息 - 初始状态
+  - name: 02-获取账户信息初始状态
+    description: 测试新用户获取账户信息（余额为0，无配额记录）
+    steps:
+      - name: 获取账户信息
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.data.userId: "{{.test_user_id}}"
+            $.data.balance: 0
+            $.success: true
+
+  # ==================== 充值流程测试 ====================
+  
+  # 3. 充值流程 - 创建充值订单
+  - name: 03-充值流程创建订单
+    description: 测试创建充值订单并获取支付链接
+    steps:
+      - name: 创建充值订单
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          amount: "{{.test_amount_medium}}"
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.data.paymentUrl: "contains:https://"
+            $.success: true
+        extract:
+          recharge_order_id: $.data.orderId
+          recharge_payment_url: $.data.paymentUrl
+
+      - name: 验证账户余额未变化（充值前）
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        dependencies: [创建充值订单]
+        assert:
+          status: 200
+          body:
+            $.data.balance: 0
+            $.success: true
+
+  # 4. 充值回调 - 幂等性测试
+  - name: 04-充值回调幂等性测试
+    description: 测试充值回调的幂等性保证（重复调用只充值一次）
+    steps:
+      - name: 步骤1-创建充值订单
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id_2}}"
+          amount: "{{.test_amount_medium}}"
+          payment_method: "wechat"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+        extract:
+          idempotency_order_id: $.data.orderId
+
+      - name: 步骤2-第一次充值回调（成功）
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤1-创建充值订单]
+        body:
+          order_id: "{{.idempotency_order_id}}"
+          payment_order_id: "payment_order_{{.idempotency_order_id}}"
+          amount: "{{.test_amount_medium}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤3-验证余额已增加
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id_2}}"
+        dependencies: [步骤2-第一次充值回调（成功）]
+        assert:
+          status: 200
+          body:
+            $.data.balance: "{{.test_amount_medium}}"
+            $.success: true
+
+      - name: 步骤4-第二次充值回调（幂等性测试 - 应该成功但不重复充值）
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤3-验证余额已增加]
+        body:
+          order_id: "{{.idempotency_order_id}}"
+          payment_order_id: "payment_order_{{.idempotency_order_id}}"
+          amount: "{{.test_amount_medium}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤5-验证余额未重复增加（幂等性验证）
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id_2}}"
+        dependencies: [步骤4-第二次充值回调（幂等性测试 - 应该成功但不重复充值）]
+        assert:
+          status: 200
+          body:
+            $.data.balance: "{{.test_amount_medium}}"
+            $.success: true
+
+  # ==================== 配额检查与扣费测试 ====================
+  
+  # 5. 配额检查 - 免费额度充足
+  - name: 05-配额检查免费额度充足
+    description: 测试免费额度充足时的配额检查
+    steps:
+      - name: 检查配额-免费额度充足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 100
+        assert:
+          status: 200
+          body:
+            $.data.allowed: true
+            $.data.reason: "free"
+            $.success: true
+
+  # 6. 配额检查 - 余额充足
+  - name: 06-配额检查余额充足
+    description: 测试免费额度不足但余额充足时的配额检查
+    steps:
+      - name: 步骤1-先充值
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id_3}}"
+          amount: "{{.test_amount_large}}"
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+        extract:
+          balance_test_order_id: $.data.orderId
+
+      - name: 步骤2-充值回调
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤1-先充值]
+        body:
+          order_id: "{{.balance_test_order_id}}"
+          payment_order_id: "payment_order_{{.balance_test_order_id}}"
+          amount: "{{.test_amount_large}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤3-检查配额-余额充足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        dependencies: [步骤2-充值回调]
+        body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.test_service_passport}}"
+          count: 10000
+        assert:
+          status: 200
+          body:
+            $.data.allowed: true
+            $.data.reason: "balance"
+            $.success: true
+
+  # 7. 配额检查 - 余额不足
+  - name: 07-配额检查余额不足
+    description: 测试免费额度和余额都不足时的配额检查
+    steps:
+      - name: 检查配额-余额不足
+        endpoint: /internal/v1/billing/check
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 1000000
+        assert:
+          status: 200
+          body:
+            $.data.allowed: false
+            $.data.reason: "insufficient balance"
+            $.success: true
+
+  # 8. 扣费流程 - 使用免费额度
+  - name: 08-扣费流程使用免费额度
+    description: 测试扣费流程（使用免费额度）
+    steps:
+      - name: 步骤1-检查配额
+        endpoint: /internal/v1/billing/check
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 10
+        assert:
+          status: 200
+          body:
+            $.data.allowed: true
+            $.success: true
+
+      - name: 步骤2-扣费（使用免费额度）
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤1-检查配额]
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 10
+          cost: 0.01
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.data.recordId: "!null"
+            $.success: true
+        extract:
+          deduct_record_id: $.data.recordId
+
+      - name: 步骤3-验证扣费记录
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 10
+        dependencies: [步骤2-扣费（使用免费额度）]
+        assert:
+          status: 200
+          body:
+            $.data.total: ">0"
+            $.success: true
+
+  # 9. 扣费流程 - 使用余额
+  - name: 09-扣费流程使用余额
+    description: 测试扣费流程（使用余额）
+    steps:
+      - name: 步骤1-充值
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id_3}}"
+          amount: "{{.test_amount_medium}}"
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+        extract:
+          deduct_test_order_id: $.data.orderId
+
+      - name: 步骤2-充值回调
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤1-充值]
+        body:
+          order_id: "{{.deduct_test_order_id}}"
+          payment_order_id: "payment_order_{{.deduct_test_order_id}}"
+          amount: "{{.test_amount_medium}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤3-扣费（使用余额）
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤2-充值回调]
+        body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.test_service_passport}}"
+          count: 10000
+          cost: 10.0
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.data.recordId: "!null"
+            $.success: true
+
+      - name: 步骤4-验证余额已扣减
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+        dependencies: [步骤3-扣费（使用余额）]
+        assert:
+          status: 200
+          body:
+            $.data.balance: "<{{.test_amount_medium}}"
+            $.success: true
+
+  # ==================== 集成测试 ====================
+  
+  # 10. 完整充值流程集成测试
+  - name: 10-完整充值流程集成测试
+    description: 测试完整的充值流程（创建订单 -> 回调 -> 验证余额 -> 扣费）
+    steps:
+      - name: 步骤1-获取初始账户信息
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.data.balance: 0
+            $.success: true
+
+      - name: 步骤2-创建充值订单
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        dependencies: [步骤1-获取初始账户信息]
+        body:
+          user_id: "{{.test_user_id}}"
+          amount: "{{.test_amount_medium}}"
+          payment_method: "wechat"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.data.paymentUrl: "contains:https://"
+            $.success: true
+        extract:
+          integration_order_id: $.data.orderId
+
+      - name: 步骤3-充值回调
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤2-创建充值订单]
+        body:
+          order_id: "{{.integration_order_id}}"
+          payment_order_id: "payment_order_{{.integration_order_id}}"
+          amount: "{{.test_amount_medium}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤4-验证余额已增加
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        dependencies: [步骤3-充值回调]
+        assert:
+          status: 200
+          body:
+            $.data.balance: "{{.test_amount_medium}}"
+            $.success: true
+
+      - name: 步骤5-扣费测试
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤4-验证余额已增加]
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 10000
+          cost: 50.0
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤6-验证余额已扣减
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        dependencies: [步骤5-扣费测试]
+        assert:
+          status: 200
+          body:
+            $.data.balance: "<{{.test_amount_medium}}"
+            $.success: true
+
+      - name: 步骤7-查看消费记录
+        endpoint: /api/v1/billing/records
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          page: 1
+          page_size: 10
+        dependencies: [步骤6-验证余额已扣减]
+        assert:
+          status: 200
+          body:
+            $.data.total: ">0"
+            $.success: true
+
+  # ==================== 统计功能测试 ====================
+  
+  # 11. 获取今日统计
+  - name: 11-获取今日统计
+    description: 测试获取今日调用统计
+    steps:
+      - name: 获取今日统计
+        endpoint: /api/v1/billing/stats/today
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+        assert:
+          status: 200
+          body:
+            $.data.userId: "{{.test_user_id}}"
+            $.data.serviceName: "{{.test_service_passport}}"
+            $.data.period: "today"
+            $.success: true
+
+  # 12. 获取本月统计
+  - name: 12-获取本月统计
+    description: 测试获取本月调用统计
+    steps:
+      - name: 获取本月统计
+        endpoint: /api/v1/billing/stats/month
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+        assert:
+          status: 200
+          body:
+            $.data.userId: "{{.test_user_id}}"
+            $.data.serviceName: "{{.test_service_passport}}"
+            $.data.period: "month"
+            $.success: true
+
+  # 13. 获取汇总统计
+  - name: 13-获取汇总统计
+    description: 测试获取所有服务的汇总统计
+    steps:
+      - name: 获取汇总统计
+        endpoint: /api/v1/billing/stats/summary
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id}}"
+        assert:
+          status: 200
+          body:
+            $.data.userId: "{{.test_user_id}}"
+            $.data.services: "!null"
+            $.success: true
+
+  # ==================== 异常场景测试 ====================
+  
+  # 14. 充值订单不存在
+  - name: 14-充值回调订单不存在
+    description: 测试充值回调时订单不存在的情况
+    steps:
+      - name: 充值回调-订单不存在
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        body:
+          order_id: "non_existent_order_12345"
+          payment_order_id: "payment_order_12345"
+          amount: 100.0
+          status: "success"
+        assert:
+          status: [400, 404, 500]
+          body:
+            $.success: false
+
+  # 15. 扣费余额不足
+  - name: 15-扣费余额不足
+    description: 测试余额不足时的扣费失败
+    steps:
+      - name: 扣费-余额不足
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          service_name: "{{.test_service_passport}}"
+          count: 1000000
+          cost: 1000000.0
+        assert:
+          status: [400, 500]
+          body:
+            $.success: false
+
+  # ==================== 边界值测试 ====================
+  
+  # 16. 最小金额充值
+  - name: 16-最小金额充值
+    description: 测试最小金额充值
+    steps:
+      - name: 创建最小金额充值订单
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          amount: 0.01
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+
+  # 17. 最大金额充值
+  - name: 17-最大金额充值
+    description: 测试最大金额充值
+    steps:
+      - name: 创建最大金额充值订单
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id}}"
+          amount: 999999.99
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+
+  # ==================== 并发测试（模拟高并发场景） ====================
+  
+  # 18. 并发扣费测试
+  - name: 18-并发扣费测试
+    description: 测试高并发场景下的扣费（验证分布式锁和幂等性）
+    steps:
+      - name: 步骤1-准备余额
+        endpoint: /api/v1/billing/recharge
+        method: POST
+        body:
+          user_id: "{{.test_user_id_3}}"
+          amount: "{{.test_amount_large}}"
+          payment_method: "alipay"
+        assert:
+          status: 200
+          body:
+            $.data.orderId: "!null"
+            $.success: true
+        extract:
+          concurrent_order_id: $.data.orderId
+
+      - name: 步骤2-充值回调
+        endpoint: /internal/v1/billing/callback
+        method: POST
+        dependencies: [步骤1-准备余额]
+        body:
+          order_id: "{{.concurrent_order_id}}"
+          payment_order_id: "payment_order_{{.concurrent_order_id}}"
+          amount: "{{.test_amount_large}}"
+          status: "success"
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤3-并发扣费1
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤2-充值回调]
+        body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.test_service_passport}}"
+          count: 100
+          cost: 10.0
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤4-并发扣费2
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤2-充值回调]
+        body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.test_service_passport}}"
+          count: 100
+          cost: 10.0
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤5-并发扣费3
+        endpoint: /internal/v1/billing/deduct
+        method: POST
+        dependencies: [步骤2-充值回调]
+        body:
+          user_id: "{{.test_user_id_3}}"
+          service_name: "{{.test_service_passport}}"
+          count: 100
+          cost: 10.0
+        assert:
+          status: 200
+          body:
+            $.data.success: true
+            $.success: true
+
+      - name: 步骤6-验证余额正确
+        endpoint: /api/v1/billing/account
+        method: GET
+        query_params:
+          user_id: "{{.test_user_id_3}}"
+        dependencies: [步骤3-并发扣费1, 步骤4-并发扣费2, 步骤5-并发扣费3]
+        assert:
+          status: 200
+          body:
+            $.data.balance: ">0"
+            $.success: true

@@ -28,7 +28,12 @@ func NewGRPCServer(c *conf.Server, billing *service.BillingService, logger log.L
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
+	
+	// 注册外部服务（面向前端/开发者）
 	v1.RegisterBillingServiceServer(srv, billing)
+	
+	// 注册内部服务（面向 Gateway/Payment）
 	v1.RegisterBillingInternalServiceServer(srv, billing)
+	
 	return srv
 }

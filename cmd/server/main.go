@@ -6,6 +6,7 @@ import (
 
 	"billing-service/internal/conf"
 
+	"github.com/gaoyong06/go-pkg/logger"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -45,15 +46,8 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 
 func main() {
 	flag.Parse()
-	logger := log.With(log.NewStdLogger(os.Stdout),
-		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
-		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID(),
-	)
+
+	// 初始化 Kratos Config
 	c := config.New(
 		config.WithSource(
 			file.NewSource(flagconf),
@@ -70,7 +64,33 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, &bc, logger)
+	// 初始化日志 (使用 go-pkg/logger)
+	logConfig := &logger.Config{
+		Level:      "info",
+		Format:     "json",
+		Output:     "stdout",
+		FilePath:   "logs/billing-service.log",
+		MaxSize:    100,
+		MaxAge:     30,
+		MaxBackups: 10,
+		Compress:   true,
+		EnableConsole: true,
+	}
+
+	loggerInstance := logger.NewLogger(logConfig)
+
+	// 添加基本字段
+	loggerInstance = log.With(loggerInstance,
+		"ts", log.DefaultTimestamp,
+		"caller", log.DefaultCaller,
+		"service.id", id,
+		"service.name", Name,
+		"service.version", Version,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID(),
+	)
+
+	app, cleanup, err := wireApp(bc.Server, bc.Data, &bc, loggerInstance)
 	if err != nil {
 		panic(err)
 	}

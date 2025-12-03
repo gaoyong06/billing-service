@@ -22,3 +22,8 @@ billing:
     passport: 10000
     payment: 1000
     asset: 1000
+payment_service:
+  grpc_addr: 127.0.0.1:9101
+  timeout: 5s
+  return_url: http://localhost:3000/callback
+  notify_url: http://localhost:8107/internal/v1/billing/callback

@@ -5,7 +5,9 @@ import (
 
 	pb "billing-service/api/billing/v1"
 	"billing-service/internal/biz"
+	billingErrors "billing-service/internal/errors"
 
+	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -51,7 +53,33 @@ func (s *BillingService) GetAccount(ctx context.Context, req *pb.GetAccountReque
 
 // Recharge 发起充值
 func (s *BillingService) Recharge(ctx context.Context, req *pb.RechargeRequest) (*pb.RechargeReply, error) {
-	orderID, payURL, err := s.uc.Recharge(ctx, req.UserId, req.Amount)
+	// 将 payment_method 字符串转换为 PaymentMethod 枚举
+	// payment_method: "alipay" -> 1, "wechat" -> 2, 默认 -> 1 (alipay)
+	method := int32(1) // 默认支付宝
+	if req.PaymentMethod == "wechat" || req.PaymentMethod == "wechatpay" {
+		method = 2 // 微信支付
+	} else if req.PaymentMethod == "alipay" {
+		method = 1 // 支付宝
+	}
+
+	// 从 context 中获取客户端 IP（如果有）
+	// clientIP := ""
+	// if ip := ctx.Value("client_ip"); ip != nil {
+	// 	if ipStr, ok := ip.(string); ok {
+	// 		clientIP = ipStr
+	// 	}
+	// }
+
+	// 验证币种必填
+	if req.Currency == "" {
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeCurrencyRequired)
+	}
+
+	// TODO: 从配置中获取 return_url 和 notify_url
+	returnURL := "" // 从配置中获取
+	notifyURL := "" // 从配置中获取
+
+	orderID, payURL, err := s.uc.Recharge(ctx, req.UserId, req.Amount, method, req.Currency, returnURL, notifyURL)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +98,18 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 
 	pbRecords := make([]*pb.BillingRecord, 0, len(records))
 	for _, r := range records {
+		// 将字符串类型转换为 int32（兼容 proto 定义）
+		// "free" -> 1, "balance" -> 2
+		var typeInt int32
+		if r.Type == "free" {
+			typeInt = 1
+		} else if r.Type == "balance" {
+			typeInt = 2
+		}
 		pbRecords = append(pbRecords, &pb.BillingRecord{
 			Id:          r.ID,
 			ServiceName: r.ServiceName,
-			Type:        int32(r.Type),
+			Type:        typeInt,
 			Amount:      r.Amount,
 			Count:       int32(r.Count),
 			CreatedAt:   timestamppb.New(r.CreatedAt),

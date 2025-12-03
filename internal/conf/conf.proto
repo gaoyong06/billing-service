@@ -9,6 +9,7 @@ message Bootstrap {
   Server server = 1;
   Data data = 2;
   Billing billing = 3;
+  PaymentService payment_service = 4;
 }
 
 message Server {
@@ -44,4 +45,11 @@ message Data {
 message Billing {
   map<string, double> prices = 1;
   map<string, int32> free_quotas = 2;
+}
+
+message PaymentService {
+  string grpc_addr = 1;
+  google.protobuf.Duration timeout = 2;
+  string return_url = 3;  // 支付成功后的返回URL
+  string notify_url = 4;  // 支付回调通知URL
 }

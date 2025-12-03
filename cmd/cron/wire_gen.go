@@ -28,9 +28,26 @@ func wireApp(bootstrap *conf.Bootstrap) (*CronApp, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	billingRepo := data.NewBillingRepo(dataData, logger)
+	userBalanceRepo := data.NewUserBalanceRepo(dataData, logger)
+	userBalanceUseCase := biz.NewUserBalanceUseCase(userBalanceRepo, logger)
+	freeQuotaRepo := data.NewFreeQuotaRepo(dataData, logger)
 	billingConfig := biz.NewBillingConfig(bootstrap)
-	billingUseCase := biz.NewBillingUseCase(billingRepo, logger, billingConfig)
+	freeQuotaUseCase := biz.NewFreeQuotaUseCase(freeQuotaRepo, billingConfig, logger)
+	billingRecordRepo := data.NewBillingRecordRepo(dataData, logger)
+	billingRecordUseCase := biz.NewBillingRecordUseCase(billingRecordRepo, logger)
+	rechargeOrderRepo := data.NewRechargeOrderRepo(dataData, logger)
+	paymentService := bootstrap.PaymentService
+	paymentServiceClient, err := data.NewPaymentServiceClient(paymentService, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	rechargeOrderUseCase := biz.NewRechargeOrderUseCase(rechargeOrderRepo, paymentServiceClient, billingConfig, logger)
+	statsRepo := data.NewStatsRepo(dataData, logger)
+	statsUseCase := biz.NewStatsUseCase(statsRepo, logger)
+	redsync := data.NewRedSync(dataData)
+	billingRepo := data.NewBillingRepo(dataData, redsync, logger, userBalanceRepo, freeQuotaRepo, billingRecordRepo, rechargeOrderRepo, statsRepo)
+	billingUseCase := biz.NewBillingUseCase(userBalanceUseCase, freeQuotaUseCase, billingRecordUseCase, rechargeOrderUseCase, statsUseCase, billingRepo, billingConfig, logger)
 	cronApp := &CronApp{
 		billingUsecase: billingUseCase,
 	}

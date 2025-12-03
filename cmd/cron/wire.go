@@ -33,6 +33,9 @@ func wireApp(*conf.Bootstrap) (*CronApp, func(), error) {
 		// NewBillingConfig 需要 *conf.Bootstrap
 		biz.ProviderSet,
 
+		// 提供 PaymentService 配置（从 Bootstrap 中提取，cron 可能不需要，但为了 wire 能正常工作）
+		wire.FieldsOf(new(*conf.Bootstrap), "PaymentService"),
+
 		// App 结构
 		wire.Struct(new(CronApp), "*"),
 	))

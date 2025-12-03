@@ -50,12 +50,22 @@ func NewHTTPServer(c *conf.Server, billing *service.BillingService, logger log.L
 	}
 	srv := http.NewServer(opts...)
 
-	// 注册业务路由
+	// 注册外部服务路由（面向前端/开发者）
 	v1.RegisterBillingServiceHTTPServer(srv, billing)
+	
+	// 注册内部服务路由（面向 Gateway/Payment）
+	v1.RegisterBillingInternalServiceHTTPServer(srv, billing)
 
 	// 注册健康检查端点
 	srv.Route("/").GET("/health", func(ctx http.Context) error {
 		return ctx.Result(200, health.NewResponse("billing-service"))
+	})
+
+	// 注册 Prometheus metrics 端点
+	srv.Route("/").GET("/metrics", func(ctx http.Context) error {
+		// Prometheus metrics 端点由 kratos 的 metrics 中间件自动处理
+		// 如果需要自定义，可以在这里实现
+		return nil
 	})
 
 	return srv

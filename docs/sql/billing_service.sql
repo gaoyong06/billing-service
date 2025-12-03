@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS `user_balance` (
     `user_balance_id` VARCHAR(36) NOT NULL COMMENT '主键ID',
     `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
     `balance` DECIMAL(10, 2) DEFAULT 0.00 COMMENT '余额',
-    `version` INT DEFAULT 0 COMMENT '乐观锁版本号',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`user_balance_id`),
@@ -37,10 +36,24 @@ CREATE TABLE IF NOT EXISTS `billing_record` (
     `billing_record_id` VARCHAR(36) NOT NULL COMMENT '主键ID',
     `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
     `service_name` VARCHAR(32) NOT NULL COMMENT '服务名',
-    `type` TINYINT NOT NULL COMMENT '1:免费额度, 2:余额扣费',
+    `type` ENUM('free', 'balance') NOT NULL COMMENT 'free:免费额度, balance:余额扣费',
     `amount` DECIMAL(10, 4) DEFAULT 0.0000 COMMENT '扣费金额',
     `count` INT DEFAULT 1 COMMENT '调用次数',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`billing_record_id`),
     INDEX `idx_user_date` (`user_id`, `created_at`) COMMENT '用户消费记录索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消费流水表';
+
+-- Table: recharge_order
+CREATE TABLE IF NOT EXISTS `recharge_order` (
+    `order_id` VARCHAR(64) NOT NULL COMMENT '订单ID（billing-service生成）',
+    `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID',
+    `amount` DECIMAL(10, 2) NOT NULL COMMENT '充值金额',
+    `payment_order_id` VARCHAR(64) DEFAULT NULL COMMENT 'payment-service的订单ID',
+    `status` ENUM('pending', 'success', 'failed') NOT NULL DEFAULT 'pending' COMMENT '订单状态: pending-待支付, success-支付成功, failed-支付失败',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`order_id`),
+    UNIQUE KEY `uk_payment_order_id` (`payment_order_id`) COMMENT 'payment订单ID唯一索引（幂等性保证）',
+    INDEX `idx_user_id` (`user_id`) COMMENT '用户ID索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='充值订单表（幂等性保证）';

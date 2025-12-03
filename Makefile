@@ -7,6 +7,7 @@ BUILD_OUTPUT := ./bin/server
 RUN_MAIN := cmd/server/main.go cmd/server/wire_gen.go
 CONFIG_FILE := configs/config.yaml
 HTTP_PORT := 8107
+GRPC_PORT := 9107
 TEST_CONFIG := test/api/api-test-config.yaml
 
 include ../devops-tools/Makefile.common

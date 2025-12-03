@@ -7,13 +7,25 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewBillingRepo)
+var ProviderSet = wire.NewSet(
+	NewData,
+	NewRedSync,
+	NewUserBalanceRepo,
+	NewFreeQuotaRepo,
+	NewBillingRecordRepo,
+	NewRechargeOrderRepo,
+	NewStatsRepo,
+	NewBillingRepo,
+	NewPaymentServiceClient,
+)
 
 // Data .
 type Data struct {
@@ -52,9 +64,9 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
 		WriteTimeout: c.Redis.WriteTimeout.AsDuration(),
 		// 连接池配置（优化高频调用）
-		PoolSize:     20,  // 连接池大小（建议根据实际负载调整，20 适合中等规模）
-		MinIdleConns: 5,   // 最小空闲连接数（保持一定数量的连接以减少连接建立开销）
-		MaxRetries:   3,   // 最大重试次数（网络抖动时自动重试）
+		PoolSize:     20,              // 连接池大小（建议根据实际负载调整，20 适合中等规模）
+		MinIdleConns: 5,               // 最小空闲连接数（保持一定数量的连接以减少连接建立开销）
+		MaxRetries:   3,               // 最大重试次数（网络抖动时自动重试）
 		DialTimeout:  5 * time.Second, // 连接超时时间
 	})
 
@@ -80,4 +92,14 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		}
 	}
 	return d, cleanup, nil
+}
+
+// NewRedSync 创建 Redis 分布式锁管理器
+// 从 Data 中提取 Redis Client
+func NewRedSync(data *Data) *redsync.Redsync {
+	if data == nil || data.rdb == nil {
+		return nil
+	}
+	pool := goredis.NewPool(data.rdb)
+	return redsync.New(pool)
 }

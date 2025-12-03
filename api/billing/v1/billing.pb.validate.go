@@ -412,6 +412,8 @@ func (m *RechargeRequest) validate(all bool) error {
 
 	// no validation rules for PaymentMethod
 
+	// no validation rules for Currency
+
 	if len(errors) > 0 {
 		return RechargeRequestMultiError(errors)
 	}

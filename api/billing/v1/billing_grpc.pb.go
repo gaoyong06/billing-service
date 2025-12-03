@@ -31,7 +31,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// BillingService 计费服务（面向前端/开发者）
+// BillingService 计费服务（外部接口）
+// 面向前端/开发者的接口
 type BillingServiceClient interface {
 	// 获取账户资产信息 (余额 + 剩余配额)
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountReply, error)
@@ -119,7 +120,8 @@ func (c *billingServiceClient) GetStatsSummary(ctx context.Context, in *GetStats
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility.
 //
-// BillingService 计费服务（面向前端/开发者）
+// BillingService 计费服务（外部接口）
+// 面向前端/开发者的接口
 type BillingServiceServer interface {
 	// 获取账户资产信息 (余额 + 剩余配额)
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountReply, error)
@@ -336,7 +338,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// BillingInternalService 计费内部服务（面向 Gateway/Payment）
+// BillingInternalService 计费内部服务（内部接口）
+// 面向内部服务（Gateway/Payment）的接口
 type BillingInternalServiceClient interface {
 	// 检查并预扣费 (Check & Reserve)
 	CheckQuota(ctx context.Context, in *CheckQuotaRequest, opts ...grpc.CallOption) (*CheckQuotaReply, error)
@@ -388,7 +391,8 @@ func (c *billingInternalServiceClient) RechargeCallback(ctx context.Context, in 
 // All implementations must embed UnimplementedBillingInternalServiceServer
 // for forward compatibility.
 //
-// BillingInternalService 计费内部服务（面向 Gateway/Payment）
+// BillingInternalService 计费内部服务（内部接口）
+// 面向内部服务（Gateway/Payment）的接口
 type BillingInternalServiceServer interface {
 	// 检查并预扣费 (Check & Reserve)
 	CheckQuota(context.Context, *CheckQuotaRequest) (*CheckQuotaReply, error)

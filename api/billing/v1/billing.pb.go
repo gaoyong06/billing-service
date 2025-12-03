@@ -200,6 +200,7 @@ type RechargeRequest struct {
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Amount        float64                `protobuf:"fixed64,2,opt,name=amount,proto3" json:"amount,omitempty"`
 	PaymentMethod string                 `protobuf:"bytes,3,opt,name=payment_method,json=paymentMethod,proto3" json:"payment_method,omitempty"` // wechat, alipay
+	Currency      string                 `protobuf:"bytes,4,opt,name=currency,proto3" json:"currency,omitempty"`                                // 币种，必填，例如：CNY, USD
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -251,6 +252,13 @@ func (x *RechargeRequest) GetAmount() float64 {
 func (x *RechargeRequest) GetPaymentMethod() string {
 	if x != nil {
 		return x.PaymentMethod
+	}
+	return ""
+}
+
+func (x *RechargeRequest) GetCurrency() string {
+	if x != nil {
+		return x.Currency
 	}
 	return ""
 }
@@ -1251,11 +1259,12 @@ const file_billing_proto_rawDesc = "" +
 	"\n" +
 	"used_quota\x18\x03 \x01(\x05R\tusedQuota\x12\x1f\n" +
 	"\vreset_month\x18\x04 \x01(\tR\n" +
-	"resetMonth\"i\n" +
+	"resetMonth\"\x85\x01\n" +
 	"\x0fRechargeRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12%\n" +
-	"\x0epayment_method\x18\x03 \x01(\tR\rpaymentMethod\"K\n" +
+	"\x0epayment_method\x18\x03 \x01(\tR\rpaymentMethod\x12\x1a\n" +
+	"\bcurrency\x18\x04 \x01(\tR\bcurrency\"K\n" +
 	"\rRechargeReply\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x1f\n" +
 	"\vpayment_url\x18\x02 \x01(\tR\n" +
