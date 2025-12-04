@@ -5,7 +5,6 @@ import (
 	"billing-service/internal/service"
 
 	"github.com/gaoyong06/go-pkg/health"
-	"github.com/gaoyong06/go-pkg/middleware/cors"
 	"github.com/gaoyong06/go-pkg/middleware/i18n"
 	"github.com/gaoyong06/go-pkg/middleware/response"
 
@@ -32,8 +31,6 @@ func NewHTTPServer(c *conf.Server, billing *service.BillingService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			// 添加 CORS 中间件
-			cors.Middleware(cors.DefaultConfig()),
 			// 添加 i18n 中间件
 			i18n.Middleware(),
 		),
