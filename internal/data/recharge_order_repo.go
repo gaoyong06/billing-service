@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	"billing-service/internal/data/model"
 	billingErrors "billing-service/internal/errors"
 
@@ -149,7 +150,7 @@ func (r *rechargeOrderRepo) RechargeWithIdempotency(ctx context.Context, orderID
 		}
 
 		// 5. 更新 Redis 缓存（设置超时避免阻塞）
-		balanceKey := fmt.Sprintf("balance:%s", order.UserID)
+		balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, order.UserID)
 		newBalance := balance.Balance + amount
 		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cacheCancel()

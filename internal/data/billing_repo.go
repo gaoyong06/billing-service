@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	"billing-service/internal/data/model"
 	billingErrors "billing-service/internal/errors"
 	"billing-service/internal/metrics"
@@ -104,22 +105,22 @@ func (r *billingRepo) ListBillingRecords(ctx context.Context, userID string, pag
 // 使用分布式锁防止高并发超扣
 func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error) {
 	// 获取分布式锁（按用户+服务+月份）
-	lockKey := fmt.Sprintf("deduct:lock:%s:%s:%s", userID, serviceName, month)
+	lockKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyDeductLock, userID, serviceName, month)
 	if r.sync != nil {
 		lockStartTime := time.Now()
 		mutex := r.sync.NewMutex(lockKey, redsync.WithExpiry(5*time.Second))
-		if err := mutex.Lock(); err != nil {
-			r.log.Errorf("Failed to acquire lock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
+			if err := mutex.Lock(); err != nil {
+				r.log.Errorf("Failed to acquire lock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
+				if r.metrics != nil {
+					r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusFailed).Inc()
+					r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
+				}
+				return "", pkgErrors.NewBizErrorWithLang(context.Background(), billingErrors.ErrCodeDeductLockFailed)
+			}
 			if r.metrics != nil {
-				r.metrics.LockAcquireTotal.WithLabelValues("failed").Inc()
+				r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusSuccess).Inc()
 				r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
 			}
-			return "", pkgErrors.NewBizErrorWithLang(context.Background(), billingErrors.ErrCodeDeductLockFailed)
-		}
-		if r.metrics != nil {
-			r.metrics.LockAcquireTotal.WithLabelValues("success").Inc()
-			r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
-		}
 		defer func() {
 			if ok, err := mutex.Unlock(); !ok || err != nil {
 				r.log.Warnf("Failed to unlock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
@@ -268,14 +269,14 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		defer cacheCancel()
 
 		if needUpdateQuotaCache {
-			quotaKey := fmt.Sprintf("quota:%s:%s:%s", userID, serviceName, month)
+			quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
 			if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", quotaRemaining), 5*time.Minute).Err(); err != nil {
 				// 缓存更新失败不影响主流程，只记录日志
 				r.log.Warnf("failed to update quota cache: %v", err)
 			}
 		}
 		if needUpdateBalanceCache {
-			balanceKey := fmt.Sprintf("balance:%s", userID)
+			balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
 			if err := r.data.rdb.Set(cacheCtx, balanceKey, fmt.Sprintf("%.2f", newBalance), 5*time.Minute).Err(); err != nil {
 				// 缓存更新失败不影响主流程，只记录日志
 				r.log.Warnf("failed to update balance cache: %v", err)

@@ -1,14 +1,15 @@
 package model
 
 import (
+	"billing-service/internal/constants"
 	"time"
 )
 
-// 充值订单状态常量
+// 充值订单状态常量（引用 constants 包中的常量，保持一致性）
 const (
-	RechargeStatusPending = "pending" // 待支付
-	RechargeStatusSuccess = "success" // 支付成功
-	RechargeStatusFailed  = "failed"  // 支付失败
+	RechargeStatusPending = constants.OrderStatusPending // 待支付
+	RechargeStatusSuccess = constants.OrderStatusSuccess // 支付成功
+	RechargeStatusFailed  = constants.OrderStatusFailed  // 支付失败
 )
 
 // RechargeOrder 充值订单表（用于幂等性保证）

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"billing-service/internal/constants"
 	billingErrors "billing-service/internal/errors"
 	"billing-service/internal/metrics"
 
@@ -95,7 +96,7 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 		balance = &UserBalance{UserID: userID, Balance: 0}
 	}
 
-	month := time.Now().Format("2006-01")
+	month := time.Now().Format(constants.TimeFormatMonth)
 	var quotas []*FreeQuota
 	for service := range uc.conf.FreeQuotas {
 		q, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, service, month)
@@ -127,13 +128,13 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 		}
 	}()
 
-	month := time.Now().Format("2006-01")
+	month := time.Now().Format(constants.TimeFormatMonth)
 
 	// 1. 检查免费额度
 	quota, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
 	if err != nil {
 		if uc.metrics != nil {
-			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "error").Inc()
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultError).Inc()
 		}
 		return false, "", err
 	}
@@ -169,16 +170,16 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	if quota.TotalQuota-quota.UsedQuota >= count {
 		// 记录配额检查成功（使用免费额度）
 		if uc.metrics != nil {
-			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "allowed").Inc()
-			// 检查配额是否即将用尽（剩余 < 20%）
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultAllowed).Inc()
+			// 检查配额是否即将用尽（剩余 < 阈值）
 			remainingPercent := float64(quota.TotalQuota-quota.UsedQuota) / float64(quota.TotalQuota) * 100
-			if remainingPercent < 20 {
+			if remainingPercent < uc.conf.QuotaLowPercentThreshold {
 				uc.metrics.QuotaLowAlert.WithLabelValues(serviceName).Set(1)
 			} else {
 				uc.metrics.QuotaLowAlert.WithLabelValues(serviceName).Set(0)
 			}
 		}
-		return true, "free", nil
+		return true, constants.BillingMessageFree, nil
 	}
 
 	// 2. 检查余额
@@ -206,23 +207,23 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	if balance.Balance >= cost {
 		// 记录配额检查成功（使用余额）
 		if uc.metrics != nil {
-			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "allowed").Inc()
-			// 检查余额是否不足（余额 < 10 元）
-			if balance.Balance < 10 {
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultAllowed).Inc()
+			// 检查余额是否不足（余额 < 阈值）
+			if balance.Balance < uc.conf.BalanceLowThreshold {
 				uc.metrics.BalanceLowAlert.Set(1)
 			} else {
 				uc.metrics.BalanceLowAlert.Set(0)
 			}
 		}
-		return true, "balance", nil
+		return true, constants.BillingMessageBalance, nil
 	}
 
 	// 记录配额检查失败（余额不足）
 	if uc.metrics != nil {
-		uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, "denied").Inc()
+		uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultDenied).Inc()
 		uc.metrics.BalanceLowAlert.Set(1) // 余额不足告警
 	}
-	return false, "insufficient balance", nil
+	return false, constants.BillingMessageInsufficientBalance, nil
 }
 
 // DeductQuota 扣减配额（跨领域事务）
@@ -230,7 +231,7 @@ func (uc *BillingUseCase) DeductQuota(ctx context.Context, userID, serviceName s
 	startTime := time.Now()
 	price := uc.conf.Prices[serviceName]
 	cost := price * float64(count)
-	month := time.Now().Format("2006-01")
+	month := time.Now().Format(constants.TimeFormatMonth)
 
 	recordID, err := uc.repo.DeductQuota(ctx, userID, serviceName, count, cost, month)
 
@@ -243,8 +244,8 @@ func (uc *BillingUseCase) DeductQuota(ctx context.Context, userID, serviceName s
 			// 根据扣费类型记录（这里简化处理，实际应该从 repo 返回扣费类型）
 			// 由于 DeductQuota 返回的是 recordID，我们需要推断扣费类型
 			// 为了简化，这里先记录为 "mixed"，实际应该从业务逻辑中获取
-			uc.metrics.DeductQuotaTotal.WithLabelValues(serviceName, "mixed").Inc()
-			uc.metrics.DeductQuotaAmount.WithLabelValues(serviceName, "balance").Add(cost)
+			uc.metrics.DeductQuotaTotal.WithLabelValues(serviceName, constants.DeductTypeMixed).Inc()
+			uc.metrics.DeductQuotaAmount.WithLabelValues(serviceName, constants.BillingTypeBalance).Add(cost)
 		}
 	}
 
@@ -270,7 +271,7 @@ func (uc *BillingUseCase) RechargeCallback(ctx context.Context, orderID string, 
 // 为所有用户创建下个月的免费额度记录
 func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, error) {
 	// 获取下个月
-	nextMonth := time.Now().AddDate(0, 1, 0).Format("2006-01")
+	nextMonth := time.Now().AddDate(0, 1, 0).Format(constants.TimeFormatMonth)
 
 	// 获取所有用户ID
 	userIDs, err := uc.statsUseCase.GetAllUserIDs(ctx)

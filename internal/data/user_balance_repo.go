@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	"billing-service/internal/data/model"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -31,7 +32,7 @@ func NewUserBalanceRepo(data *Data, logger log.Logger) biz.UserBalanceRepo {
 // GetUserBalance 获取用户余额
 func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*biz.UserBalance, error) {
 	// 先尝试从 Redis 获取
-	balanceKey := fmt.Sprintf("balance:%s", userID)
+	balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
 	balanceStr, err := r.data.rdb.Get(ctx, balanceKey).Result()
 	if err == nil {
 		// 从缓存获取成功
@@ -91,7 +92,7 @@ func (r *userBalanceRepo) Recharge(ctx context.Context, userID string, amount fl
 			return err
 		}
 		// 更新 Redis 缓存（设置超时避免阻塞）
-		balanceKey := fmt.Sprintf("balance:%s", userID)
+		balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
 		newBalance := m.Balance + amount
 		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cacheCancel()

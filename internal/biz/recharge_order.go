@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"billing-service/internal/constants"
 	"billing-service/internal/metrics"
 
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
@@ -68,21 +69,21 @@ func (uc *RechargeOrderUseCase) CreateRecharge(ctx context.Context, userID strin
 	}
 
 	// 生成订单ID
-	orderID := fmt.Sprintf("recharge_%s_%d", userID, time.Now().Unix())
+	orderID := fmt.Sprintf("%s%s_%d", constants.OrderIDPrefixRecharge, userID, time.Now().Unix())
 
 	// 创建充值订单记录（用于幂等性保证）
 	orderCreateStart := time.Now()
 	if err := uc.repo.CreateRechargeOrder(ctx, orderID, userID, amount); err != nil {
 		uc.log.Errorf("CreateRechargeOrder failed: %v", err)
 		if uc.metrics != nil {
-			uc.metrics.RechargeOrderTotal.WithLabelValues("failed").Inc()
+			uc.metrics.RechargeOrderTotal.WithLabelValues(constants.OrderStatusFailed).Inc()
 			uc.metrics.RechargeFailedTotal.Inc()
 		}
 		return "", "", pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeRechargeOrderCreateFailed)
 	}
 	if uc.metrics != nil {
 		uc.metrics.RechargeOrderCreateDuration.Observe(time.Since(orderCreateStart).Seconds())
-		uc.metrics.RechargeOrderTotal.WithLabelValues("pending").Inc()
+		uc.metrics.RechargeOrderTotal.WithLabelValues(constants.OrderStatusPending).Inc()
 	}
 
 	// 调用 Payment Service 创建支付订单
@@ -113,7 +114,7 @@ func (uc *RechargeOrderUseCase) CreateRecharge(ctx context.Context, userID strin
 	if err != nil {
 		uc.log.Errorf("CreatePayment failed: order_id=%s, error=%v", orderID, err)
 		if uc.metrics != nil {
-			uc.metrics.RechargeTotal.WithLabelValues("failed").Inc()
+			uc.metrics.RechargeTotal.WithLabelValues(constants.OrderStatusFailed).Inc()
 			uc.metrics.RechargeFailedTotal.Inc()
 			uc.metrics.RechargeDuration.WithLabelValues("create").Observe(time.Since(startTime).Seconds())
 		}
@@ -122,8 +123,8 @@ func (uc *RechargeOrderUseCase) CreateRecharge(ctx context.Context, userID strin
 
 	// 记录充值成功指标
 	if uc.metrics != nil {
-		uc.metrics.RechargeTotal.WithLabelValues("success").Inc()
-		uc.metrics.RechargeAmount.WithLabelValues("success").Add(amount)
+		uc.metrics.RechargeTotal.WithLabelValues(constants.OrderStatusSuccess).Inc()
+		uc.metrics.RechargeAmount.WithLabelValues(constants.OrderStatusSuccess).Add(amount)
 		uc.metrics.RechargeDuration.WithLabelValues("create").Observe(time.Since(startTime).Seconds())
 	}
 
@@ -146,7 +147,7 @@ func (uc *RechargeOrderUseCase) RechargeCallback(ctx context.Context, orderID st
 
 	if existingOrder != nil {
 		// 订单已存在，检查状态
-		if existingOrder.Status == "success" {
+		if existingOrder.Status == constants.OrderStatusSuccess {
 			uc.log.Infof("Recharge already processed: payment_order_id=%s, status=%s", paymentOrderID, existingOrder.Status)
 			return nil // 已经处理过，直接返回成功（幂等性）
 		}
@@ -162,7 +163,7 @@ func (uc *RechargeOrderUseCase) RechargeCallback(ctx context.Context, orderID st
 		if existingOrder == nil {
 			return pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeRechargeOrderNotFound)
 		}
-		if existingOrder.Status == "success" {
+		if existingOrder.Status == constants.OrderStatusSuccess {
 			uc.log.Infof("Recharge already processed: order_id=%s, status=%s", orderID, existingOrder.Status)
 			return nil // 已经处理过，直接返回成功（幂等性）
 		}

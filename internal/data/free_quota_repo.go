@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	"billing-service/internal/data/model"
 	"billing-service/internal/metrics"
 
@@ -39,7 +40,7 @@ func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, serviceName, m
 	}
 
 	// 先尝试从 Redis 获取剩余配额
-	quotaKey := fmt.Sprintf("quota:%s:%s:%s", userID, serviceName, month)
+	quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
 	remainingStr, err := r.data.rdb.Get(ctx, quotaKey).Result()
 	if err == nil {
 		// 从缓存获取成功

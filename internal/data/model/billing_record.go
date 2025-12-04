@@ -1,13 +1,14 @@
 package model
 
 import (
+	"billing-service/internal/constants"
 	"time"
 )
 
-// 计费类型常量
+// 计费类型常量（引用 constants 包中的常量，保持一致性）
 const (
-	BillingTypeFree    = "free"    // 免费额度
-	BillingTypeBalance = "balance" // 余额扣费
+	BillingTypeFree    = constants.BillingTypeFree    // 免费额度
+	BillingTypeBalance = constants.BillingTypeBalance // 余额扣费
 )
 
 // BillingRecord 消费流水表

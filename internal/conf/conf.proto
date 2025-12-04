@@ -45,6 +45,10 @@ message Data {
 message Billing {
   map<string, double> prices = 1;
   map<string, int32> free_quotas = 2;
+  // 余额低阈值（单位：元），当余额低于此值时触发告警
+  double balance_low_threshold = 3;
+  // 配额低阈值（百分比），当剩余配额低于此百分比时触发告警
+  double quota_low_percent_threshold = 4;
 }
 
 message PaymentService {

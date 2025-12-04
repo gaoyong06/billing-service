@@ -2,9 +2,11 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	"billing-service/internal/data/model"
 	billingErrors "billing-service/internal/errors"
 
@@ -91,9 +93,9 @@ func (r *statsRepo) GetStatsToday(ctx context.Context, userID, serviceName strin
 
 	if err := query.Select(
 		"SUM(count) as total_count",
-		"SUM(CASE WHEN type = 'balance' THEN amount ELSE 0 END) as total_cost",
-		"SUM(CASE WHEN type = 'free' THEN count ELSE 0 END) as free_count",
-		"SUM(CASE WHEN type = 'balance' THEN count ELSE 0 END) as paid_count",
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN amount ELSE 0 END) as total_cost", constants.BillingTypeBalance),
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as free_count", constants.BillingTypeFree),
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as paid_count", constants.BillingTypeBalance),
 	).Scan(&result).Error; err != nil {
 		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeGetStatsFailed)
 	}
@@ -105,7 +107,7 @@ func (r *statsRepo) GetStatsToday(ctx context.Context, userID, serviceName strin
 		TotalCost:   result.TotalCost,
 		FreeCount:   result.FreeCount,
 		PaidCount:   result.PaidCount,
-		Period:      "today",
+		Period:      constants.StatsPeriodToday,
 	}, nil
 }
 
@@ -135,9 +137,9 @@ func (r *statsRepo) GetStatsMonth(ctx context.Context, userID, serviceName strin
 
 	if err := query.Select(
 		"SUM(count) as total_count",
-		"SUM(CASE WHEN type = 'balance' THEN amount ELSE 0 END) as total_cost",
-		"SUM(CASE WHEN type = 'free' THEN count ELSE 0 END) as free_count",
-		"SUM(CASE WHEN type = 'balance' THEN count ELSE 0 END) as paid_count",
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN amount ELSE 0 END) as total_cost", constants.BillingTypeBalance),
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as free_count", constants.BillingTypeFree),
+		fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as paid_count", constants.BillingTypeBalance),
 	).Scan(&result).Error; err != nil {
 		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeGetStatsFailed)
 	}
@@ -149,7 +151,7 @@ func (r *statsRepo) GetStatsMonth(ctx context.Context, userID, serviceName strin
 		TotalCost:   result.TotalCost,
 		FreeCount:   result.FreeCount,
 		PaidCount:   result.PaidCount,
-		Period:      "month",
+		Period:      constants.StatsPeriodMonth,
 	}, nil
 }
 
@@ -174,9 +176,9 @@ func (r *statsRepo) GetStatsSummary(ctx context.Context, userID string) (*biz.St
 		Select(
 			"service_name",
 			"SUM(count) as total_count",
-			"SUM(CASE WHEN type = 'balance' THEN amount ELSE 0 END) as total_cost",
-			"SUM(CASE WHEN type = 'free' THEN count ELSE 0 END) as free_count",
-			"SUM(CASE WHEN type = 'balance' THEN count ELSE 0 END) as paid_count",
+			fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN amount ELSE 0 END) as total_cost", constants.BillingTypeBalance),
+			fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as free_count", constants.BillingTypeFree),
+			fmt.Sprintf("SUM(CASE WHEN type = '%s' THEN count ELSE 0 END) as paid_count", constants.BillingTypeBalance),
 		).
 		Group("service_name").
 		Scan(&serviceStats).Error; err != nil {

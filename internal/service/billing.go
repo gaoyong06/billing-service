@@ -5,6 +5,7 @@ import (
 
 	pb "billing-service/api/billing/v1"
 	"billing-service/internal/biz"
+	"billing-service/internal/constants"
 	billingErrors "billing-service/internal/errors"
 
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
@@ -54,11 +55,11 @@ func (s *BillingService) GetAccount(ctx context.Context, req *pb.GetAccountReque
 // Recharge 发起充值
 func (s *BillingService) Recharge(ctx context.Context, req *pb.RechargeRequest) (*pb.RechargeReply, error) {
 	// 将 payment_method 字符串转换为 PaymentMethod 枚举
-	// payment_method: "alipay" -> 1, "wechat" -> 2, 默认 -> 1 (alipay)
+	// payment_method: "alipay" -> 1, "wechatpay" -> 2, 默认 -> 1 (alipay)
 	method := int32(1) // 默认支付宝
-	if req.PaymentMethod == "wechat" || req.PaymentMethod == "wechatpay" {
+	if req.PaymentMethod == constants.PaymentMethodWechat {
 		method = 2 // 微信支付
-	} else if req.PaymentMethod == "alipay" {
+	} else if req.PaymentMethod == constants.PaymentMethodAlipay {
 		method = 1 // 支付宝
 	}
 
@@ -101,9 +102,9 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 		// 将字符串类型转换为 int32（兼容 proto 定义）
 		// "free" -> 1, "balance" -> 2
 		var typeInt int32
-		if r.Type == "free" {
+		if r.Type == constants.BillingTypeFree {
 			typeInt = 1
-		} else if r.Type == "balance" {
+		} else if r.Type == constants.BillingTypeBalance {
 			typeInt = 2
 		}
 		pbRecords = append(pbRecords, &pb.BillingRecord{
@@ -152,7 +153,7 @@ func (s *BillingService) DeductQuota(ctx context.Context, req *pb.DeductQuotaReq
 // RechargeCallback 充值回调
 func (s *BillingService) RechargeCallback(ctx context.Context, req *pb.RechargeCallbackRequest) (*pb.RechargeCallbackReply, error) {
 	// 验证支付状态
-	if req.Status != "SUCCESS" {
+	if req.Status != constants.PaymentStatusSuccess {
 		return &pb.RechargeCallbackReply{Success: true}, nil // 支付失败，直接返回成功（已处理）
 	}
 
