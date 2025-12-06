@@ -8,9 +8,10 @@ import (
 	"billing-service/internal/constants"
 	"billing-service/internal/metrics"
 
+	billingErrors "billing-service/internal/errors"
+
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	pkgUtils "github.com/gaoyong06/go-pkg/utils"
-	billingErrors "billing-service/internal/errors"
 	"github.com/go-kratos/kratos/v2/log"
 )
 
@@ -36,11 +37,11 @@ type RechargeOrderRepo interface {
 
 // RechargeOrderUseCase 充值订单业务逻辑
 type RechargeOrderUseCase struct {
-	repo                RechargeOrderRepo
+	repo                 RechargeOrderRepo
 	paymentServiceClient PaymentServiceClient
-	conf                *BillingConfig
-	log                 *log.Helper
-	metrics             *metrics.BillingMetrics
+	conf                 *BillingConfig
+	log                  *log.Helper
+	metrics              *metrics.BillingMetrics
 }
 
 // NewRechargeOrderUseCase 创建充值订单 UseCase
@@ -51,11 +52,11 @@ func NewRechargeOrderUseCase(
 	logger log.Logger,
 ) *RechargeOrderUseCase {
 	return &RechargeOrderUseCase{
-		repo:                repo,
+		repo:                 repo,
 		paymentServiceClient: paymentServiceClient,
-		conf:                conf,
-		log:                 log.NewHelper(logger),
-		metrics:             metrics.GetMetrics(),
+		conf:                 conf,
+		log:                  log.NewHelper(logger),
+		metrics:              metrics.GetMetrics(),
 	}
 }
 
@@ -100,9 +101,13 @@ func (uc *RechargeOrderUseCase) CreateRecharge(ctx context.Context, userID strin
 	clientIP := pkgUtils.GetClientIP(ctx)
 
 	// 调用 payment-service 创建支付订单
+	// 注意：充值场景是开发者向 DevShare 平台充值，用于支付平台提供的服务（如 passport、asset 等）
+	// 这不是为开发者的某个具体应用充值，所以 app_id 应该为空
+	// 如果将来需要区分平台充值和应用充值，可以考虑使用特殊的 app_id 值（如 "platform"）
 	paymentResp, err := uc.paymentServiceClient.CreatePayment(ctx, &CreatePaymentRequest{
 		OrderID:   orderID,
 		UserID:    userID,
+		AppID:     "", // 充值场景：开发者向平台充值，不关联具体应用
 		Amount:    amount,
 		Currency:  currency,
 		Method:    method,
@@ -172,4 +177,3 @@ func (uc *RechargeOrderUseCase) RechargeCallback(ctx context.Context, orderID st
 	// 执行充值（带幂等性保证）
 	return uc.repo.RechargeWithIdempotency(ctx, orderID, paymentOrderID, amount)
 }
-

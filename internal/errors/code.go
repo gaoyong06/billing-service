@@ -106,4 +106,3 @@ const (
 	// ErrCodeInvalidUserID 无效的用户ID
 	ErrCodeInvalidUserID = 190709
 )
-

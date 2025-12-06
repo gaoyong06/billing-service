@@ -11,6 +11,7 @@ type PaymentServiceClient interface {
 type CreatePaymentRequest struct {
 	OrderID   string
 	UserID    string
+	AppID     string // 应用ID（开发者充值时使用开发者的 app_id）
 	Amount    float64
 	Currency  string
 	Method    int32

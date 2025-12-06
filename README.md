@@ -1,4 +1,13 @@
-# Billing Service
+# Billing Service（计费服务）
+
+- 职责：财务中心，管理用户资产和扣费
+- 负责：
+ - 余额管理（user_balance 表）
+ - 免费额度管理（free_quota 表）
+ - 扣费逻辑（优先免费额度，不足扣余额）
+ - 消费流水（billing_record 表）
+ - 充值订单（recharge_order 表）
+ - 数据：记录“消费流水”（用户使用服务时的扣费）
 
 DevShare 平台的财务中心，负责管理开发者的钱包、配额与账单。
 

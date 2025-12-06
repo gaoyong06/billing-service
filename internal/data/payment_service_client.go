@@ -70,6 +70,8 @@ func (c *paymentServiceClient) CreatePayment(ctx context.Context, req *biz.Creat
 	resp, err := c.client.CreatePayment(ctx, &paymentv1.CreatePaymentRequest{
 		OrderId:   req.OrderID,
 		UserId:    userID,
+		AppId:     req.AppID, // 传递应用ID（充值场景可能为空）
+		Source:    "billing", // 标记来源为充值
 		Amount:    amountCents,
 		Currency:  req.Currency,
 		Method:    paymentv1.PaymentMethod(req.Method),
