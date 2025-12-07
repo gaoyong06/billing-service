@@ -86,6 +86,51 @@ func NewBillingUseCase(
 	}
 }
 
+// getOrCreateQuota 获取或创建配额记录（如果不存在则创建）
+// 用于确保用户在当前月份有配额记录
+func (uc *BillingUseCase) getOrCreateQuota(ctx context.Context, userID, serviceName, month string) (*FreeQuota, error) {
+	// 先尝试获取配额记录
+	quota, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
+	if err != nil {
+		return nil, err
+	}
+
+	// 如果记录存在，直接返回
+	if quota != nil {
+		return quota, nil
+	}
+
+	// 记录不存在，检查配置中是否有该服务
+	totalQuota, ok := uc.conf.FreeQuotas[serviceName]
+	if !ok {
+		// 配置中没有该服务，返回 nil（不创建记录）
+		return nil, nil
+	}
+
+	// 创建并保存配额记录
+	quota = &FreeQuota{
+		UserID:      userID,
+		ServiceName: serviceName,
+		TotalQuota:  int(totalQuota),
+		UsedQuota:   0,
+		ResetMonth:  month,
+	}
+	if err := uc.freeQuotaUseCase.CreateQuota(ctx, quota); err != nil {
+		// 创建失败可能是并发导致的重复创建，尝试重新获取
+		quota, err = uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
+		if err != nil {
+			return nil, err
+		}
+		if quota == nil {
+			// 重新获取后仍然为 nil，说明创建失败且无法获取
+			uc.log.Warnf("Failed to create/get quota for user=%s, service=%s, month=%s", userID, serviceName, month)
+			return nil, nil
+		}
+	}
+
+	return quota, nil
+}
+
 // GetAccount 获取账户信息（组合多个领域）
 func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserBalance, []*FreeQuota, error) {
 	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
@@ -99,18 +144,14 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 	month := time.Now().Format(constants.TimeFormatMonth)
 	var quotas []*FreeQuota
 	for service := range uc.conf.FreeQuotas {
-		q, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, service, month)
+		q, err := uc.getOrCreateQuota(ctx, userID, service, month)
 		if err != nil {
-			continue // 忽略错误或记录日志
+			uc.log.Warnf("Failed to get or create quota for user=%s, service=%s, month=%s: %v", userID, service, month, err)
+			continue // 忽略错误，继续处理其他服务
 		}
 		if q == nil {
-			q = &FreeQuota{
-				UserID:      userID,
-				ServiceName: service,
-				TotalQuota:  int(uc.conf.FreeQuotas[service]),
-				UsedQuota:   0,
-				ResetMonth:  month,
-			}
+			// 配置中没有该服务或创建失败，跳过
+			continue
 		}
 		quotas = append(quotas, q)
 	}
@@ -130,8 +171,8 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 
 	month := time.Now().Format(constants.TimeFormatMonth)
 
-	// 1. 检查免费额度
-	quota, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
+	// 1. 检查免费额度（如果不存在则自动创建）
+	quota, err := uc.getOrCreateQuota(ctx, userID, serviceName, month)
 	if err != nil {
 		if uc.metrics != nil {
 			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultError).Inc()
@@ -139,31 +180,9 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 		return false, "", err
 	}
 
-	// 如果没有记录，自动创建（新用户或新月份）
+	// 如果配额记录不存在且无法创建，说明配置中没有该服务
 	if quota == nil {
-		totalQuota, ok := uc.conf.FreeQuotas[serviceName]
-		if !ok {
-			return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeUnknownService)
-		}
-
-		// 创建免费额度记录
-		quota = &FreeQuota{
-			UserID:      userID,
-			ServiceName: serviceName,
-			TotalQuota:  int(totalQuota),
-			UsedQuota:   0,
-			ResetMonth:  month,
-		}
-		if err := uc.freeQuotaUseCase.CreateQuota(ctx, quota); err != nil {
-			// 创建失败可能是并发导致的重复创建，尝试重新获取
-			quota, err = uc.freeQuotaUseCase.GetQuota(ctx, userID, serviceName, month)
-			if err != nil {
-				return false, "", pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeQuotaCreateFailed)
-			}
-			if quota == nil {
-				return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeQuotaNotFound)
-			}
-		}
+		return false, "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeUnknownService)
 	}
 
 	// 检查免费额度是否充足
