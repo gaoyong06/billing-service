@@ -9,7 +9,7 @@ import (
 
 // UserBalance 账户余额领域对象
 type UserBalance struct {
-	UserID    string
+	UID       string
 	Balance   float64
 	UpdatedAt time.Time
 }
@@ -43,4 +43,3 @@ func (uc *UserBalanceUseCase) GetBalance(ctx context.Context, userID string) (*U
 func (uc *UserBalanceUseCase) Recharge(ctx context.Context, userID string, amount float64) error {
 	return uc.repo.Recharge(ctx, userID, amount)
 }
-

@@ -7,7 +7,7 @@ import (
 // FreeQuota 免费额度表
 type FreeQuota struct {
 	FreeQuotaID string    `gorm:"primaryKey;type:varchar(36)"`
-	UserID      string    `gorm:"type:varchar(36);not null;uniqueIndex:uk_user_service_month,priority:1"`
+	UID         string    `gorm:"column:uid;type:varchar(36);not null;uniqueIndex:uk_user_service_month,priority:1"`
 	ServiceName string    `gorm:"type:varchar(32);not null;uniqueIndex:uk_user_service_month,priority:2"`
 	TotalQuota  int       `gorm:"default:0"`
 	UsedQuota   int       `gorm:"default:0"`
@@ -20,4 +20,3 @@ type FreeQuota struct {
 func (FreeQuota) TableName() string {
 	return "free_quota"
 }
-

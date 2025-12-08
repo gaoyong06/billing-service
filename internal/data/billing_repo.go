@@ -22,15 +22,15 @@ import (
 
 // billingRepo 组合 repo，实现 biz.BillingRepo 接口
 type billingRepo struct {
-	data                *Data
-	log                 *log.Helper
-	sync                *redsync.Redsync
-	metrics             *metrics.BillingMetrics
-	userBalanceRepo     biz.UserBalanceRepo
-	freeQuotaRepo       biz.FreeQuotaRepo
-	billingRecordRepo   biz.BillingRecordRepo
-	rechargeOrderRepo   biz.RechargeOrderRepo
-	statsRepo           biz.StatsRepo
+	data              *Data
+	log               *log.Helper
+	sync              *redsync.Redsync
+	metrics           *metrics.BillingMetrics
+	userBalanceRepo   biz.UserBalanceRepo
+	freeQuotaRepo     biz.FreeQuotaRepo
+	billingRecordRepo biz.BillingRecordRepo
+	rechargeOrderRepo biz.RechargeOrderRepo
+	statsRepo         biz.StatsRepo
 }
 
 // NewBillingRepo 创建组合 repo
@@ -109,18 +109,18 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 	if r.sync != nil {
 		lockStartTime := time.Now()
 		mutex := r.sync.NewMutex(lockKey, redsync.WithExpiry(5*time.Second))
-			if err := mutex.Lock(); err != nil {
-				r.log.Errorf("Failed to acquire lock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
-				if r.metrics != nil {
-					r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusFailed).Inc()
-					r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
-				}
-				return "", pkgErrors.NewBizErrorWithLang(context.Background(), billingErrors.ErrCodeDeductLockFailed)
-			}
+		if err := mutex.Lock(); err != nil {
+			r.log.Errorf("Failed to acquire lock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
 			if r.metrics != nil {
-				r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusSuccess).Inc()
+				r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusFailed).Inc()
 				r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
 			}
+			return "", pkgErrors.NewBizErrorWithLang(context.Background(), billingErrors.ErrCodeDeductLockFailed)
+		}
+		if r.metrics != nil {
+			r.metrics.LockAcquireTotal.WithLabelValues(constants.OrderStatusSuccess).Inc()
+			r.metrics.LockAcquireDuration.Observe(time.Since(lockStartTime).Seconds())
+		}
 		defer func() {
 			if ok, err := mutex.Unlock(); !ok || err != nil {
 				r.log.Warnf("Failed to unlock for deduct quota: user_id=%s, service=%s, error=%v", userID, serviceName, err)
@@ -190,7 +190,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 					// 用户余额记录不存在，自动创建（初始余额为 0）
 					balance = model.UserBalance{
 						UserBalanceID: uuid.New().String(),
-						UserID:        userID,
+						UID:           userID,
 						Balance:       0,
 					}
 					if err := tx.Create(&balance).Error; err != nil {
@@ -223,7 +223,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		if freeQuotaUsed > 0 {
 			freeRecord := model.BillingRecord{
 				BillingRecordID: recordID,
-				UserID:          userID,
+				UID:             userID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeFree,
 				Amount:          0,
@@ -243,7 +243,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 			}
 			balanceRecord := model.BillingRecord{
 				BillingRecordID: balanceRecordID,
-				UserID:          userID,
+				UID:             userID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeBalance,
 				Amount:          balanceDeducted,
@@ -299,19 +299,19 @@ func (r *billingRepo) GetRechargeOrderByID(ctx context.Context, orderID string) 
 	return r.rechargeOrderRepo.GetRechargeOrderByID(ctx, orderID)
 }
 
-// GetRechargeOrderByPaymentID 通过支付订单ID查询充值订单
-func (r *billingRepo) GetRechargeOrderByPaymentID(ctx context.Context, paymentOrderID string) (*biz.RechargeOrder, error) {
-	return r.rechargeOrderRepo.GetRechargeOrderByPaymentID(ctx, paymentOrderID)
+// GetRechargeOrderByPaymentID 通过支付流水号查询充值订单
+func (r *billingRepo) GetRechargeOrderByPaymentID(ctx context.Context, paymentID string) (*biz.RechargeOrder, error) {
+	return r.rechargeOrderRepo.GetRechargeOrderByPaymentID(ctx, paymentID)
 }
 
 // UpdateRechargeOrderStatus 更新充值订单状态
-func (r *billingRepo) UpdateRechargeOrderStatus(ctx context.Context, orderID, paymentOrderID, status string) error {
-	return r.rechargeOrderRepo.UpdateRechargeOrderStatus(ctx, orderID, paymentOrderID, status)
+func (r *billingRepo) UpdateRechargeOrderStatus(ctx context.Context, orderID, paymentID, status string) error {
+	return r.rechargeOrderRepo.UpdateRechargeOrderStatus(ctx, orderID, paymentID, status)
 }
 
 // RechargeWithIdempotency 带幂等性保证的充值
-func (r *billingRepo) RechargeWithIdempotency(ctx context.Context, orderID, paymentOrderID string, amount float64) error {
-	return r.rechargeOrderRepo.RechargeWithIdempotency(ctx, orderID, paymentOrderID, amount)
+func (r *billingRepo) RechargeWithIdempotency(ctx context.Context, orderID, paymentID string, amount float64) error {
+	return r.rechargeOrderRepo.RechargeWithIdempotency(ctx, orderID, paymentID, amount)
 }
 
 // ========== 统计相关 ==========
@@ -335,4 +335,3 @@ func (r *billingRepo) GetStatsMonth(ctx context.Context, userID, serviceName str
 func (r *billingRepo) GetStatsSummary(ctx context.Context, userID string) (*biz.StatsSummary, error) {
 	return r.statsRepo.GetStatsSummary(ctx, userID)
 }
-

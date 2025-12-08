@@ -389,9 +389,9 @@ components:
         RechargeCallbackRequest:
             type: object
             properties:
-                orderId:
+                rechargeOrderId:
                     type: string
-                paymentOrderId:
+                paymentId:
                     type: string
                 amount:
                     type: number
@@ -401,7 +401,7 @@ components:
         RechargeReply:
             type: object
             properties:
-                orderId:
+                rechargeOrderId:
                     type: string
                 paymentUrl:
                     type: string

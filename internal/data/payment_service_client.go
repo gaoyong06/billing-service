@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	paymentv1 "xinyuan_tech/payment-service/api/payment/v1"
 	"billing-service/internal/biz"
 	"billing-service/internal/conf"
 	billingErrors "billing-service/internal/errors"
+	paymentv1 "xinyuan_tech/payment-service/api/payment/v1"
 
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	"github.com/go-kratos/kratos/v2/log"
@@ -57,8 +57,8 @@ func NewPaymentServiceClient(c *conf.PaymentService, logger log.Logger) (Payment
 
 // CreatePayment 创建支付订单（实现 biz.PaymentServiceClient 接口）
 func (c *paymentServiceClient) CreatePayment(ctx context.Context, req *biz.CreatePaymentRequest) (*biz.CreatePaymentReply, error) {
-	// 将 userID 从 string 转换为 uint64
-	userID, err := strconv.ParseUint(req.UserID, 10, 64)
+	// 将 uid 从 string 转换为 uint64
+	userID, err := strconv.ParseUint(req.UID, 10, 64)
 	if err != nil {
 		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeInvalidUserID)
 	}

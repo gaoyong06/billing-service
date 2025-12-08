@@ -46,7 +46,7 @@ func (s *BillingService) GetAccount(ctx context.Context, req *pb.GetAccountReque
 	}
 
 	return &pb.GetAccountReply{
-		UserId:  balance.UserID,
+		UserId:  balance.UID,
 		Balance: balance.Balance,
 		Quotas:  pbQuotas,
 	}, nil
@@ -85,8 +85,8 @@ func (s *BillingService) Recharge(ctx context.Context, req *pb.RechargeRequest) 
 		return nil, err
 	}
 	return &pb.RechargeReply{
-		OrderId:    orderID,
-		PaymentUrl: payURL,
+		RechargeOrderId: orderID,
+		PaymentUrl:      payURL,
 	}, nil
 }
 
@@ -157,7 +157,7 @@ func (s *BillingService) RechargeCallback(ctx context.Context, req *pb.RechargeC
 		return &pb.RechargeCallbackReply{Success: true}, nil // 支付失败，直接返回成功（已处理）
 	}
 
-	err := s.uc.RechargeCallback(ctx, req.OrderId, req.Amount)
+	err := s.uc.RechargeCallback(ctx, req.RechargeOrderId, req.Amount)
 	if err != nil {
 		return &pb.RechargeCallbackReply{Success: false}, err
 	}
@@ -172,7 +172,7 @@ func (s *BillingService) GetStatsToday(ctx context.Context, req *pb.GetStatsToda
 	}
 
 	return &pb.GetStatsReply{
-		UserId:      stats.UserID,
+		UserId:      stats.UID,
 		ServiceName: stats.ServiceName,
 		TotalCount:  int32(stats.TotalCount),
 		TotalCost:   stats.TotalCost,
@@ -190,7 +190,7 @@ func (s *BillingService) GetStatsMonth(ctx context.Context, req *pb.GetStatsMont
 	}
 
 	return &pb.GetStatsReply{
-		UserId:      stats.UserID,
+		UserId:      stats.UID,
 		ServiceName: stats.ServiceName,
 		TotalCount:  int32(stats.TotalCount),
 		TotalCost:   stats.TotalCost,
@@ -219,7 +219,7 @@ func (s *BillingService) GetStatsSummary(ctx context.Context, req *pb.GetStatsSu
 	}
 
 	return &pb.GetStatsSummaryReply{
-		UserId:     summary.UserID,
+		UserId:     summary.UID,
 		TotalCount: int32(summary.TotalCount),
 		TotalCost:  summary.TotalCost,
 		Services:   pbServices,

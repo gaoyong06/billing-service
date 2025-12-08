@@ -25,7 +25,7 @@ const (
 
 type GetAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,7 +69,7 @@ func (x *GetAccountRequest) GetUserId() string {
 
 type GetAccountReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	Balance       float64                `protobuf:"fixed64,2,opt,name=balance,proto3" json:"balance,omitempty"`
 	Quotas        []*FreeQuota           `protobuf:"bytes,3,rep,name=quotas,proto3" json:"quotas,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -129,10 +129,10 @@ func (x *GetAccountReply) GetQuotas() []*FreeQuota {
 
 type FreeQuota struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	TotalQuota    int32                  `protobuf:"varint,2,opt,name=total_quota,json=totalQuota,proto3" json:"total_quota,omitempty"`
-	UsedQuota     int32                  `protobuf:"varint,3,opt,name=used_quota,json=usedQuota,proto3" json:"used_quota,omitempty"`
-	ResetMonth    string                 `protobuf:"bytes,4,opt,name=reset_month,json=resetMonth,proto3" json:"reset_month,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,1,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	TotalQuota    int32                  `protobuf:"varint,2,opt,name=totalQuota,proto3" json:"totalQuota,omitempty"`
+	UsedQuota     int32                  `protobuf:"varint,3,opt,name=usedQuota,proto3" json:"usedQuota,omitempty"`
+	ResetMonth    string                 `protobuf:"bytes,4,opt,name=resetMonth,proto3" json:"resetMonth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -197,10 +197,10 @@ func (x *FreeQuota) GetResetMonth() string {
 
 type RechargeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	Amount        float64                `protobuf:"fixed64,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	PaymentMethod string                 `protobuf:"bytes,3,opt,name=payment_method,json=paymentMethod,proto3" json:"payment_method,omitempty"` // wechat, alipay
-	Currency      string                 `protobuf:"bytes,4,opt,name=currency,proto3" json:"currency,omitempty"`                                // 币种，必填，例如：CNY, USD
+	PaymentMethod string                 `protobuf:"bytes,3,opt,name=paymentMethod,proto3" json:"paymentMethod,omitempty"` // wechat, alipay
+	Currency      string                 `protobuf:"bytes,4,opt,name=currency,proto3" json:"currency,omitempty"`           // 币种，必填，例如：CNY, USD
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -264,11 +264,11 @@ func (x *RechargeRequest) GetCurrency() string {
 }
 
 type RechargeReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	PaymentUrl    string                 `protobuf:"bytes,2,opt,name=payment_url,json=paymentUrl,proto3" json:"payment_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+	PaymentUrl      string                 `protobuf:"bytes,2,opt,name=paymentUrl,proto3" json:"paymentUrl,omitempty"`           // 支付URL
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *RechargeReply) Reset() {
@@ -301,9 +301,9 @@ func (*RechargeReply) Descriptor() ([]byte, []int) {
 	return file_billing_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *RechargeReply) GetOrderId() string {
+func (x *RechargeReply) GetRechargeOrderId() string {
 	if x != nil {
-		return x.OrderId
+		return x.RechargeOrderId
 	}
 	return ""
 }
@@ -317,9 +317,9 @@ func (x *RechargeReply) GetPaymentUrl() string {
 
 type ListRecordsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -430,11 +430,11 @@ func (x *ListRecordsReply) GetTotal() int32 {
 type BillingRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
 	Type          int32                  `protobuf:"varint,3,opt,name=type,proto3" json:"type,omitempty"` // 1:免费额度, 2:余额扣费
 	Amount        float64                `protobuf:"fixed64,4,opt,name=amount,proto3" json:"amount,omitempty"`
 	Count         int32                  `protobuf:"varint,5,opt,name=count,proto3" json:"count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -513,8 +513,8 @@ func (x *BillingRecord) GetCreatedAt() *timestamppb.Timestamp {
 
 type CheckQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
 	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -625,8 +625,8 @@ func (x *CheckQuotaReply) GetReason() string {
 
 type DeductQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
 	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
 	Cost          float64                `protobuf:"fixed64,4,opt,name=cost,proto3" json:"cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -694,7 +694,7 @@ func (x *DeductQuotaRequest) GetCost() float64 {
 type DeductQuotaReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	RecordId      string                 `protobuf:"bytes,2,opt,name=record_id,json=recordId,proto3" json:"record_id,omitempty"`
+	RecordId      string                 `protobuf:"bytes,2,opt,name=recordId,proto3" json:"recordId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -744,13 +744,13 @@ func (x *DeductQuotaReply) GetRecordId() string {
 }
 
 type RechargeCallbackRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrderId        string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	PaymentOrderId string                 `protobuf:"bytes,2,opt,name=payment_order_id,json=paymentOrderId,proto3" json:"payment_order_id,omitempty"`
-	Amount         float64                `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	Status         string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+	PaymentId       string                 `protobuf:"bytes,2,opt,name=paymentId,proto3" json:"paymentId,omitempty"`             // 支付流水号（payment-service返回的payment_id）
+	Amount          float64                `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`                 // 充值金额
+	Status          string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`                   // 支付状态
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *RechargeCallbackRequest) Reset() {
@@ -783,16 +783,16 @@ func (*RechargeCallbackRequest) Descriptor() ([]byte, []int) {
 	return file_billing_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *RechargeCallbackRequest) GetOrderId() string {
+func (x *RechargeCallbackRequest) GetRechargeOrderId() string {
 	if x != nil {
-		return x.OrderId
+		return x.RechargeOrderId
 	}
 	return ""
 }
 
-func (x *RechargeCallbackRequest) GetPaymentOrderId() string {
+func (x *RechargeCallbackRequest) GetPaymentId() string {
 	if x != nil {
-		return x.PaymentOrderId
+		return x.PaymentId
 	}
 	return ""
 }
@@ -858,8 +858,8 @@ func (x *RechargeCallbackReply) GetSuccess() bool {
 // 统计相关消息
 type GetStatsTodayRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"` // 可选，不传则统计所有服务
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"` // 可选，不传则统计所有服务
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -910,8 +910,8 @@ func (x *GetStatsTodayRequest) GetServiceName() string {
 
 type GetStatsMonthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"` // 可选，不传则统计所有服务
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"` // 可选，不传则统计所有服务
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -962,7 +962,7 @@ func (x *GetStatsMonthRequest) GetServiceName() string {
 
 type GetStatsSummaryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1006,13 +1006,13 @@ func (x *GetStatsSummaryRequest) GetUserId() string {
 
 type GetStatsReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"` // 如果请求时指定了服务名称，这里返回；否则为空
-	TotalCount    int32                  `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`   // 总调用次数
-	TotalCost     float64                `protobuf:"fixed64,4,opt,name=total_cost,json=totalCost,proto3" json:"total_cost,omitempty"`     // 总费用（仅余额扣费部分）
-	FreeCount     int32                  `protobuf:"varint,5,opt,name=free_count,json=freeCount,proto3" json:"free_count,omitempty"`      // 免费额度使用次数
-	PaidCount     int32                  `protobuf:"varint,6,opt,name=paid_count,json=paidCount,proto3" json:"paid_count,omitempty"`      // 余额扣费次数
-	Period        string                 `protobuf:"bytes,7,opt,name=period,proto3" json:"period,omitempty"`                              // 统计周期：today 或 month
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"` // 如果请求时指定了服务名称，这里返回；否则为空
+	TotalCount    int32                  `protobuf:"varint,3,opt,name=totalCount,proto3" json:"totalCount,omitempty"`  // 总调用次数
+	TotalCost     float64                `protobuf:"fixed64,4,opt,name=totalCost,proto3" json:"totalCost,omitempty"`   // 总费用（仅余额扣费部分）
+	FreeCount     int32                  `protobuf:"varint,5,opt,name=freeCount,proto3" json:"freeCount,omitempty"`    // 免费额度使用次数
+	PaidCount     int32                  `protobuf:"varint,6,opt,name=paidCount,proto3" json:"paidCount,omitempty"`    // 余额扣费次数
+	Period        string                 `protobuf:"bytes,7,opt,name=period,proto3" json:"period,omitempty"`           // 统计周期：today 或 month
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1098,11 +1098,11 @@ func (x *GetStatsReply) GetPeriod() string {
 
 type ServiceStats struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"` // 服务名称
-	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`   // 总调用次数
-	TotalCost     float64                `protobuf:"fixed64,3,opt,name=total_cost,json=totalCost,proto3" json:"total_cost,omitempty"`     // 总费用
-	FreeCount     int32                  `protobuf:"varint,4,opt,name=free_count,json=freeCount,proto3" json:"free_count,omitempty"`      // 免费额度使用次数
-	PaidCount     int32                  `protobuf:"varint,5,opt,name=paid_count,json=paidCount,proto3" json:"paid_count,omitempty"`      // 余额扣费次数
+	ServiceName   string                 `protobuf:"bytes,1,opt,name=serviceName,proto3" json:"serviceName,omitempty"` // 服务名称
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=totalCount,proto3" json:"totalCount,omitempty"`  // 总调用次数
+	TotalCost     float64                `protobuf:"fixed64,3,opt,name=totalCost,proto3" json:"totalCost,omitempty"`   // 总费用
+	FreeCount     int32                  `protobuf:"varint,4,opt,name=freeCount,proto3" json:"freeCount,omitempty"`    // 免费额度使用次数
+	PaidCount     int32                  `protobuf:"varint,5,opt,name=paidCount,proto3" json:"paidCount,omitempty"`    // 余额扣费次数
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1174,10 +1174,10 @@ func (x *ServiceStats) GetPaidCount() int32 {
 
 type GetStatsSummaryReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"` // 所有服务总调用次数
-	TotalCost     float64                `protobuf:"fixed64,3,opt,name=total_cost,json=totalCost,proto3" json:"total_cost,omitempty"`   // 所有服务总费用
-	Services      []*ServiceStats        `protobuf:"bytes,4,rep,name=services,proto3" json:"services,omitempty"`                        // 各服务统计
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=totalCount,proto3" json:"totalCount,omitempty"` // 所有服务总调用次数
+	TotalCost     float64                `protobuf:"fixed64,3,opt,name=totalCost,proto3" json:"totalCost,omitempty"`  // 所有服务总费用
+	Services      []*ServiceStats        `protobuf:"bytes,4,rep,name=services,proto3" json:"services,omitempty"`      // 各服务统计
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1245,103 +1245,100 @@ var File_billing_proto protoreflect.FileDescriptor
 const file_billing_proto_rawDesc = "" +
 	"\n" +
 	"\rbilling.proto\x12\n" +
-	"billing.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\",\n" +
-	"\x11GetAccountRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"s\n" +
-	"\x0fGetAccountReply\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
+	"billing.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n" +
+	"\x11GetAccountRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\"r\n" +
+	"\x0fGetAccountReply\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
 	"\abalance\x18\x02 \x01(\x01R\abalance\x12-\n" +
-	"\x06quotas\x18\x03 \x03(\v2\x15.billing.v1.FreeQuotaR\x06quotas\"\x8f\x01\n" +
-	"\tFreeQuota\x12!\n" +
-	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1f\n" +
-	"\vtotal_quota\x18\x02 \x01(\x05R\n" +
-	"totalQuota\x12\x1d\n" +
+	"\x06quotas\x18\x03 \x03(\v2\x15.billing.v1.FreeQuotaR\x06quotas\"\x8b\x01\n" +
+	"\tFreeQuota\x12 \n" +
+	"\vserviceName\x18\x01 \x01(\tR\vserviceName\x12\x1e\n" +
 	"\n" +
-	"used_quota\x18\x03 \x01(\x05R\tusedQuota\x12\x1f\n" +
-	"\vreset_month\x18\x04 \x01(\tR\n" +
-	"resetMonth\"\x85\x01\n" +
-	"\x0fRechargeRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
-	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12%\n" +
-	"\x0epayment_method\x18\x03 \x01(\tR\rpaymentMethod\x12\x1a\n" +
-	"\bcurrency\x18\x04 \x01(\tR\bcurrency\"K\n" +
-	"\rRechargeReply\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x1f\n" +
-	"\vpayment_url\x18\x02 \x01(\tR\n" +
-	"paymentUrl\"^\n" +
-	"\x12ListRecordsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"]\n" +
+	"totalQuota\x18\x02 \x01(\x05R\n" +
+	"totalQuota\x12\x1c\n" +
+	"\tusedQuota\x18\x03 \x01(\x05R\tusedQuota\x12\x1e\n" +
+	"\n" +
+	"resetMonth\x18\x04 \x01(\tR\n" +
+	"resetMonth\"\x83\x01\n" +
+	"\x0fRechargeRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12$\n" +
+	"\rpaymentMethod\x18\x03 \x01(\tR\rpaymentMethod\x12\x1a\n" +
+	"\bcurrency\x18\x04 \x01(\tR\bcurrency\"Y\n" +
+	"\rRechargeReply\x12(\n" +
+	"\x0frechargeOrderId\x18\x01 \x01(\tR\x0frechargeOrderId\x12\x1e\n" +
+	"\n" +
+	"paymentUrl\x18\x02 \x01(\tR\n" +
+	"paymentUrl\"\\\n" +
+	"\x12ListRecordsRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1a\n" +
+	"\bpageSize\x18\x03 \x01(\x05R\bpageSize\"]\n" +
 	"\x10ListRecordsReply\x123\n" +
 	"\arecords\x18\x01 \x03(\v2\x19.billing.v1.BillingRecordR\arecords\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\xbf\x01\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xbd\x01\n" +
 	"\rBillingRecord\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\x05R\x04type\x12\x16\n" +
 	"\x06amount\x18\x04 \x01(\x01R\x06amount\x12\x14\n" +
-	"\x05count\x18\x05 \x01(\x05R\x05count\x129\n" +
-	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"e\n" +
-	"\x11CheckQuotaRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
+	"\x05count\x18\x05 \x01(\x05R\x05count\x128\n" +
+	"\tcreatedAt\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"c\n" +
+	"\x11CheckQuotaRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
 	"\x05count\x18\x03 \x01(\x05R\x05count\"C\n" +
 	"\x0fCheckQuotaReply\x12\x18\n" +
 	"\aallowed\x18\x01 \x01(\bR\aallowed\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"z\n" +
-	"\x12DeductQuotaRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"x\n" +
+	"\x12DeductQuotaRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
 	"\x05count\x18\x03 \x01(\x05R\x05count\x12\x12\n" +
-	"\x04cost\x18\x04 \x01(\x01R\x04cost\"I\n" +
+	"\x04cost\x18\x04 \x01(\x01R\x04cost\"H\n" +
 	"\x10DeductQuotaReply\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
-	"\trecord_id\x18\x02 \x01(\tR\brecordId\"\x8e\x01\n" +
-	"\x17RechargeCallbackRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\x12(\n" +
-	"\x10payment_order_id\x18\x02 \x01(\tR\x0epaymentOrderId\x12\x16\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1a\n" +
+	"\brecordId\x18\x02 \x01(\tR\brecordId\"\x91\x01\n" +
+	"\x17RechargeCallbackRequest\x12(\n" +
+	"\x0frechargeOrderId\x18\x01 \x01(\tR\x0frechargeOrderId\x12\x1c\n" +
+	"\tpaymentId\x18\x02 \x01(\tR\tpaymentId\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\x01R\x06amount\x12\x16\n" +
 	"\x06status\x18\x04 \x01(\tR\x06status\"1\n" +
 	"\x15RechargeCallbackReply\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"R\n" +
-	"\x14GetStatsTodayRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\"R\n" +
-	"\x14GetStatsMonthRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\"1\n" +
-	"\x16GetStatsSummaryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xe1\x01\n" +
-	"\rGetStatsReply\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12\x1f\n" +
-	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"P\n" +
+	"\x14GetStatsTodayRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\"P\n" +
+	"\x14GetStatsMonthRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\"0\n" +
+	"\x16GetStatsSummaryRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\"\xdb\x01\n" +
+	"\rGetStatsReply\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x1e\n" +
 	"\n" +
-	"total_cost\x18\x04 \x01(\x01R\ttotalCost\x12\x1d\n" +
+	"totalCount\x18\x03 \x01(\x05R\n" +
+	"totalCount\x12\x1c\n" +
+	"\ttotalCost\x18\x04 \x01(\x01R\ttotalCost\x12\x1c\n" +
+	"\tfreeCount\x18\x05 \x01(\x05R\tfreeCount\x12\x1c\n" +
+	"\tpaidCount\x18\x06 \x01(\x05R\tpaidCount\x12\x16\n" +
+	"\x06period\x18\a \x01(\tR\x06period\"\xaa\x01\n" +
+	"\fServiceStats\x12 \n" +
+	"\vserviceName\x18\x01 \x01(\tR\vserviceName\x12\x1e\n" +
 	"\n" +
-	"free_count\x18\x05 \x01(\x05R\tfreeCount\x12\x1d\n" +
+	"totalCount\x18\x02 \x01(\x05R\n" +
+	"totalCount\x12\x1c\n" +
+	"\ttotalCost\x18\x03 \x01(\x01R\ttotalCost\x12\x1c\n" +
+	"\tfreeCount\x18\x04 \x01(\x05R\tfreeCount\x12\x1c\n" +
+	"\tpaidCount\x18\x05 \x01(\x05R\tpaidCount\"\xa2\x01\n" +
+	"\x14GetStatsSummaryReply\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x1e\n" +
 	"\n" +
-	"paid_count\x18\x06 \x01(\x05R\tpaidCount\x12\x16\n" +
-	"\x06period\x18\a \x01(\tR\x06period\"\xaf\x01\n" +
-	"\fServiceStats\x12!\n" +
-	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1f\n" +
-	"\vtotal_count\x18\x02 \x01(\x05R\n" +
-	"totalCount\x12\x1d\n" +
-	"\n" +
-	"total_cost\x18\x03 \x01(\x01R\ttotalCost\x12\x1d\n" +
-	"\n" +
-	"free_count\x18\x04 \x01(\x05R\tfreeCount\x12\x1d\n" +
-	"\n" +
-	"paid_count\x18\x05 \x01(\x05R\tpaidCount\"\xa5\x01\n" +
-	"\x14GetStatsSummaryReply\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
-	"\vtotal_count\x18\x02 \x01(\x05R\n" +
-	"totalCount\x12\x1d\n" +
-	"\n" +
-	"total_cost\x18\x03 \x01(\x01R\ttotalCost\x124\n" +
+	"totalCount\x18\x02 \x01(\x05R\n" +
+	"totalCount\x12\x1c\n" +
+	"\ttotalCost\x18\x03 \x01(\x01R\ttotalCost\x124\n" +
 	"\bservices\x18\x04 \x03(\v2\x18.billing.v1.ServiceStatsR\bservices2\xb8\x05\n" +
 	"\x0eBillingService\x12i\n" +
 	"\n" +
@@ -1396,7 +1393,7 @@ var file_billing_proto_goTypes = []any{
 var file_billing_proto_depIdxs = []int32{
 	2,  // 0: billing.v1.GetAccountReply.quotas:type_name -> billing.v1.FreeQuota
 	7,  // 1: billing.v1.ListRecordsReply.records:type_name -> billing.v1.BillingRecord
-	20, // 2: billing.v1.BillingRecord.created_at:type_name -> google.protobuf.Timestamp
+	20, // 2: billing.v1.BillingRecord.createdAt:type_name -> google.protobuf.Timestamp
 	18, // 3: billing.v1.GetStatsSummaryReply.services:type_name -> billing.v1.ServiceStats
 	0,  // 4: billing.v1.BillingService.GetAccount:input_type -> billing.v1.GetAccountRequest
 	3,  // 5: billing.v1.BillingService.Recharge:input_type -> billing.v1.RechargeRequest

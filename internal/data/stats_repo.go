@@ -101,7 +101,7 @@ func (r *statsRepo) GetStatsToday(ctx context.Context, userID, serviceName strin
 	}
 
 	return &biz.Stats{
-		UserID:      userID,
+		UID:         userID,
 		ServiceName: serviceName,
 		TotalCount:  result.TotalCount,
 		TotalCost:   result.TotalCost,
@@ -145,7 +145,7 @@ func (r *statsRepo) GetStatsMonth(ctx context.Context, userID, serviceName strin
 	}
 
 	return &biz.Stats{
-		UserID:      userID,
+		UID:         userID,
 		ServiceName: serviceName,
 		TotalCount:  result.TotalCount,
 		TotalCost:   result.TotalCost,
@@ -203,10 +203,9 @@ func (r *statsRepo) GetStatsSummary(ctx context.Context, userID string) (*biz.St
 	}
 
 	return &biz.StatsSummary{
-		UserID:     userID,
+		UID:        userID,
 		TotalCount: totalCount,
 		TotalCost:  totalCost,
 		Services:   services,
 	}, nil
 }
-

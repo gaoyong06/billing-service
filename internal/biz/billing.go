@@ -34,9 +34,9 @@ type BillingRepo interface {
 	// 订单相关（幂等性保证）
 	CreateRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error
 	GetRechargeOrderByID(ctx context.Context, orderID string) (*RechargeOrder, error)
-	GetRechargeOrderByPaymentID(ctx context.Context, paymentOrderID string) (*RechargeOrder, error)
-	UpdateRechargeOrderStatus(ctx context.Context, orderID, paymentOrderID, status string) error
-	RechargeWithIdempotency(ctx context.Context, orderID, paymentOrderID string, amount float64) error
+	GetRechargeOrderByPaymentID(ctx context.Context, paymentID string) (*RechargeOrder, error)
+	UpdateRechargeOrderStatus(ctx context.Context, orderID, paymentID, status string) error
+	RechargeWithIdempotency(ctx context.Context, orderID, paymentID string, amount float64) error
 
 	// 重置相关
 	GetAllUserIDs(ctx context.Context) ([]string, error)
@@ -109,7 +109,7 @@ func (uc *BillingUseCase) getOrCreateQuota(ctx context.Context, userID, serviceN
 
 	// 创建并保存配额记录
 	quota = &FreeQuota{
-		UserID:      userID,
+		UID:         userID,
 		ServiceName: serviceName,
 		TotalQuota:  int(totalQuota),
 		UsedQuota:   0,
@@ -138,7 +138,7 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 		return nil, nil, err
 	}
 	if balance == nil {
-		balance = &UserBalance{UserID: userID, Balance: 0}
+		balance = &UserBalance{UID: userID, Balance: 0}
 	}
 
 	month := time.Now().Format(constants.TimeFormatMonth)
@@ -210,7 +210,7 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	// 如果余额记录不存在，自动创建（初始余额为 0）
 	if balance == nil {
 		balance = &UserBalance{
-			UserID:  userID,
+			UID:     userID,
 			Balance: 0,
 		}
 		// 注意：这里不创建记录，只是用于检查
@@ -324,7 +324,7 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 
 			// 创建新的免费额度记录
 			quota := &FreeQuota{
-				UserID:      userID,
+				UID:         userID,
 				ServiceName: serviceName,
 				TotalQuota:  int(totalQuota),
 				UsedQuota:   0,

@@ -514,7 +514,7 @@ func (m *RechargeReply) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for OrderId
+	// no validation rules for RechargeOrderId
 
 	// no validation rules for PaymentUrl
 
@@ -1427,9 +1427,9 @@ func (m *RechargeCallbackRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for OrderId
+	// no validation rules for RechargeOrderId
 
-	// no validation rules for PaymentOrderId
+	// no validation rules for PaymentId
 
 	// no validation rules for Amount
 

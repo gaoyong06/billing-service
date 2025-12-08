@@ -28,7 +28,7 @@ func NewBillingRecordRepo(data *Data, logger log.Logger) biz.BillingRecordRepo {
 func (r *billingRecordRepo) CreateBillingRecord(ctx context.Context, record *biz.BillingRecord) error {
 	m := model.BillingRecord{
 		BillingRecordID: uuid.New().String(),
-		UserID:          record.UserID,
+		UID:             record.UID,
 		ServiceName:     record.ServiceName,
 		Type:            record.Type,
 		Amount:          record.Amount,
@@ -43,7 +43,7 @@ func (r *billingRecordRepo) ListBillingRecords(ctx context.Context, userID strin
 	var total int64
 
 	offset := (page - 1) * pageSize
-	db := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).Where("user_id = ?", userID)
+	db := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).Where("uid = ?", userID)
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -57,7 +57,7 @@ func (r *billingRecordRepo) ListBillingRecords(ctx context.Context, userID strin
 	for _, m := range models {
 		records = append(records, &biz.BillingRecord{
 			ID:          m.BillingRecordID,
-			UserID:      m.UserID,
+			UID:         m.UID,
 			ServiceName: m.ServiceName,
 			Type:        m.Type,
 			Amount:      m.Amount,
@@ -67,4 +67,3 @@ func (r *billingRecordRepo) ListBillingRecords(ctx context.Context, userID strin
 	}
 	return records, total, nil
 }
-

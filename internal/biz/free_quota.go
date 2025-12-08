@@ -8,7 +8,7 @@ import (
 
 // FreeQuota 免费额度领域对象
 type FreeQuota struct {
-	UserID      string
+	UID         string
 	ServiceName string
 	TotalQuota  int
 	UsedQuota   int
@@ -52,4 +52,3 @@ func (uc *FreeQuotaUseCase) CreateQuota(ctx context.Context, quota *FreeQuota) e
 func (uc *FreeQuotaUseCase) UpdateQuota(ctx context.Context, quota *FreeQuota) error {
 	return uc.repo.UpdateFreeQuota(ctx, quota)
 }
-

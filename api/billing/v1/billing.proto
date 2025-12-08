@@ -83,38 +83,38 @@ service BillingInternalService {
 }
 
 message GetAccountRequest {
-  string user_id = 1;
+  string userId = 1;
 }
 
 message GetAccountReply {
-  string user_id = 1;
+  string userId = 1;
   double balance = 2;
   repeated FreeQuota quotas = 3;
 }
 
 message FreeQuota {
-  string service_name = 1;
-  int32 total_quota = 2;
-  int32 used_quota = 3;
-  string reset_month = 4;
+  string serviceName = 1;
+  int32 totalQuota = 2;
+  int32 usedQuota = 3;
+  string resetMonth = 4;
 }
 
 message RechargeRequest {
-  string user_id = 1;
+  string userId = 1;
   double amount = 2;
-  string payment_method = 3; // wechat, alipay
+  string paymentMethod = 3; // wechat, alipay
   string currency = 4; // 币种，必填，例如：CNY, USD
 }
 
 message RechargeReply {
-  string order_id = 1;
-  string payment_url = 2;
+  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+  string paymentUrl = 2; // 支付URL
 }
 
 message ListRecordsRequest {
-  string user_id = 1;
+  string userId = 1;
   int32 page = 2;
-  int32 page_size = 3;
+  int32 pageSize = 3;
 }
 
 message ListRecordsReply {
@@ -124,16 +124,16 @@ message ListRecordsReply {
 
 message BillingRecord {
   string id = 1;
-  string service_name = 2;
+  string serviceName = 2;
   int32 type = 3; // 1:免费额度, 2:余额扣费
   double amount = 4;
   int32 count = 5;
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp createdAt = 6;
 }
 
 message CheckQuotaRequest {
-  string user_id = 1;
-  string service_name = 2;
+  string userId = 1;
+  string serviceName = 2;
   int32 count = 3;
 }
 
@@ -143,22 +143,22 @@ message CheckQuotaReply {
 }
 
 message DeductQuotaRequest {
-  string user_id = 1;
-  string service_name = 2;
+  string userId = 1;
+  string serviceName = 2;
   int32 count = 3;
   double cost = 4;
 }
 
 message DeductQuotaReply {
   bool success = 1;
-  string record_id = 2;
+  string recordId = 2;
 }
 
 message RechargeCallbackRequest {
-  string order_id = 1;
-  string payment_order_id = 2;
-  double amount = 3;
-  string status = 4;
+  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+  string paymentId = 2; // 支付流水号（payment-service返回的payment_id）
+  double amount = 3; // 充值金额
+  string status = 4; // 支付状态
 }
 
 message RechargeCallbackReply {
@@ -167,40 +167,40 @@ message RechargeCallbackReply {
 
 // 统计相关消息
 message GetStatsTodayRequest {
-  string user_id = 1;
-  string service_name = 2; // 可选，不传则统计所有服务
+  string userId = 1;
+  string serviceName = 2; // 可选，不传则统计所有服务
 }
 
 message GetStatsMonthRequest {
-  string user_id = 1;
-  string service_name = 2; // 可选，不传则统计所有服务
+  string userId = 1;
+  string serviceName = 2; // 可选，不传则统计所有服务
 }
 
 message GetStatsSummaryRequest {
-  string user_id = 1;
+  string userId = 1;
 }
 
 message GetStatsReply {
-  string user_id = 1;
-  string service_name = 2; // 如果请求时指定了服务名称，这里返回；否则为空
-  int32 total_count = 3;   // 总调用次数
-  double total_cost = 4;   // 总费用（仅余额扣费部分）
-  int32 free_count = 5;    // 免费额度使用次数
-  int32 paid_count = 6;    // 余额扣费次数
+  string userId = 1;
+  string serviceName = 2; // 如果请求时指定了服务名称，这里返回；否则为空
+  int32 totalCount = 3;   // 总调用次数
+  double totalCost = 4;   // 总费用（仅余额扣费部分）
+  int32 freeCount = 5;    // 免费额度使用次数
+  int32 paidCount = 6;    // 余额扣费次数
   string period = 7;       // 统计周期：today 或 month
 }
 
 message ServiceStats {
-  string service_name = 1; // 服务名称
-  int32 total_count = 2;   // 总调用次数
-  double total_cost = 3;   // 总费用
-  int32 free_count = 4;    // 免费额度使用次数
-  int32 paid_count = 5;    // 余额扣费次数
+  string serviceName = 1; // 服务名称
+  int32 totalCount = 2;   // 总调用次数
+  double totalCost = 3;   // 总费用
+  int32 freeCount = 4;    // 免费额度使用次数
+  int32 paidCount = 5;    // 余额扣费次数
 }
 
 message GetStatsSummaryReply {
-  string user_id = 1;
-  int32 total_count = 2;   // 所有服务总调用次数
-  double total_cost = 3;   // 所有服务总费用
+  string userId = 1;
+  int32 totalCount = 2;   // 所有服务总调用次数
+  double totalCost = 3;   // 所有服务总费用
   repeated ServiceStats services = 4; // 各服务统计
 }
