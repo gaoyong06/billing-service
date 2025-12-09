@@ -35,10 +35,10 @@ func NewRechargeOrderRepo(data *Data, logger log.Logger) biz.RechargeOrderRepo {
 // CreateRechargeOrder 创建充值订单记录
 func (r *rechargeOrderRepo) CreateRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error {
 	order := model.RechargeOrder{
-		RechargeOrderID: orderID,
-		UID:             userID,
-		Amount:          amount,
-		Status:          model.RechargeStatusPending,
+		OrderID: orderID,
+		UID:     userID,
+		Amount:  amount,
+		Status:  model.RechargeStatusPending,
 	}
 	return r.data.db.WithContext(ctx).Create(&order).Error
 }
@@ -46,7 +46,7 @@ func (r *rechargeOrderRepo) CreateRechargeOrder(ctx context.Context, orderID, us
 // GetRechargeOrderByID 通过订单ID查询充值订单
 func (r *rechargeOrderRepo) GetRechargeOrderByID(ctx context.Context, orderID string) (*biz.RechargeOrder, error) {
 	var m model.RechargeOrder
-	if err := r.data.db.WithContext(ctx).Where("recharge_order_id = ?", orderID).First(&m).Error; err != nil {
+	if err := r.data.db.WithContext(ctx).Where("order_id = ?", orderID).First(&m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -54,13 +54,13 @@ func (r *rechargeOrderRepo) GetRechargeOrderByID(ctx context.Context, orderID st
 	}
 
 	return &biz.RechargeOrder{
-		RechargeOrderID: m.RechargeOrderID,
-		UID:             m.UID,
-		Amount:          m.Amount,
-		PaymentID:       m.PaymentID,
-		Status:          m.Status,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
+		OrderID:   m.OrderID,
+		UID:       m.UID,
+		Amount:    m.Amount,
+		PaymentID: m.PaymentID,
+		Status:    m.Status,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
 	}, nil
 }
 
@@ -75,13 +75,13 @@ func (r *rechargeOrderRepo) GetRechargeOrderByPaymentID(ctx context.Context, pay
 	}
 
 	return &biz.RechargeOrder{
-		RechargeOrderID: m.RechargeOrderID,
-		UID:             m.UID,
-		Amount:          m.Amount,
-		PaymentID:       m.PaymentID,
-		Status:          m.Status,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
+		OrderID:   m.OrderID,
+		UID:       m.UID,
+		Amount:    m.Amount,
+		PaymentID: m.PaymentID,
+		Status:    m.Status,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
 	}, nil
 }
 
@@ -95,7 +95,7 @@ func (r *rechargeOrderRepo) UpdateRechargeOrderStatus(ctx context.Context, order
 	}
 
 	return r.data.db.WithContext(ctx).Model(&model.RechargeOrder{}).
-		Where("recharge_order_id = ?", orderID).
+		Where("order_id = ?", orderID).
 		Updates(updates).Error
 }
 
@@ -105,7 +105,7 @@ func (r *rechargeOrderRepo) RechargeWithIdempotency(ctx context.Context, orderID
 		// 1. 锁定订单记录
 		var order model.RechargeOrder
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("recharge_order_id = ?", orderID).
+			Where("order_id = ?", orderID).
 			First(&order).Error; err != nil {
 			return pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeRechargeOrderGetFailed)
 		}

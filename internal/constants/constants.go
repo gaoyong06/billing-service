@@ -89,3 +89,11 @@ const (
 	// OrderIDPrefixRecharge 充值订单ID前缀
 	OrderIDPrefixRecharge = "recharge_"
 )
+
+// 支付来源常量（用于 payment-service）
+const (
+	// PaymentSourceBilling 充值来源
+	PaymentSourceBilling = "billing"
+	// PaymentSourceSubscription 订阅来源
+	PaymentSourceSubscription = "subscription"
+)

@@ -46,14 +46,14 @@ CREATE TABLE IF NOT EXISTS `billing_record` (
 
 -- Table: recharge_order
 CREATE TABLE IF NOT EXISTS `recharge_order` (
-    `recharge_order_id` VARCHAR(64) NOT NULL COMMENT '充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}，作为主键，传给payment-service作为业务订单号）',
+    `order_id` VARCHAR(64) NOT NULL COMMENT '订单号（billing-service生成，格式：recharge_{uid}_{timestamp}，作为主键，传给payment-service作为业务订单号order_id）',
     `uid` VARCHAR(36) NOT NULL COMMENT '用户ID',
     `amount` DECIMAL(10, 2) NOT NULL COMMENT '充值金额',
     `payment_id` VARCHAR(64) DEFAULT NULL COMMENT '支付流水号（payment-service返回的payment_id，用于关联payment-service的支付订单，有唯一索引保证幂等性）',
     `status` ENUM('pending', 'success', 'failed') NOT NULL DEFAULT 'pending' COMMENT '订单状态: pending-待支付, success-支付成功, failed-支付失败',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`recharge_order_id`),
+    PRIMARY KEY (`order_id`),
     UNIQUE KEY `uk_payment_id` (`payment_id`) COMMENT 'payment_id唯一索引（幂等性保证）',
     INDEX `idx_uid` (`uid`) COMMENT '用户ID索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='充值订单表（幂等性保证）';

@@ -6,6 +6,7 @@ import (
 
 	"billing-service/internal/biz"
 	"billing-service/internal/conf"
+	"billing-service/internal/constants"
 	billingErrors "billing-service/internal/errors"
 	paymentv1 "xinyuan_tech/payment-service/api/payment/v1"
 
@@ -67,11 +68,11 @@ func (c *paymentServiceClient) CreatePayment(ctx context.Context, req *biz.Creat
 	amountCents := int64(req.Amount * 100)
 
 	// 调用 payment-service 的 gRPC 接口
+	// 注意：appId 现在只从 Context 获取（由中间件从 Header 提取），不再从请求体传递
 	resp, err := c.client.CreatePayment(ctx, &paymentv1.CreatePaymentRequest{
 		OrderId:   req.OrderID,
 		UserId:    userID,
-		AppId:     req.AppID, // 传递应用ID（充值场景可能为空）
-		Source:    "billing", // 标记来源为充值
+		Source:    constants.PaymentSourceBilling, // 标记来源为充值
 		Amount:    amountCents,
 		Currency:  req.Currency,
 		Method:    paymentv1.PaymentMethod(req.Method),

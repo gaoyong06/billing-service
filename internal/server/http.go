@@ -5,6 +5,7 @@ import (
 	"billing-service/internal/service"
 
 	"github.com/gaoyong06/go-pkg/health"
+	"github.com/gaoyong06/go-pkg/middleware/app_id"
 	"github.com/gaoyong06/go-pkg/middleware/i18n"
 	"github.com/gaoyong06/go-pkg/middleware/response"
 
@@ -31,6 +32,8 @@ func NewHTTPServer(c *conf.Server, billing *service.BillingService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			// 添加 app_id 中间件（优先于其他中间件，确保 app_id 在 Context 中可用）
+			app_id.Middleware(),
 			// 添加 i18n 中间件
 			i18n.Middleware(),
 		),
@@ -52,7 +55,7 @@ func NewHTTPServer(c *conf.Server, billing *service.BillingService, logger log.L
 
 	// 注册外部服务路由（面向前端/开发者）
 	v1.RegisterBillingServiceHTTPServer(srv, billing)
-	
+
 	// 注册内部服务路由（面向 Gateway/Payment）
 	v1.RegisterBillingInternalServiceHTTPServer(srv, billing)
 

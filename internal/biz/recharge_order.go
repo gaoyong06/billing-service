@@ -17,13 +17,13 @@ import (
 
 // RechargeOrder 充值订单领域对象
 type RechargeOrder struct {
-	RechargeOrderID string    // 充值订单ID（billing-service生成，传给payment-service作为业务订单号）
-	UID             string    // 用户ID
-	Amount          float64   // 充值金额
-	PaymentID       string    // 支付流水号（payment-service返回的payment_id）
-	Status          string    // 订单状态
-	CreatedAt       time.Time // 创建时间
-	UpdatedAt       time.Time // 更新时间
+	OrderID   string    // 订单号（billing-service生成，传给payment-service作为业务订单号order_id）
+	UID       string    // 用户ID
+	Amount    float64   // 充值金额
+	PaymentID string    // 支付流水号（payment-service返回的payment_id）
+	Status    string    // 订单状态
+	CreatedAt time.Time // 创建时间
+	UpdatedAt time.Time // 更新时间
 }
 
 // RechargeOrderRepo 充值订单数据层接口（定义在 biz 层）
@@ -157,7 +157,7 @@ func (uc *RechargeOrderUseCase) RechargeCallback(ctx context.Context, orderID st
 			return nil // 已经处理过，直接返回成功（幂等性）
 		}
 		// 使用已存在的订单ID
-		orderID = existingOrder.RechargeOrderID
+		orderID = existingOrder.OrderID
 	} else {
 		// 订单不存在，可能是旧数据或测试数据，尝试通过订单ID查询
 		existingOrder, err = uc.repo.GetRechargeOrderByID(ctx, orderID)
@@ -169,7 +169,7 @@ func (uc *RechargeOrderUseCase) RechargeCallback(ctx context.Context, orderID st
 			return pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeRechargeOrderNotFound)
 		}
 		if existingOrder.Status == constants.OrderStatusSuccess {
-			uc.log.Infof("Recharge already processed: recharge_order_id=%s, status=%s", orderID, existingOrder.Status)
+			uc.log.Infof("Recharge already processed: order_id=%s, status=%s", orderID, existingOrder.Status)
 			return nil // 已经处理过，直接返回成功（幂等性）
 		}
 	}
