@@ -40,6 +40,16 @@ message Data {
   }
   Database database = 1;
   Redis redis = 2;
+  RocketMQ rocketmq = 3;
+
+  message RocketMQ {
+    repeated string name_servers = 1;
+    string group_name = 2;
+    string topic = 3;
+    int32 retry_times = 4;
+    google.protobuf.Duration send_timeout = 5;
+    bool enabled = 6;
+  }
 }
 
 message Billing {

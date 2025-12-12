@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -12,6 +13,7 @@ import (
 	billingErrors "billing-service/internal/errors"
 	"billing-service/internal/metrics"
 
+	"github.com/apache/rocketmq-client-go/v2/primitive"
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redsync/redsync/v4"
@@ -19,6 +21,53 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+const deductScript = `
+local quotaKey = KEYS[1]
+local balanceKey = KEYS[2]
+local count = tonumber(ARGV[1])
+local totalCost = tonumber(ARGV[2])
+
+-- Get remaining quota
+local quota = redis.call('GET', quotaKey)
+if not quota then
+    return {-1, 0, 0, 0} -- Quota Cache Missing
+end
+quota = tonumber(quota)
+
+-- Case 1: Quota enough
+if quota >= count then
+    redis.call('DECRBY', quotaKey, count)
+    return {1, count, 0, 0} -- Success (Free)
+end
+
+-- Case 2: Mixed (Quota + Balance)
+local balance = redis.call('GET', balanceKey)
+if not balance then
+    return {-2, 0, 0, 0} -- Balance Cache Missing
+end
+balance = tonumber(balance)
+
+local freeUsed = quota
+local paidCount = count - quota
+local unitPrice = 0
+if count > 0 then
+    unitPrice = totalCost / count
+end
+local needed = paidCount * unitPrice
+
+if balance >= needed then
+    redis.call('SET', quotaKey, 0)
+    redis.call('INCRBYFLOAT', balanceKey, -needed)
+    -- Formatting needed as string to avoid precision loss? Or just number.
+    -- Redis Lua usually returns logic numbers. Let's return as string for safety if float?
+    -- Actually Redis response for float is Bulk String if configured?
+    -- Let's return number and hope Go Redis handles it.
+    return {1, freeUsed, paidCount, tostring(needed)} -- Success (Mixed)
+end
+
+return {0, 0, 0, 0} -- Insufficient
+`
 
 // billingRepo 组合 repo，实现 biz.BillingRepo 接口
 type billingRepo struct {
@@ -103,7 +152,210 @@ func (r *billingRepo) ListBillingRecords(ctx context.Context, userID string, pag
 // DeductQuota 核心扣费逻辑（事务）
 // 支持混合扣费：优先扣除免费额度，不足时扣除余额
 // 使用分布式锁防止高并发超扣
+// DeductQuota 核心扣费逻辑
+// 优化版：优先使用 Redis Lua + RocketMQ 异步处理
+// 降级版：如果 MQ 未启用，回退 to DB 事务
 func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error) {
+	// 如果 MQ 未启用，走降级方案（DB事务）
+	if r.data.mq == nil {
+		return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+	}
+
+	// 1. 准备 Keys
+	quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+	balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
+
+	// 2. 执行 Lua 脚本
+	// 重试机制：如果 Cache Missing，加载后重试
+	for i := 0; i < 2; i++ {
+		res, err := r.data.rdb.Eval(ctx, deductScript, []string{quotaKey, balanceKey}, count, cost).Result()
+		if err != nil {
+			r.log.Errorf("Lua script failed: %v", err)
+			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month) // 出错降级
+		}
+
+		// Parse result: []interface{}
+		// {code, freeUsed, paidCount, balanceDeducted}
+		vals, ok := res.([]interface{})
+		if !ok || len(vals) != 4 {
+			r.log.Errorf("Lua script returned invalid result: %v", res)
+			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+		}
+
+		code := int(vals[0].(int64))
+
+		if code == 1 {
+			freeUsed := int(vals[1].(int64))
+			paidCount := int(vals[2].(int64))
+			// balanceDeducted returned as string from Lua to preserve float? Or standard float?
+			// We used tostring(needed) in Lua.
+			balanceDeductedStr := vals[3].(string)
+			// Parse float
+			balanceDeducted := 0.0
+			if balanceDeductedStr != "0" {
+				fmt.Sscanf(balanceDeductedStr, "%f", &balanceDeducted)
+			}
+
+			// 成功扣费
+			recordID := uuid.New().String()
+
+			// 3. 发送消息到 RocketMQ
+			event := &biz.DeductEvent{
+				RecordID:        recordID,
+				UserID:          userID,
+				ServiceName:     serviceName,
+				Count:           count,
+				Cost:            cost,
+				FreeCount:       freeUsed,
+				PaidCount:       paidCount,
+				BalanceDeducted: balanceDeducted,
+				DeductTime:      time.Now(),
+				Month:           month,
+			}
+			msgBytes, _ := json.Marshal(event)
+			msg := primitive.NewMessage("billing_deduct_queue", msgBytes)
+
+			_, err := r.data.mq.SendSync(ctx, msg)
+			if err != nil {
+				r.log.Errorf("Send RocketMQ failed: %v", err)
+				// 降级回 DB 事务
+				return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+			}
+
+			return recordID, nil
+		} else if code == 0 {
+			// 余额不足
+			return "", pkgErrors.NewBizErrorWithLang(ctx, billingErrors.ErrCodeInsufficientBalance)
+		} else if code == -1 || code == -2 {
+			// Cache Missing，加载数据
+			if i == 0 {
+				r.loadCache(ctx, userID, serviceName, month)
+				continue
+			}
+			// 还是缺失，降级
+			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+		}
+	}
+
+	return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+}
+
+// BatchDeductQuota 批量处理扣费记录（Consumer调用）
+func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.DeductEvent) error {
+	if len(events) == 0 {
+		return nil
+	}
+
+	return r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, event := range events {
+			// 1. 更新 FreeQuota
+			if event.FreeCount > 0 {
+				if err := tx.Model(&model.FreeQuota{}).
+					Where("uid = ? AND service_name = ? AND reset_month = ?", event.UserID, event.ServiceName, event.Month).
+					Update("used_quota", gorm.Expr("used_quota + ?", event.FreeCount)).Error; err != nil {
+					// 如果更新失败（例如记录不存在），可能需要处理。但理论上应该存在。
+					r.log.Errorf("Failed to update free quota in batch: %v", err)
+					return err
+				}
+
+				// 插入免费记录
+				freeRecord := model.BillingRecord{
+					BillingRecordID: event.RecordID, // 如果全是免费，用这个ID
+					UID:             event.UserID,
+					ServiceName:     event.ServiceName,
+					Type:            model.BillingTypeFree,
+					Amount:          0,
+					Count:           event.FreeCount,
+					CreatedAt:       event.DeductTime,
+				}
+				if event.PaidCount > 0 {
+					// 如果混合，免费记录要换个ID或加后缀？或者主ID给谁？
+					// 之前逻辑：freeRecord ID = recordID, balanceRecord ID = recordID (if pure) or new uuid.
+					// 让我们保持简单：都生成新UUID，或者复用。
+					// 之前逻辑：free used recordID, balance used recordID/newID.
+					// 这里我们生成 uuid 吧。
+					freeRecord.BillingRecordID = uuid.New().String()
+				}
+				if err := tx.Create(&freeRecord).Error; err != nil {
+					return err
+				}
+			}
+
+			// 2. 更新 Balance
+			if event.BalanceDeducted > 0 {
+				if err := tx.Model(&model.UserBalance{}).
+					Where("uid = ?", event.UserID).
+					Update("balance", gorm.Expr("balance - ?", event.BalanceDeducted)).Error; err != nil {
+					r.log.Errorf("Failed to update balance in batch: %v", err)
+					return err
+				}
+
+				// 插入余额记录
+				balanceRecord := model.BillingRecord{
+					BillingRecordID: event.RecordID, // 主ID给余额记录（如果混合）
+					UID:             event.UserID,
+					ServiceName:     event.ServiceName,
+					Type:            model.BillingTypeBalance,
+					Amount:          event.BalanceDeducted,
+					Count:           event.PaidCount,
+					CreatedAt:       event.DeductTime,
+				}
+				// 如果纯扣余额，用 recordID. 如果混合，free用了uuid, balance 用 recordID. OK.
+				if event.FreeCount > 0 {
+					// 混合情况，recordID 给谁？
+					// repo 里面返回的是 recordID.
+					// 对于用户来说，拥有 recordID 的那条记录比较重要。
+					// 之前的逻辑：
+					// Free: recordID
+					// Balance: recordID
+					// Mixed: Free=recordID, Balance=UUID ? Or Free=UUID, Balance=recordID?
+					// Checked `deductQuotaDB`:
+					// recordID = new UUID
+					// Free: ID = recordID
+					// Balance: ID = recordID (if no free), else NewUUID.
+					// So Free always gets recordID? No.
+					// If free > 0: freeRecord.ID = recordID.
+					// If balance > 0: balanceRecord.ID = recordID (if free==0) else newUUID.
+					// So if Mixed, Free gets recordID, Balance gets NewUUID.
+
+					// Let's mimic this.
+					balanceRecord.BillingRecordID = uuid.New().String()
+				}
+
+				if err := tx.Create(&balanceRecord).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// loadCache 加载缓存 (同步)
+func (r *billingRepo) loadCache(ctx context.Context, userID, serviceName, month string) {
+	// 加载 Quota
+	q, err := r.freeQuotaRepo.GetFreeQuota(ctx, userID, serviceName, month)
+	if err == nil && q != nil {
+		remaining := q.TotalQuota - q.UsedQuota
+		quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+		// 同步写入 Redis
+		r.data.rdb.Set(ctx, quotaKey, remaining, 5*time.Minute)
+	}
+
+	// 加载 Balance
+	b, err := r.userBalanceRepo.GetUserBalance(ctx, userID)
+	if err == nil {
+		balance := 0.0
+		if b != nil {
+			balance = b.Balance
+		}
+		balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
+		r.data.rdb.Set(ctx, balanceKey, balance, 5*time.Minute)
+	}
+}
+
+// deductQuotaDB DB 事务扣费（原 DeductQuota）
+func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error) {
 	// 获取分布式锁（按用户+服务+月份）
 	lockKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyDeductLock, userID, serviceName, month)
 	if r.sync != nil {

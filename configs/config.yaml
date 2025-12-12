@@ -34,6 +34,15 @@ data:
     read_timeout: 0.2s
     # Redis 写入超时时间
     write_timeout: 0.2s
+  # RocketMQ 消息队列配置
+  rocketmq:
+    name_servers:
+      - "127.0.0.1:9876"
+    group_name: "billing_deduct_group"
+    topic: "billing_deduct_queue"
+    retry_times: 2
+    send_timeout: 3s
+    enabled: true
 
 # 计费业务配置
 billing:

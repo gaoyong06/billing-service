@@ -30,6 +30,7 @@ type BillingRepo interface {
 
 	// 事务操作
 	DeductQuota(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error)
+	BatchDeductQuota(ctx context.Context, events []*DeductEvent) error
 
 	// 订单相关（幂等性保证）
 	CreateRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error

@@ -51,7 +51,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Boots
 	billingService := service.NewBillingService(billingUseCase, logger)
 	grpcServer := server.NewGRPCServer(confServer, billingService, logger)
 	httpServer := server.NewHTTPServer(confServer, billingService, logger)
-	app := newApp(logger, grpcServer, httpServer)
+	mqConsumerServer := server.NewMQConsumerServer(confData, billingRepo, logger)
+	app := newApp(logger, grpcServer, httpServer, mqConsumerServer)
 	return app, func() {
 		cleanup()
 	}, nil

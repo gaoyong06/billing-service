@@ -6,6 +6,8 @@ import (
 
 	"billing-service/internal/conf"
 
+	"billing-service/internal/server"
+
 	"github.com/gaoyong06/go-pkg/logger"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -30,7 +32,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, mq *server.MQConsumerServer) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -40,6 +42,7 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 		kratos.Server(
 			gs,
 			hs,
+			mq,
 		),
 	)
 }
@@ -66,14 +69,14 @@ func main() {
 
 	// 初始化日志 (使用 go-pkg/logger)
 	logConfig := &logger.Config{
-		Level:      "info",
-		Format:     "json",
-		Output:     "stdout",
-		FilePath:   "logs/billing-service.log",
-		MaxSize:    100,
-		MaxAge:     30,
-		MaxBackups: 10,
-		Compress:   true,
+		Level:         "info",
+		Format:        "json",
+		Output:        "stdout",
+		FilePath:      "logs/billing-service.log",
+		MaxSize:       100,
+		MaxAge:        30,
+		MaxBackups:    10,
+		Compress:      true,
 		EnableConsole: true,
 	}
 

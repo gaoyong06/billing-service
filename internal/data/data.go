@@ -12,6 +12,10 @@ import (
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	"github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/apache/rocketmq-client-go/v2/producer"
 )
 
 // ProviderSet is data providers.
@@ -31,6 +35,7 @@ var ProviderSet = wire.NewSet(
 type Data struct {
 	db  *gorm.DB
 	rdb *redis.Client
+	mq  rocketmq.Producer
 }
 
 // NewData .
@@ -77,9 +82,27 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		return nil, nil, err
 	}
 
+	// RocketMQ Producer
+	var mq rocketmq.Producer
+	if c.Rocketmq != nil && c.Rocketmq.Enabled {
+		p, err := rocketmq.NewProducer(
+			producer.WithNsResolver(primitive.NewPassthroughResolver(c.Rocketmq.NameServers)),
+			producer.WithRetry(int(c.Rocketmq.RetryTimes)),
+			producer.WithGroupName(c.Rocketmq.GroupName),
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = p.Start(); err != nil {
+			return nil, nil, err
+		}
+		mq = p
+	}
+
 	d := &Data{
 		db:  db,
 		rdb: rdb,
+		mq:  mq,
 	}
 
 	cleanup := func() {
@@ -89,6 +112,11 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		}
 		if err := d.rdb.Close(); err != nil {
 			log.Error(err)
+		}
+		if d.mq != nil {
+			if err := d.mq.Shutdown(); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 	return d, cleanup, nil
