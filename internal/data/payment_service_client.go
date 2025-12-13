@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"strconv"
 
 	"billing-service/internal/biz"
 	"billing-service/internal/conf"
@@ -58,11 +57,6 @@ func NewPaymentServiceClient(c *conf.PaymentService, logger log.Logger) (Payment
 
 // CreatePayment 创建支付订单（实现 biz.PaymentServiceClient 接口）
 func (c *paymentServiceClient) CreatePayment(ctx context.Context, req *biz.CreatePaymentRequest) (*biz.CreatePaymentReply, error) {
-	// 将 uid 从 string 转换为 uint64
-	userID, err := strconv.ParseUint(req.UID, 10, 64)
-	if err != nil {
-		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeInvalidUserID)
-	}
 
 	// 将金额从元转换为分
 	amountCents := int64(req.Amount * 100)
@@ -71,7 +65,7 @@ func (c *paymentServiceClient) CreatePayment(ctx context.Context, req *biz.Creat
 	// 注意：appId 现在只从 Context 获取（由中间件从 Header 提取），不再从请求体传递
 	resp, err := c.client.CreatePayment(ctx, &paymentv1.CreatePaymentRequest{
 		OrderId:   req.OrderID,
-		UserId:    userID,
+		Uid:       req.UID,
 		Source:    constants.PaymentSourceBilling, // 标记来源为充值
 		Amount:    amountCents,
 		Currency:  req.Currency,

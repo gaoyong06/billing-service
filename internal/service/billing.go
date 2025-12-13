@@ -30,8 +30,15 @@ func NewBillingService(uc *biz.BillingUseCase, logger log.Logger) *BillingServic
 
 // GetAccount 获取账户资产信息
 func (s *BillingService) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountReply, error) {
+	// 验证必填字段
+	if req.UserId == "" {
+		s.log.Warnf("GetAccount: userId is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+
 	balance, quotas, err := s.uc.GetAccount(ctx, req.UserId)
 	if err != nil {
+		s.log.Errorf("GetAccount failed: userId=%s, error=%v", req.UserId, err)
 		return nil, err
 	}
 

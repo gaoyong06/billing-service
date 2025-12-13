@@ -38,8 +38,8 @@ func (r *statsRepo) GetAllUserIDs(ctx context.Context) ([]string, error) {
 	var quotaUserIDs []string
 	if err := r.data.db.WithContext(ctx).
 		Model(&model.FreeQuota{}).
-		Distinct("user_id").
-		Pluck("user_id", &quotaUserIDs).Error; err != nil {
+		Distinct("uid").
+		Pluck("uid", &quotaUserIDs).Error; err != nil {
 		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeGetAllUserIDsFailed)
 	}
 	for _, userID := range quotaUserIDs {
@@ -50,8 +50,8 @@ func (r *statsRepo) GetAllUserIDs(ctx context.Context) ([]string, error) {
 	var balanceUserIDs []string
 	if err := r.data.db.WithContext(ctx).
 		Model(&model.UserBalance{}).
-		Distinct("user_id").
-		Pluck("user_id", &balanceUserIDs).Error; err != nil {
+		Distinct("uid").
+		Pluck("uid", &balanceUserIDs).Error; err != nil {
 		return nil, pkgErrors.WrapErrorWithLang(ctx, err, billingErrors.ErrCodeGetAllUserIDsFailed)
 	}
 	for _, userID := range balanceUserIDs {
@@ -76,7 +76,7 @@ func (r *statsRepo) GetStatsToday(ctx context.Context, userID, serviceName strin
 
 	// 构建查询条件
 	query := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
-		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, todayStart, todayEnd)
+		Where("uid = ? AND created_at >= ? AND created_at < ?", userID, todayStart, todayEnd)
 
 	// 如果指定了服务名称，添加过滤条件
 	if serviceName != "" {
@@ -120,7 +120,7 @@ func (r *statsRepo) GetStatsMonth(ctx context.Context, userID, serviceName strin
 
 	// 构建查询条件
 	query := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
-		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart)
+		Where("uid = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart)
 
 	// 如果指定了服务名称，添加过滤条件
 	if serviceName != "" {
@@ -172,7 +172,7 @@ func (r *statsRepo) GetStatsSummary(ctx context.Context, userID string) (*biz.St
 	}
 
 	if err := r.data.db.WithContext(ctx).Model(&model.BillingRecord{}).
-		Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart).
+		Where("uid = ? AND created_at >= ? AND created_at < ?", userID, monthStart, nextMonthStart).
 		Select(
 			"service_name",
 			"SUM(count) as total_count",

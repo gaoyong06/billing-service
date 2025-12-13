@@ -31,6 +31,10 @@ func NewUserBalanceRepo(data *Data, logger log.Logger) biz.UserBalanceRepo {
 
 // GetUserBalance 获取用户余额
 func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*biz.UserBalance, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("userID is required")
+	}
+
 	// 先尝试从 Redis 获取
 	balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
 	balanceStr, err := r.data.rdb.Get(ctx, balanceKey).Result()
@@ -49,9 +53,11 @@ func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*b
 	var m model.UserBalance
 	if err := r.data.db.WithContext(ctx).Where("uid = ?", userID).First(&m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 用户不存在，返回 nil 而不是错误（业务层会处理为余额 0）
 			return nil, nil
 		}
-		return nil, err
+		r.log.Errorf("GetUserBalance failed: userID=%s, error=%v", userID, err)
+		return nil, fmt.Errorf("failed to query user balance from database: %w", err)
 	}
 
 	result := &biz.UserBalance{

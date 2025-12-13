@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"billing-service/internal/constants"
@@ -134,9 +135,15 @@ func (uc *BillingUseCase) getOrCreateQuota(ctx context.Context, userID, serviceN
 
 // GetAccount 获取账户信息（组合多个领域）
 func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserBalance, []*FreeQuota, error) {
+	if userID == "" {
+		uc.log.Warnf("GetAccount: userID is empty")
+		return nil, nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+
 	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
-		return nil, nil, err
+		uc.log.Errorf("GetAccount failed to get balance: userID=%s, error=%v", userID, err)
+		return nil, nil, fmt.Errorf("failed to get user balance: %w", err)
 	}
 	if balance == nil {
 		balance = &UserBalance{UID: userID, Balance: 0}

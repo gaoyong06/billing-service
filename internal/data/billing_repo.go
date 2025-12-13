@@ -390,7 +390,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		// 1. 检查并扣减免费额度
 		var quota model.FreeQuota
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("user_id = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
+			Where("uid = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
 			First(&quota).Error
 
 		quotaNotFound := errors.Is(err, gorm.ErrRecordNotFound)
@@ -437,7 +437,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		if balanceCount > 0 {
 			var balance model.UserBalance
 			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-				Where("user_id = ?", userID).First(&balance).Error; err != nil {
+				Where("uid = ?", userID).First(&balance).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					// 用户余额记录不存在，自动创建（初始余额为 0）
 					balance = model.UserBalance{

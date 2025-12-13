@@ -52,6 +52,12 @@ func NewMQConsumerServer(c *conf.Data, repo biz.BillingRepo, logger log.Logger) 
 // Start starts the consumer
 func (s *MQConsumerServer) Start(ctx context.Context) error {
 	if !s.enabled {
+		s.log.Infof("MQConsumerServer is disabled, skipping startup")
+		return nil
+	}
+
+	if s.c == nil {
+		s.log.Warnf("MQConsumerServer consumer is nil, skipping startup")
 		return nil
 	}
 
@@ -60,10 +66,20 @@ func (s *MQConsumerServer) Start(ctx context.Context) error {
 	// Subscribe
 	err := s.c.Subscribe(s.conf.Rocketmq.Topic, consumer.MessageSelector{}, s.handler)
 	if err != nil {
-		return err
+		s.log.Errorf("Failed to subscribe to topic %s: %v", s.conf.Rocketmq.Topic, err)
+		// 不返回错误，避免导致整个应用启动失败
+		// 在开发环境中，RocketMQ 可能不可用
+		return nil
 	}
 
-	return s.c.Start()
+	err = s.c.Start()
+	if err != nil {
+		s.log.Errorf("Failed to start RocketMQ consumer: %v", err)
+		// 不返回错误，避免导致整个应用启动失败
+		return nil
+	}
+
+	return nil
 }
 
 // Stop stops the consumer
