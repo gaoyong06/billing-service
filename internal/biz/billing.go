@@ -111,7 +111,7 @@ func (uc *BillingUseCase) getOrCreateQuota(ctx context.Context, userID, serviceN
 
 	// 创建并保存配额记录
 	quota = &FreeQuota{
-		UID:         userID,
+		UserID:      userID,
 		ServiceName: serviceName,
 		TotalQuota:  int(totalQuota),
 		UsedQuota:   0,
@@ -146,7 +146,7 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 		return nil, nil, fmt.Errorf("failed to get user balance: %w", err)
 	}
 	if balance == nil {
-		balance = &UserBalance{UID: userID, Balance: 0}
+		balance = &UserBalance{UserID: userID, Balance: 0}
 	}
 
 	month := time.Now().Format(constants.TimeFormatMonth)
@@ -218,7 +218,7 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	// 如果余额记录不存在，自动创建（初始余额为 0）
 	if balance == nil {
 		balance = &UserBalance{
-			UID:     userID,
+			UserID:  userID,
 			Balance: 0,
 		}
 		// 注意：这里不创建记录，只是用于检查
@@ -332,7 +332,7 @@ func (uc *BillingUseCase) ResetFreeQuotas(ctx context.Context) (int, []string, e
 
 			// 创建新的免费额度记录
 			quota := &FreeQuota{
-				UID:         userID,
+				UserID:      userID,
 				ServiceName: serviceName,
 				TotalQuota:  int(totalQuota),
 				UsedQuota:   0,
