@@ -10,7 +10,7 @@ import (
 // BillingRecord 消费记录领域对象
 type BillingRecord struct {
 	ID          string
-	UID         string
+	UserID      string
 	ServiceName string
 	Type        string // "free": 免费额度, "balance": 余额扣费
 	Amount      float64

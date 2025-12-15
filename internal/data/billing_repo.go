@@ -251,7 +251,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 			// 1. 更新 FreeQuota
 			if event.FreeCount > 0 {
 				if err := tx.Model(&model.FreeQuota{}).
-					Where("uid = ? AND service_name = ? AND reset_month = ?", event.UserID, event.ServiceName, event.Month).
+					Where("user_id = ? AND service_name = ? AND reset_month = ?", event.UserID, event.ServiceName, event.Month).
 					Update("used_quota", gorm.Expr("used_quota + ?", event.FreeCount)).Error; err != nil {
 					// 如果更新失败（例如记录不存在），可能需要处理。但理论上应该存在。
 					r.log.Errorf("Failed to update free quota in batch: %v", err)
@@ -261,7 +261,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 				// 插入免费记录
 				freeRecord := model.BillingRecord{
 					BillingRecordID: event.RecordID, // 如果全是免费，用这个ID
-					UID:             event.UserID,
+					UserID:          event.UserID,
 					ServiceName:     event.ServiceName,
 					Type:            model.BillingTypeFree,
 					Amount:          0,
@@ -284,7 +284,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 			// 2. 更新 Balance
 			if event.BalanceDeducted > 0 {
 				if err := tx.Model(&model.UserBalance{}).
-					Where("uid = ?", event.UserID).
+					Where("user_id = ?", event.UserID).
 					Update("balance", gorm.Expr("balance - ?", event.BalanceDeducted)).Error; err != nil {
 					r.log.Errorf("Failed to update balance in batch: %v", err)
 					return err
@@ -293,7 +293,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 				// 插入余额记录
 				balanceRecord := model.BillingRecord{
 					BillingRecordID: event.RecordID, // 主ID给余额记录（如果混合）
-					UID:             event.UserID,
+					UserID:          event.UserID,
 					ServiceName:     event.ServiceName,
 					Type:            model.BillingTypeBalance,
 					Amount:          event.BalanceDeducted,
@@ -390,7 +390,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		// 1. 检查并扣减免费额度
 		var quota model.FreeQuota
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("uid = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
+			Where("user_id = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
 			First(&quota).Error
 
 		quotaNotFound := errors.Is(err, gorm.ErrRecordNotFound)
@@ -437,12 +437,12 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		if balanceCount > 0 {
 			var balance model.UserBalance
 			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-				Where("uid = ?", userID).First(&balance).Error; err != nil {
+				Where("user_id = ?", userID).First(&balance).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					// 用户余额记录不存在，自动创建（初始余额为 0）
 					balance = model.UserBalance{
 						UserBalanceID: uuid.New().String(),
-						UID:           userID,
+						UserID:        userID,
 						Balance:       0,
 					}
 					if err := tx.Create(&balance).Error; err != nil {
@@ -475,7 +475,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		if freeQuotaUsed > 0 {
 			freeRecord := model.BillingRecord{
 				BillingRecordID: recordID,
-				UID:             userID,
+				UserID:          userID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeFree,
 				Amount:          0,
@@ -495,7 +495,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 			}
 			balanceRecord := model.BillingRecord{
 				BillingRecordID: balanceRecordID,
-				UID:             userID,
+				UserID:          userID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeBalance,
 				Amount:          balanceDeducted,

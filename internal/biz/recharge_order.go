@@ -18,7 +18,7 @@ import (
 // RechargeOrder 充值订单领域对象
 type RechargeOrder struct {
 	OrderID   string    // 订单号（billing-service生成，传给payment-service作为业务订单号order_id）
-	UID       string    // 用户ID
+	UserID    string    // 用户ID
 	Amount    float64   // 充值金额
 	PaymentID string    // 支付流水号（payment-service返回的payment_id）
 	Status    string    // 订单状态
@@ -106,7 +106,7 @@ func (uc *RechargeOrderUseCase) CreateRecharge(ctx context.Context, userID strin
 	// 如果将来需要区分平台充值和应用充值，可以考虑使用特殊的 app_id 值（如 "platform"）
 	paymentResp, err := uc.paymentServiceClient.CreatePayment(ctx, &CreatePaymentRequest{
 		OrderID:   orderID,
-		UID:       userID,
+		UserID:    userID,
 		AppID:     "", // 充值场景：开发者向平台充值，不关联具体应用
 		Amount:    amount,
 		Currency:  currency,

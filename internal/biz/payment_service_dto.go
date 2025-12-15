@@ -10,7 +10,7 @@ type PaymentServiceClient interface {
 // CreatePaymentRequest 创建支付请求
 type CreatePaymentRequest struct {
 	OrderID   string // 充值订单ID（billing-service生成，传给payment-service作为业务订单号）
-	UID       string
+	UserID    string
 	AppID     string // 应用ID（开发者充值时使用开发者的 app_id）
 	Amount    float64
 	Currency  string

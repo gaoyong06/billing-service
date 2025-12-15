@@ -43,7 +43,7 @@ func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*b
 		var balance float64
 		if _, err := fmt.Sscanf(balanceStr, "%f", &balance); err == nil {
 			return &biz.UserBalance{
-				UID:     userID,
+				UserID:  userID,
 				Balance: balance,
 			}, nil
 		}
@@ -51,7 +51,7 @@ func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*b
 
 	// 缓存未命中，从数据库查询
 	var m model.UserBalance
-	if err := r.data.db.WithContext(ctx).Where("uid = ?", userID).First(&m).Error; err != nil {
+	if err := r.data.db.WithContext(ctx).Where("user_id = ?", userID).First(&m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 用户不存在，返回 nil 而不是错误（业务层会处理为余额 0）
 			return nil, nil
@@ -61,7 +61,7 @@ func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*b
 	}
 
 	result := &biz.UserBalance{
-		UID:       m.UID,
+		UserID:    m.UserID,
 		Balance:   m.Balance,
 		UpdatedAt: m.UpdatedAt,
 	}
@@ -83,11 +83,11 @@ func (r *userBalanceRepo) GetUserBalance(ctx context.Context, userID string) (*b
 func (r *userBalanceRepo) Recharge(ctx context.Context, userID string, amount float64) error {
 	return r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var m model.UserBalance
-		if err := tx.Where("uid = ?", userID).First(&m).Error; err != nil {
+		if err := tx.Where("user_id = ?", userID).First(&m).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				m = model.UserBalance{
 					UserBalanceID: uuid.New().String(),
-					UID:           userID,
+					UserID:        userID,
 					Balance:       amount,
 				}
 				return tx.Create(&m).Error

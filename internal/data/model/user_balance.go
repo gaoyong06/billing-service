@@ -7,7 +7,7 @@ import (
 // UserBalance 账户余额表
 type UserBalance struct {
 	UserBalanceID string    `gorm:"primaryKey;type:varchar(36)"`
-	UID           string    `gorm:"column:uid;uniqueIndex:uk_uid;type:varchar(36);not null"`
+	UserID        string    `gorm:"column:user_id;uniqueIndex:uk_user_id;type:varchar(36);not null"`
 	Balance       float64   `gorm:"type:decimal(10,2);default:0.00"`
 	CreatedAt     time.Time `gorm:"autoCreateTime"`
 	UpdatedAt     time.Time `gorm:"autoUpdateTime"`

@@ -14,12 +14,12 @@ const (
 // BillingRecord 消费流水表
 type BillingRecord struct {
 	BillingRecordID string    `gorm:"primaryKey;type:varchar(36)"`
-	UID             string    `gorm:"column:uid;type:varchar(36);not null;index:idx_uid_date,priority:1"`
+	UserID          string    `gorm:"column:user_id;type:varchar(36);not null;index:idx_user_id_date,priority:1"`
 	ServiceName     string    `gorm:"type:varchar(32);not null"`
 	Type            string    `gorm:"type:enum('free','balance');not null"` // free:免费额度, balance:余额扣费
 	Amount          float64   `gorm:"type:decimal(10,4);default:0.0000"`
 	Count           int       `gorm:"default:1"`
-	CreatedAt       time.Time `gorm:"autoCreateTime;index:idx_uid_date,priority:2"`
+	CreatedAt       time.Time `gorm:"autoCreateTime;index:idx_user_id_date,priority:2"`
 }
 
 // TableName 指定表名

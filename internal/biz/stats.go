@@ -8,7 +8,7 @@ import (
 
 // Stats 统计对象
 type Stats struct {
-	UID         string
+	UserID      string
 	ServiceName string
 	TotalCount  int     // 总调用次数
 	TotalCost   float64 // 总费用（仅余额扣费部分）
@@ -28,7 +28,7 @@ type ServiceStats struct {
 
 // StatsSummary 汇总统计对象
 type StatsSummary struct {
-	UID        string
+	UserID     string
 	TotalCount int
 	TotalCost  float64
 	Services   []*ServiceStats

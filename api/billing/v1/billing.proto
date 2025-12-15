@@ -107,7 +107,7 @@ message RechargeRequest {
 }
 
 message RechargeReply {
-  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{user_id}_{timestamp}）
   string paymentUrl = 2; // 支付URL
 }
 
@@ -155,7 +155,7 @@ message DeductQuotaReply {
 }
 
 message RechargeCallbackRequest {
-  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+  string rechargeOrderId = 1; // 充值订单ID（billing-service生成，格式：recharge_{user_id}_{timestamp}）
   string paymentId = 2; // 支付流水号（payment-service返回的payment_id）
   double amount = 3; // 充值金额
   string status = 4; // 支付状态

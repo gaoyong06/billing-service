@@ -15,7 +15,7 @@ const (
 // RechargeOrder 充值订单表（用于幂等性保证）
 type RechargeOrder struct {
 	OrderID   string    `gorm:"primaryKey;column:order_id;type:varchar(64)"` // 订单号（billing-service生成，传给payment-service作为业务订单号order_id）
-	UID       string    `gorm:"column:uid;type:varchar(36);not null;index:idx_uid"`
+	UserID    string    `gorm:"column:user_id;type:varchar(36);not null;index:idx_user_id"`
 	Amount    float64   `gorm:"type:decimal(10,2);not null"`
 	PaymentID string    `gorm:"column:payment_id;type:varchar(64);uniqueIndex"`                     // 支付流水号（payment-service返回的payment_id）
 	Status    string    `gorm:"type:enum('pending','success','failed');not null;default:'pending'"` // pending:待支付, success:支付成功, failed:支付失败

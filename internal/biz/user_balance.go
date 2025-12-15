@@ -9,7 +9,7 @@ import (
 
 // UserBalance 账户余额领域对象
 type UserBalance struct {
-	UID       string
+	UserID    string
 	Balance   float64
 	UpdatedAt time.Time
 }

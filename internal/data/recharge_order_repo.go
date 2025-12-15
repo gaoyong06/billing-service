@@ -36,7 +36,7 @@ func NewRechargeOrderRepo(data *Data, logger log.Logger) biz.RechargeOrderRepo {
 func (r *rechargeOrderRepo) CreateRechargeOrder(ctx context.Context, orderID, userID string, amount float64) error {
 	order := model.RechargeOrder{
 		OrderID: orderID,
-		UID:     userID,
+		UserID:  userID,
 		Amount:  amount,
 		Status:  model.RechargeStatusPending,
 	}
@@ -55,7 +55,7 @@ func (r *rechargeOrderRepo) GetRechargeOrderByID(ctx context.Context, orderID st
 
 	return &biz.RechargeOrder{
 		OrderID:   m.OrderID,
-		UID:       m.UID,
+		UserID:    m.UserID,
 		Amount:    m.Amount,
 		PaymentID: m.PaymentID,
 		Status:    m.Status,
@@ -76,7 +76,7 @@ func (r *rechargeOrderRepo) GetRechargeOrderByPaymentID(ctx context.Context, pay
 
 	return &biz.RechargeOrder{
 		OrderID:   m.OrderID,
-		UID:       m.UID,
+		UserID:    m.UserID,
 		Amount:    m.Amount,
 		PaymentID: m.PaymentID,
 		Status:    m.Status,
@@ -127,13 +127,13 @@ func (r *rechargeOrderRepo) RechargeWithIdempotency(ctx context.Context, orderID
 		// 4. 执行充值
 		var balance model.UserBalance
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("uid = ?", order.UID).
+			Where("user_id = ?", order.UserID).
 			First(&balance).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// 用户余额不存在，创建新记录
 				balance = model.UserBalance{
 					UserBalanceID: uuid.New().String(),
-					UID:           order.UID,
+					UserID:        order.UserID,
 					Balance:       amount,
 				}
 				if err := tx.Create(&balance).Error; err != nil {
@@ -150,7 +150,7 @@ func (r *rechargeOrderRepo) RechargeWithIdempotency(ctx context.Context, orderID
 		}
 
 		// 5. 更新 Redis 缓存（设置超时避免阻塞）
-		balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, order.UID)
+		balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, order.UserID)
 		newBalance := balance.Balance + amount
 		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cacheCancel()

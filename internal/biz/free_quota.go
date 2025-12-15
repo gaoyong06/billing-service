@@ -8,7 +8,7 @@ import (
 
 // FreeQuota 免费额度领域对象
 type FreeQuota struct {
-	UID         string
+	UserID      string
 	ServiceName string
 	TotalQuota  int
 	UsedQuota   int

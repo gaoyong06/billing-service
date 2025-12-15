@@ -265,7 +265,7 @@ func (x *RechargeRequest) GetCurrency() string {
 
 type RechargeReply struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{user_id}_{timestamp}）
 	PaymentUrl      string                 `protobuf:"bytes,2,opt,name=paymentUrl,proto3" json:"paymentUrl,omitempty"`           // 支付URL
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -745,7 +745,7 @@ func (x *DeductQuotaReply) GetRecordId() string {
 
 type RechargeCallbackRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{uid}_{timestamp}）
+	RechargeOrderId string                 `protobuf:"bytes,1,opt,name=rechargeOrderId,proto3" json:"rechargeOrderId,omitempty"` // 充值订单ID（billing-service生成，格式：recharge_{user_id}_{timestamp}）
 	PaymentId       string                 `protobuf:"bytes,2,opt,name=paymentId,proto3" json:"paymentId,omitempty"`             // 支付流水号（payment-service返回的payment_id）
 	Amount          float64                `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`                 // 充值金额
 	Status          string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`                   // 支付状态
