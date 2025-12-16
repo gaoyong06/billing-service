@@ -10,6 +10,7 @@ type BillingConfig struct {
 	FreeQuotas               map[string]int32
 	BalanceLowThreshold      float64 // 余额低阈值（单位：元）
 	QuotaLowPercentThreshold float64 // 配额低阈值（百分比）
+	DevMode                  bool    // 开发模式开关，开启后跳过余额检查
 }
 
 // NewBillingConfig 从配置创建 BillingConfig
@@ -19,6 +20,7 @@ func NewBillingConfig(c *conf.Bootstrap) *BillingConfig {
 		FreeQuotas:               make(map[string]int32),
 		BalanceLowThreshold:      10.0,  // 默认值
 		QuotaLowPercentThreshold: 20.0,  // 默认值
+		DevMode:                  true,   // 开发模式默认开启
 	}
 	if c.Billing != nil {
 		for k, v := range c.Billing.Prices {
@@ -34,6 +36,8 @@ func NewBillingConfig(c *conf.Bootstrap) *BillingConfig {
 		if c.Billing.QuotaLowPercentThreshold > 0 {
 			config.QuotaLowPercentThreshold = c.Billing.QuotaLowPercentThreshold
 		}
+		// 从配置读取开发模式开关，如果未配置则使用默认值 true
+		config.DevMode = c.Billing.DevMode
 	}
 	return config
 }

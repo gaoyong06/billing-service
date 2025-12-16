@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"billing-service/internal/biz"
 	"billing-service/internal/conf"
@@ -66,7 +67,14 @@ func (s *MQConsumerServer) Start(ctx context.Context) error {
 	// Subscribe
 	err := s.c.Subscribe(s.conf.Rocketmq.Topic, consumer.MessageSelector{}, s.handler)
 	if err != nil {
-		s.log.Errorf("Failed to subscribe to topic %s: %v", s.conf.Rocketmq.Topic, err)
+		errMsg := strings.ToLower(err.Error())
+		// Topic 不存在或路由信息未找到是预期情况（特别是在开发环境中）
+		// broker 配置了 autoCreateTopicEnable = true，topic 会在第一次发送消息时自动创建
+		if strings.Contains(errMsg, "route info not found") || strings.Contains(errMsg, "topic not exist") {
+			s.log.Warnf("Topic '%s' does not exist yet (this is expected). It will be auto-created when first message is sent. Error: %v", s.conf.Rocketmq.Topic, err)
+		} else {
+			s.log.Errorf("Failed to subscribe to topic %s: %v", s.conf.Rocketmq.Topic, err)
+		}
 		// 不返回错误，避免导致整个应用启动失败
 		// 在开发环境中，RocketMQ 可能不可用
 		return nil
@@ -74,7 +82,14 @@ func (s *MQConsumerServer) Start(ctx context.Context) error {
 
 	err = s.c.Start()
 	if err != nil {
-		s.log.Errorf("Failed to start RocketMQ consumer: %v", err)
+		errMsg := strings.ToLower(err.Error())
+		// RETRY topic 不存在是预期情况，RocketMQ 会在需要重试时自动创建
+		// 格式: %RETRY%ConsumerGroupName
+		if strings.Contains(errMsg, "retry") && (strings.Contains(errMsg, "topic") || strings.Contains(errMsg, "not exist")) {
+			s.log.Debugf("RETRY topic does not exist yet (this is expected). It will be auto-created when messages need retry. Error: %v", err)
+		} else {
+			s.log.Errorf("Failed to start RocketMQ consumer: %v", err)
+		}
 		// 不返回错误，避免导致整个应用启动失败
 		return nil
 	}

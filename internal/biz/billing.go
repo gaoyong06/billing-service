@@ -210,6 +210,16 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, serviceName st
 	}
 
 	// 2. 检查余额
+	// 开发模式：跳过余额检查，直接返回成功
+	if uc.conf.DevMode {
+		uc.log.Infof("Dev mode enabled: skipping balance check for user %s, service %s", userID, serviceName)
+		// 记录配额检查成功（开发模式）
+		if uc.metrics != nil {
+			uc.metrics.QuotaCheckTotal.WithLabelValues(serviceName, constants.QuotaCheckResultAllowed).Inc()
+		}
+		return true, constants.BillingMessageBalance, nil
+	}
+
 	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
 		return false, "", err
@@ -259,6 +269,22 @@ func (uc *BillingUseCase) DeductQuota(ctx context.Context, userID, serviceName s
 	price := uc.conf.Prices[serviceName]
 	cost := price * float64(count)
 	month := time.Now().Format(constants.TimeFormatMonth)
+
+	// 开发模式：跳过实际扣费，直接返回成功
+	if uc.conf.DevMode {
+		uc.log.Infof("Dev mode enabled: skipping quota deduction for user %s, service %s, count %d", userID, serviceName, count)
+		// 生成一个模拟的 recordID
+		recordID := fmt.Sprintf("dev_%d_%s", time.Now().Unix(), userID)
+
+		// 记录扣费指标（开发模式）
+		if uc.metrics != nil {
+			duration := time.Since(startTime).Seconds()
+			uc.metrics.DeductQuotaDuration.WithLabelValues(serviceName).Observe(duration)
+			uc.metrics.DeductQuotaTotal.WithLabelValues(serviceName, constants.DeductTypeMixed).Inc()
+		}
+
+		return recordID, nil
+	}
 
 	recordID, err := uc.repo.DeductQuota(ctx, userID, serviceName, count, cost, month)
 

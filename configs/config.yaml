@@ -69,6 +69,11 @@ billing:
   # 当用户剩余免费额度低于总额度的此百分比时，会触发告警指标（QuotaLowAlert）
   # 例如：总额度 10000，阈值 20%，则剩余 < 2000 时触发告警
   quota_low_percent_threshold: 20.0
+  
+  # 开发模式开关（默认：true）
+  # 开启后跳过余额检查，扣费操作始终返回成功，方便开发测试
+  # 生产环境请设置为 false
+  dev_mode: true
 
 # 支付服务配置（用于充值功能）
 payment_service:

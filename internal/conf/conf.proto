@@ -59,6 +59,8 @@ message Billing {
   double balance_low_threshold = 3;
   // 配额低阈值（百分比），当剩余配额低于此百分比时触发告警
   double quota_low_percent_threshold = 4;
+  // 开发模式开关，开启后跳过余额检查，扣费操作始终返回成功（默认：true）
+  bool dev_mode = 5;
 }
 
 message PaymentService {
