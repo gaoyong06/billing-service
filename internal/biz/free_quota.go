@@ -9,6 +9,7 @@ import (
 // FreeQuota 免费额度领域对象
 type FreeQuota struct {
 	UserID      string
+	AppID       string // 应用ID（用于按应用管理免费额度）
 	ServiceName string
 	TotalQuota  int
 	UsedQuota   int
@@ -17,7 +18,7 @@ type FreeQuota struct {
 
 // FreeQuotaRepo 免费额度数据层接口（定义在 biz 层）
 type FreeQuotaRepo interface {
-	GetFreeQuota(ctx context.Context, userID, serviceName, month string) (*FreeQuota, error)
+	GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*FreeQuota, error)
 	CreateFreeQuota(ctx context.Context, quota *FreeQuota) error
 	UpdateFreeQuota(ctx context.Context, quota *FreeQuota) error
 }
@@ -39,8 +40,8 @@ func NewFreeQuotaUseCase(repo FreeQuotaRepo, conf *BillingConfig, logger log.Log
 }
 
 // GetQuota 获取免费额度
-func (uc *FreeQuotaUseCase) GetQuota(ctx context.Context, userID, serviceName, month string) (*FreeQuota, error) {
-	return uc.repo.GetFreeQuota(ctx, userID, serviceName, month)
+func (uc *FreeQuotaUseCase) GetQuota(ctx context.Context, userID, appID, serviceName, month string) (*FreeQuota, error) {
+	return uc.repo.GetFreeQuota(ctx, userID, appID, serviceName, month)
 }
 
 // CreateQuota 创建免费额度

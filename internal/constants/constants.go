@@ -30,6 +30,8 @@ const (
 const (
 	// BillingMessageFree 使用免费额度
 	BillingMessageFree = "free"
+	// BillingMessageFreeApp 免费应用（白名单应用，不扣费）
+	BillingMessageFreeApp = "free_app"
 	// BillingMessageBalance 使用余额
 	BillingMessageBalance = "balance"
 	// BillingMessageInsufficientBalance 余额不足
@@ -72,6 +74,8 @@ const (
 
 // 扣费类型常量（用于指标）
 const (
+	// DeductTypeFree 免费应用（白名单应用，不扣费）
+	DeductTypeFree = "free"
 	// DeductTypeMixed 混合扣费
 	DeductTypeMixed = "mixed"
 )

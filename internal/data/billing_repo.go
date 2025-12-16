@@ -121,8 +121,8 @@ func (r *billingRepo) Recharge(ctx context.Context, userID string, amount float6
 // ========== 免费额度相关 ==========
 
 // GetFreeQuota 获取免费额度
-func (r *billingRepo) GetFreeQuota(ctx context.Context, userID, serviceName, month string) (*biz.FreeQuota, error) {
-	return r.freeQuotaRepo.GetFreeQuota(ctx, userID, serviceName, month)
+func (r *billingRepo) GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*biz.FreeQuota, error) {
+	return r.freeQuotaRepo.GetFreeQuota(ctx, userID, appID, serviceName, month)
 }
 
 // CreateFreeQuota 创建免费额度
@@ -155,14 +155,14 @@ func (r *billingRepo) ListBillingRecords(ctx context.Context, userID string, pag
 // DeductQuota 核心扣费逻辑
 // 优化版：优先使用 Redis Lua + RocketMQ 异步处理
 // 降级版：如果 MQ 未启用，回退 to DB 事务
-func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error) {
+func (r *billingRepo) DeductQuota(ctx context.Context, userID, appID, serviceName string, count int, cost float64, month string) (string, error) {
 	// 如果 MQ 未启用，走降级方案（DB事务）
 	if r.data.mq == nil {
-		return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+		return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month)
 	}
 
-	// 1. 准备 Keys
-	quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+	// 1. 准备 Keys（注意：Redis key 中包含 app_id，支持按应用管理配额）
+	quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
 	balanceKey := fmt.Sprintf("%s%s", constants.RedisKeyBalance, userID)
 
 	// 2. 执行 Lua 脚本
@@ -171,7 +171,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		res, err := r.data.rdb.Eval(ctx, deductScript, []string{quotaKey, balanceKey}, count, cost).Result()
 		if err != nil {
 			r.log.Errorf("Lua script failed: %v", err)
-			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month) // 出错降级
+			return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month) // 出错降级
 		}
 
 		// Parse result: []interface{}
@@ -179,7 +179,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		vals, ok := res.([]interface{})
 		if !ok || len(vals) != 4 {
 			r.log.Errorf("Lua script returned invalid result: %v", res)
-			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+			return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month)
 		}
 
 		code := int(vals[0].(int64))
@@ -203,6 +203,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 			event := &biz.DeductEvent{
 				RecordID:        recordID,
 				UserID:          userID,
+				AppID:           appID,
 				ServiceName:     serviceName,
 				Count:           count,
 				Cost:            cost,
@@ -219,7 +220,7 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 			if err != nil {
 				r.log.Errorf("Send RocketMQ failed: %v", err)
 				// 降级回 DB 事务
-				return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+				return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month)
 			}
 
 			return recordID, nil
@@ -229,15 +230,15 @@ func (r *billingRepo) DeductQuota(ctx context.Context, userID, serviceName strin
 		} else if code == -1 || code == -2 {
 			// Cache Missing，加载数据
 			if i == 0 {
-				r.loadCache(ctx, userID, serviceName, month)
+				r.loadCache(ctx, userID, appID, serviceName, month)
 				continue
 			}
 			// 还是缺失，降级
-			return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+			return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month)
 		}
 	}
 
-	return r.deductQuotaDB(ctx, userID, serviceName, count, cost, month)
+	return r.deductQuotaDB(ctx, userID, appID, serviceName, count, cost, month)
 }
 
 // BatchDeductQuota 批量处理扣费记录（Consumer调用）
@@ -251,7 +252,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 			// 1. 更新 FreeQuota
 			if event.FreeCount > 0 {
 				if err := tx.Model(&model.FreeQuota{}).
-					Where("user_id = ? AND service_name = ? AND reset_month = ?", event.UserID, event.ServiceName, event.Month).
+					Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", event.UserID, event.AppID, event.ServiceName, event.Month).
 					Update("used_quota", gorm.Expr("used_quota + ?", event.FreeCount)).Error; err != nil {
 					// 如果更新失败（例如记录不存在），可能需要处理。但理论上应该存在。
 					r.log.Errorf("Failed to update free quota in batch: %v", err)
@@ -262,6 +263,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 				freeRecord := model.BillingRecord{
 					BillingRecordID: event.RecordID, // 如果全是免费，用这个ID
 					UserID:          event.UserID,
+					AppID:           event.AppID,
 					ServiceName:     event.ServiceName,
 					Type:            model.BillingTypeFree,
 					Amount:          0,
@@ -294,6 +296,7 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 				balanceRecord := model.BillingRecord{
 					BillingRecordID: event.RecordID, // 主ID给余额记录（如果混合）
 					UserID:          event.UserID,
+					AppID:           event.AppID,
 					ServiceName:     event.ServiceName,
 					Type:            model.BillingTypeBalance,
 					Amount:          event.BalanceDeducted,
@@ -332,12 +335,12 @@ func (r *billingRepo) BatchDeductQuota(ctx context.Context, events []*biz.Deduct
 }
 
 // loadCache 加载缓存 (同步)
-func (r *billingRepo) loadCache(ctx context.Context, userID, serviceName, month string) {
+func (r *billingRepo) loadCache(ctx context.Context, userID, appID, serviceName, month string) {
 	// 加载 Quota
-	q, err := r.freeQuotaRepo.GetFreeQuota(ctx, userID, serviceName, month)
+	q, err := r.freeQuotaRepo.GetFreeQuota(ctx, userID, appID, serviceName, month)
 	if err == nil && q != nil {
 		remaining := q.TotalQuota - q.UsedQuota
-		quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+		quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
 		// 同步写入 Redis
 		r.data.rdb.Set(ctx, quotaKey, remaining, 5*time.Minute)
 	}
@@ -355,9 +358,9 @@ func (r *billingRepo) loadCache(ctx context.Context, userID, serviceName, month 
 }
 
 // deductQuotaDB DB 事务扣费（原 DeductQuota）
-func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName string, count int, cost float64, month string) (string, error) {
-	// 获取分布式锁（按用户+服务+月份）
-	lockKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyDeductLock, userID, serviceName, month)
+func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, appID, serviceName string, count int, cost float64, month string) (string, error) {
+	// 获取分布式锁（按用户+应用+服务+月份）
+	lockKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyDeductLock, userID, appID, serviceName, month)
 	if r.sync != nil {
 		lockStartTime := time.Now()
 		mutex := r.sync.NewMutex(lockKey, redsync.WithExpiry(5*time.Second))
@@ -390,7 +393,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		// 1. 检查并扣减免费额度
 		var quota model.FreeQuota
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("user_id = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
+			Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", userID, appID, serviceName, month).
 			First(&quota).Error
 
 		quotaNotFound := errors.Is(err, gorm.ErrRecordNotFound)
@@ -476,6 +479,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 			freeRecord := model.BillingRecord{
 				BillingRecordID: recordID,
 				UserID:          userID,
+				AppID:           appID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeFree,
 				Amount:          0,
@@ -496,6 +500,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 			balanceRecord := model.BillingRecord{
 				BillingRecordID: balanceRecordID,
 				UserID:          userID,
+				AppID:           appID,
 				ServiceName:     serviceName,
 				Type:            model.BillingTypeBalance,
 				Amount:          balanceDeducted,
@@ -521,7 +526,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, serviceName str
 		defer cacheCancel()
 
 		if needUpdateQuotaCache {
-			quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+			quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
 			if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", quotaRemaining), 5*time.Minute).Err(); err != nil {
 				// 缓存更新失败不影响主流程，只记录日志
 				r.log.Warnf("failed to update quota cache: %v", err)

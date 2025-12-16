@@ -864,6 +864,8 @@ func (m *BillingRecord) validate(all bool) error {
 
 	// no validation rules for Id
 
+	// no validation rules for AppId
+
 	// no validation rules for ServiceName
 
 	// no validation rules for Type
@@ -1002,6 +1004,8 @@ func (m *CheckQuotaRequest) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for UserId
+
+	// no validation rules for AppId
 
 	// no validation rules for ServiceName
 
@@ -1214,6 +1218,8 @@ func (m *DeductQuotaRequest) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for UserId
+
+	// no validation rules for AppId
 
 	// no validation rules for ServiceName
 

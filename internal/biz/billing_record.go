@@ -11,6 +11,7 @@ import (
 type BillingRecord struct {
 	ID          string
 	UserID      string
+	AppID       string // 应用ID（用于按应用统计成本）
 	ServiceName string
 	Type        string // "free": 免费额度, "balance": 余额扣费
 	Amount      float64

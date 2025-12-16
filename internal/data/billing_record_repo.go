@@ -29,6 +29,7 @@ func (r *billingRecordRepo) CreateBillingRecord(ctx context.Context, record *biz
 	m := model.BillingRecord{
 		BillingRecordID: uuid.New().String(),
 		UserID:          record.UserID,
+		AppID:           record.AppID,
 		ServiceName:     record.ServiceName,
 		Type:            record.Type,
 		Amount:          record.Amount,
@@ -58,6 +59,7 @@ func (r *billingRecordRepo) ListBillingRecords(ctx context.Context, userID strin
 		records = append(records, &biz.BillingRecord{
 			ID:          m.BillingRecordID,
 			UserID:      m.UserID,
+			AppID:       m.AppID,
 			ServiceName: m.ServiceName,
 			Type:        m.Type,
 			Amount:      m.Amount,

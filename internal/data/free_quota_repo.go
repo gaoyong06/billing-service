@@ -33,14 +33,14 @@ func NewFreeQuotaRepo(data *Data, logger log.Logger) biz.FreeQuotaRepo {
 }
 
 // GetFreeQuota 获取免费额度
-func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, serviceName, month string) (*biz.FreeQuota, error) {
+func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*biz.FreeQuota, error) {
 	// 记录配额查询指标
 	if r.metrics != nil {
 		r.metrics.QuotaQueryTotal.Inc()
 	}
 
 	// 先尝试从 Redis 获取剩余配额
-	quotaKey := fmt.Sprintf("%s%s:%s:%s", constants.RedisKeyQuota, userID, serviceName, month)
+	quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
 	remainingStr, err := r.data.rdb.Get(ctx, quotaKey).Result()
 	if err == nil {
 		// 从缓存获取成功
@@ -55,7 +55,7 @@ func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, serviceName, m
 	// 从数据库查询完整信息
 	var m model.FreeQuota
 	if err := r.data.db.WithContext(ctx).
-		Where("user_id = ? AND service_name = ? AND reset_month = ?", userID, serviceName, month).
+		Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", userID, appID, serviceName, month).
 		First(&m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -65,6 +65,7 @@ func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, serviceName, m
 
 	result := &biz.FreeQuota{
 		UserID:      m.UserID,
+		AppID:       m.AppID,
 		ServiceName: m.ServiceName,
 		TotalQuota:  m.TotalQuota,
 		UsedQuota:   m.UsedQuota,
@@ -90,6 +91,7 @@ func (r *freeQuotaRepo) CreateFreeQuota(ctx context.Context, quota *biz.FreeQuot
 	m := model.FreeQuota{
 		FreeQuotaID: uuid.New().String(),
 		UserID:      quota.UserID,
+		AppID:       quota.AppID,
 		ServiceName: quota.ServiceName,
 		TotalQuota:  quota.TotalQuota,
 		UsedQuota:   quota.UsedQuota,
@@ -101,6 +103,6 @@ func (r *freeQuotaRepo) CreateFreeQuota(ctx context.Context, quota *biz.FreeQuot
 // UpdateFreeQuota 更新免费额度
 func (r *freeQuotaRepo) UpdateFreeQuota(ctx context.Context, quota *biz.FreeQuota) error {
 	return r.data.db.WithContext(ctx).Model(&model.FreeQuota{}).
-		Where("user_id = ? AND service_name = ? AND reset_month = ?", quota.UserID, quota.ServiceName, quota.ResetMonth).
+		Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", quota.UserID, quota.AppID, quota.ServiceName, quota.ResetMonth).
 		Update("used_quota", quota.UsedQuota).Error
 }

@@ -116,6 +116,7 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 		}
 		pbRecords = append(pbRecords, &pb.BillingRecord{
 			Id:          r.ID,
+			AppId:       r.AppID,
 			ServiceName: r.ServiceName,
 			Type:        typeInt,
 			Amount:      r.Amount,
@@ -132,7 +133,13 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 
 // CheckQuota 检查并预扣费
 func (s *BillingService) CheckQuota(ctx context.Context, req *pb.CheckQuotaRequest) (*pb.CheckQuotaReply, error) {
-	allowed, reason, err := s.uc.CheckQuota(ctx, req.UserId, req.ServiceName, int(req.Count))
+	// 验证 app_id 必填（不向后兼容）
+	if req.AppId == "" {
+		s.log.Warnf("CheckQuota: app_id is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+
+	allowed, reason, err := s.uc.CheckQuota(ctx, req.UserId, req.AppId, req.ServiceName, int(req.Count))
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +151,17 @@ func (s *BillingService) CheckQuota(ctx context.Context, req *pb.CheckQuotaReque
 
 // DeductQuota 确认扣费
 func (s *BillingService) DeductQuota(ctx context.Context, req *pb.DeductQuotaRequest) (*pb.DeductQuotaReply, error) {
-	recordID, err := s.uc.DeductQuota(ctx, req.UserId, req.ServiceName, int(req.Count))
+	// 验证 app_id 必填（不向后兼容）
+	if req.AppId == "" {
+		s.log.Warnf("DeductQuota: app_id is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+
+	recordID, err := s.uc.DeductQuota(ctx, req.UserId, req.AppId, req.ServiceName, int(req.Count))
 	if err != nil {
 		// 记录错误日志，便于排查问题
-		s.log.Errorf("DeductQuota failed: user_id=%s, service=%s, count=%d, error=%v",
-			req.UserId, req.ServiceName, req.Count, err)
+		s.log.Errorf("DeductQuota failed: user_id=%s, app_id=%s, service=%s, count=%d, error=%v",
+			req.UserId, req.AppId, req.ServiceName, req.Count, err)
 		return &pb.DeductQuotaReply{Success: false}, err
 	}
 	return &pb.DeductQuotaReply{

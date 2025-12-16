@@ -430,11 +430,12 @@ func (x *ListRecordsReply) GetTotal() int32 {
 type BillingRecord struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
-	Type          int32                  `protobuf:"varint,3,opt,name=type,proto3" json:"type,omitempty"` // 1:免费额度, 2:余额扣费
-	Amount        float64                `protobuf:"fixed64,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	Count         int32                  `protobuf:"varint,5,opt,name=count,proto3" json:"count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	AppId         string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"` // 应用ID（用于按应用统计成本）
+	ServiceName   string                 `protobuf:"bytes,3,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	Type          int32                  `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"` // 1:免费额度, 2:余额扣费
+	Amount        float64                `protobuf:"fixed64,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Count         int32                  `protobuf:"varint,6,opt,name=count,proto3" json:"count,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,6 +473,13 @@ func (*BillingRecord) Descriptor() ([]byte, []int) {
 func (x *BillingRecord) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *BillingRecord) GetAppId() string {
+	if x != nil {
+		return x.AppId
 	}
 	return ""
 }
@@ -514,8 +522,9 @@ func (x *BillingRecord) GetCreatedAt() *timestamppb.Timestamp {
 type CheckQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
-	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	AppId         string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"` // 应用ID（必填，用于按应用统计成本）
+	ServiceName   string                 `protobuf:"bytes,3,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	Count         int32                  `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -553,6 +562,13 @@ func (*CheckQuotaRequest) Descriptor() ([]byte, []int) {
 func (x *CheckQuotaRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *CheckQuotaRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
 	}
 	return ""
 }
@@ -626,9 +642,10 @@ func (x *CheckQuotaReply) GetReason() string {
 type DeductQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
-	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
-	Cost          float64                `protobuf:"fixed64,4,opt,name=cost,proto3" json:"cost,omitempty"`
+	AppId         string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"` // 应用ID（必填，用于按应用统计成本）
+	ServiceName   string                 `protobuf:"bytes,3,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	Count         int32                  `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	Cost          float64                `protobuf:"fixed64,5,opt,name=cost,proto3" json:"cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -666,6 +683,13 @@ func (*DeductQuotaRequest) Descriptor() ([]byte, []int) {
 func (x *DeductQuotaRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *DeductQuotaRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
 	}
 	return ""
 }
@@ -1277,26 +1301,29 @@ const file_billing_proto_rawDesc = "" +
 	"\bpageSize\x18\x03 \x01(\x05R\bpageSize\"]\n" +
 	"\x10ListRecordsReply\x123\n" +
 	"\arecords\x18\x01 \x03(\v2\x19.billing.v1.BillingRecordR\arecords\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\xbd\x01\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xd3\x01\n" +
 	"\rBillingRecord\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\x05R\x04type\x12\x16\n" +
-	"\x06amount\x18\x04 \x01(\x01R\x06amount\x12\x14\n" +
-	"\x05count\x18\x05 \x01(\x05R\x05count\x128\n" +
-	"\tcreatedAt\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"c\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05appId\x18\x02 \x01(\tR\x05appId\x12 \n" +
+	"\vserviceName\x18\x03 \x01(\tR\vserviceName\x12\x12\n" +
+	"\x04type\x18\x04 \x01(\x05R\x04type\x12\x16\n" +
+	"\x06amount\x18\x05 \x01(\x01R\x06amount\x12\x14\n" +
+	"\x05count\x18\x06 \x01(\x05R\x05count\x128\n" +
+	"\tcreatedAt\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"y\n" +
 	"\x11CheckQuotaRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
-	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x05R\x05count\"C\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05appId\x18\x02 \x01(\tR\x05appId\x12 \n" +
+	"\vserviceName\x18\x03 \x01(\tR\vserviceName\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\x05R\x05count\"C\n" +
 	"\x0fCheckQuotaReply\x12\x18\n" +
 	"\aallowed\x18\x01 \x01(\bR\aallowed\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"x\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x8e\x01\n" +
 	"\x12DeductQuotaRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
-	"\vserviceName\x18\x02 \x01(\tR\vserviceName\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x05R\x05count\x12\x12\n" +
-	"\x04cost\x18\x04 \x01(\x01R\x04cost\"H\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05appId\x18\x02 \x01(\tR\x05appId\x12 \n" +
+	"\vserviceName\x18\x03 \x01(\tR\vserviceName\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\x05R\x05count\x12\x12\n" +
+	"\x04cost\x18\x05 \x01(\x01R\x04cost\"H\n" +
 	"\x10DeductQuotaReply\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1a\n" +
 	"\brecordId\x18\x02 \x01(\tR\brecordId\"\x91\x01\n" +

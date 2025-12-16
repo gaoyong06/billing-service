@@ -124,17 +124,19 @@ message ListRecordsReply {
 
 message BillingRecord {
   string id = 1;
-  string serviceName = 2;
-  int32 type = 3; // 1:免费额度, 2:余额扣费
-  double amount = 4;
-  int32 count = 5;
-  google.protobuf.Timestamp createdAt = 6;
+  string appId = 2; // 应用ID（用于按应用统计成本）
+  string serviceName = 3;
+  int32 type = 4; // 1:免费额度, 2:余额扣费
+  double amount = 5;
+  int32 count = 6;
+  google.protobuf.Timestamp createdAt = 7;
 }
 
 message CheckQuotaRequest {
   string userId = 1;
-  string serviceName = 2;
-  int32 count = 3;
+  string appId = 2; // 应用ID（必填，用于按应用统计成本）
+  string serviceName = 3;
+  int32 count = 4;
 }
 
 message CheckQuotaReply {
@@ -144,9 +146,10 @@ message CheckQuotaReply {
 
 message DeductQuotaRequest {
   string userId = 1;
-  string serviceName = 2;
-  int32 count = 3;
-  double cost = 4;
+  string appId = 2; // 应用ID（必填，用于按应用统计成本）
+  string serviceName = 3;
+  int32 count = 4;
+  double cost = 5;
 }
 
 message DeductQuotaReply {

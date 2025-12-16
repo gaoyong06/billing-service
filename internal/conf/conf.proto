@@ -61,6 +61,8 @@ message Billing {
   double quota_low_percent_threshold = 4;
   // 开发模式开关，开启后跳过余额检查，扣费操作始终返回成功（默认：true）
   bool dev_mode = 5;
+  // 免费应用白名单（app_id 列表），这些应用的所有调用都不扣费（用于官方应用等）
+  repeated string free_app_ids = 6;
 }
 
 message PaymentService {
