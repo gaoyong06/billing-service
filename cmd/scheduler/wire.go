@@ -14,13 +14,13 @@ import (
 	"github.com/google/wire"
 )
 
-// CronApp Cron 应用结构
-type CronApp struct {
+// SchedulerApp Scheduler 应用结构
+type SchedulerApp struct {
 	billingUsecase *biz.BillingUseCase
 }
 
 // wireApp 初始化应用
-func wireApp(*conf.Bootstrap) (*CronApp, func(), error) {
+func wireApp(*conf.Bootstrap) (*SchedulerApp, func(), error) {
 	panic(wire.Build(
 		// Logger
 		newLogger,
@@ -33,11 +33,11 @@ func wireApp(*conf.Bootstrap) (*CronApp, func(), error) {
 		// NewBillingConfig 需要 *conf.Bootstrap
 		biz.ProviderSet,
 
-		// 提供 PaymentService 配置（从 Bootstrap 中提取，cron 可能不需要，但为了 wire 能正常工作）
+		// 提供 PaymentService 配置（从 Bootstrap 中提取，scheduler 可能不需要，但为了 wire 能正常工作）
 		wire.FieldsOf(new(*conf.Bootstrap), "PaymentService"),
 
 		// App 结构
-		wire.Struct(new(CronApp), "*"),
+		wire.Struct(new(SchedulerApp), "*"),
 	))
 }
 
@@ -46,6 +46,6 @@ func newLogger() log.Logger {
 	return log.With(log.NewStdLogger(os.Stdout),
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
-		"service.name", "billing-cron",
+		"service.name", "billing-scheduler",
 	)
 }

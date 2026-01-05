@@ -94,3 +94,13 @@ payment_service:
   return_url: http://localhost:3000/callback
   # 支付回调通知 URL（Payment Service 支付完成后回调此地址）
   notify_url: http://localhost:8107/internal/v1/billing/callback
+
+# 定时任务配置
+scheduler:
+  # 免费额度重置任务配置
+  free_quota_reset_task:
+    # Cron 表达式（每月1日 00:00 执行）
+    # 格式: 秒 分 时 日 月 周
+    cron: "0 0 0 1 * *"
+    # 是否启用
+    enabled: true

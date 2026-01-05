@@ -1,0 +1,192 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"billing-service/internal/conf"
+
+	"github.com/gaoyong06/go-pkg/logger"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/robfig/cron/v3"
+	_ "go.uber.org/automaxprocs"
+)
+
+var (
+	flagconf string
+	runMode  string
+)
+
+func init() {
+	flag.StringVar(&flagconf, "conf", "", "config path, eg: -conf config.yaml (deprecated, use -mode instead)")
+	flag.StringVar(&runMode, "mode", "debug", "Run mode (debug, release)")
+}
+
+func main() {
+	flag.Parse()
+
+	// 根据 mode 自动选择配置文件
+	configPath := flagconf
+	if configPath == "" {
+		if runMode == "release" {
+			configPath = "configs/config_release.yaml"
+		} else {
+			configPath = "configs/config_debug.yaml"
+		}
+	} else {
+		// 如果指定的配置文件不存在，则回退到默认配置文件
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			if runMode == "release" {
+				configPath = "configs/config_release.yaml"
+			} else {
+				configPath = "configs/config_debug.yaml"
+			}
+		}
+	}
+
+	// 初始化配置
+	c := config.New(
+		config.WithSource(
+			file.NewSource(configPath),
+		),
+	)
+	defer c.Close()
+
+	if err := c.Load(); err != nil {
+		panic(err)
+	}
+
+	var bc conf.Bootstrap
+	if err := c.Scan(&bc); err != nil {
+		panic(err)
+	}
+
+	// 初始化日志 (使用 go-pkg/logger)
+	logConfig := &logger.Config{
+		Level:        "info",
+		Format:       "json",
+		Output:       "stdout",
+		FilePath:     "logs/billing-scheduler.log",
+		MaxSize:      100,
+		MaxAge:       30,
+		MaxBackups:   10,
+		Compress:     true,
+		EnableConsole: true,
+	}
+
+	loggerInstance := logger.NewLogger(logConfig)
+
+	// 添加基本字段
+	loggerInstance = log.With(loggerInstance,
+		"ts", log.DefaultTimestamp,
+		"caller", log.DefaultCaller,
+		"service.name", "billing-scheduler",
+	)
+
+	logHelper := log.NewHelper(loggerInstance)
+
+	// 初始化应用
+	app, cleanup, err := wireApp(&bc)
+	if err != nil {
+		panic(err)
+	}
+	defer cleanup()
+
+	// 创建定时任务调度器（支持秒级调度）
+	cronScheduler := cron.New(cron.WithSeconds())
+
+	// 注册免费额度重置任务
+	if bc.Scheduler != nil && bc.Scheduler.FreeQuotaResetTask != nil {
+		task := bc.Scheduler.FreeQuotaResetTask
+		if task.Enabled {
+			cronExpr := task.Cron
+			if cronExpr == "" {
+				cronExpr = "0 0 0 1 * *" // 默认每月1日 00:00 执行
+			}
+
+			_, err := cronScheduler.AddFunc(cronExpr, func() {
+				logHelper.Info("[SCHEDULER] Starting free quota reset...")
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				defer cancel()
+
+				count, userIDs, err := app.billingUsecase.ResetFreeQuotas(ctx)
+				if err != nil {
+					logHelper.Errorf("[SCHEDULER] Error resetting free quotas: %v", err)
+				} else {
+					logHelper.Infof("[SCHEDULER] Reset free quotas completed: count=%d, users=%d", count, len(userIDs))
+					if len(userIDs) > 0 && len(userIDs) <= 10 {
+						logHelper.Infof("[SCHEDULER] Reset users: %v", userIDs)
+					} else if len(userIDs) > 10 {
+						logHelper.Infof("[SCHEDULER] Reset users (first 10): %v", userIDs[:10])
+					}
+					logHelper.Info("[SCHEDULER] Finished free quota reset")
+				}
+			})
+			if err != nil {
+				logHelper.Errorf("Failed to add free quota reset job: %v", err)
+				panic(err)
+			}
+
+			logHelper.Infof("Free quota reset task registered: cron=%s", cronExpr)
+		} else {
+			logHelper.Info("Free quota reset task is disabled")
+		}
+	} else {
+		logHelper.Warn("Scheduler configuration not found, using default cron expression")
+		// 如果没有配置，使用默认值
+		_, err := cronScheduler.AddFunc("0 0 0 1 * *", func() {
+			logHelper.Info("[SCHEDULER] Starting free quota reset...")
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			defer cancel()
+
+			count, userIDs, err := app.billingUsecase.ResetFreeQuotas(ctx)
+			if err != nil {
+				logHelper.Errorf("[SCHEDULER] Error resetting free quotas: %v", err)
+			} else {
+				logHelper.Infof("[SCHEDULER] Reset free quotas completed: count=%d, users=%d", count, len(userIDs))
+				if len(userIDs) > 0 && len(userIDs) <= 10 {
+					logHelper.Infof("[SCHEDULER] Reset users: %v", userIDs)
+				} else if len(userIDs) > 10 {
+					logHelper.Infof("[SCHEDULER] Reset users (first 10): %v", userIDs[:10])
+				}
+				logHelper.Info("[SCHEDULER] Finished free quota reset")
+			}
+		})
+		if err != nil {
+			logHelper.Errorf("Failed to add free quota reset job: %v", err)
+			panic(err)
+		}
+	}
+
+	// 启动定时任务
+	cronScheduler.Start()
+	logHelper.Info("========================================")
+	logHelper.Info("Scheduler started successfully")
+	logHelper.Info("Scheduled jobs:")
+	if bc.Scheduler != nil && bc.Scheduler.FreeQuotaResetTask != nil && bc.Scheduler.FreeQuotaResetTask.Enabled {
+		logHelper.Infof("  - Free quota reset: %s", bc.Scheduler.FreeQuotaResetTask.Cron)
+	}
+	logHelper.Info("========================================")
+
+	// 优雅退出
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logHelper.Info("Shutting down gracefully...")
+
+	// 停止定时任务
+	ctx := cronScheduler.Stop()
+	select {
+	case <-ctx.Done():
+		logHelper.Info("Scheduler stopped gracefully")
+	case <-time.After(5 * time.Second):
+		logHelper.Info("Scheduler forced to stop after timeout")
+	}
+}

@@ -10,6 +10,7 @@ message Bootstrap {
   Data data = 2;
   Billing billing = 3;
   PaymentService payment_service = 4;
+  Scheduler scheduler = 5;
 }
 
 message Server {
@@ -70,4 +71,12 @@ message PaymentService {
   google.protobuf.Duration timeout = 2;
   string return_url = 3;  // 支付成功后的返回URL
   string notify_url = 4;  // 支付回调通知URL
+}
+
+message Scheduler {
+  message FreeQuotaResetTask {
+    string cron = 1;  // Cron 表达式（每月1日 00:00 执行，默认: "0 0 0 1 * *"）
+    bool enabled = 2;  // 是否启用
+  }
+  FreeQuotaResetTask free_quota_reset_task = 1;
 }

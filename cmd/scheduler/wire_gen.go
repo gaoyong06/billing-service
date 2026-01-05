@@ -21,7 +21,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp 初始化应用
-func wireApp(bootstrap *conf.Bootstrap) (*CronApp, func(), error) {
+func wireApp(bootstrap *conf.Bootstrap) (*SchedulerApp, func(), error) {
 	confData := bootstrap.Data
 	logger := newLogger()
 	dataData, cleanup, err := data.NewData(confData, logger)
@@ -48,22 +48,22 @@ func wireApp(bootstrap *conf.Bootstrap) (*CronApp, func(), error) {
 	redsync := data.NewRedSync(dataData)
 	billingRepo := data.NewBillingRepo(dataData, redsync, logger, userBalanceRepo, freeQuotaRepo, billingRecordRepo, rechargeOrderRepo, statsRepo)
 	billingUseCase := biz.NewBillingUseCase(userBalanceUseCase, freeQuotaUseCase, billingRecordUseCase, rechargeOrderUseCase, statsUseCase, billingRepo, billingConfig, logger)
-	cronApp := &CronApp{
+	schedulerApp := &SchedulerApp{
 		billingUsecase: billingUseCase,
 	}
-	return cronApp, func() {
+	return schedulerApp, func() {
 		cleanup()
 	}, nil
 }
 
 // wire.go:
 
-// CronApp Cron 应用结构
-type CronApp struct {
+// SchedulerApp Scheduler 应用结构
+type SchedulerApp struct {
 	billingUsecase *biz.BillingUseCase
 }
 
 // newLogger 创建 logger
 func newLogger() log.Logger {
-	return log.With(log.NewStdLogger(os.Stdout), "ts", log.DefaultTimestamp, "caller", log.DefaultCaller, "service.name", "billing-cron")
+	return log.With(log.NewStdLogger(os.Stdout), "ts", log.DefaultTimestamp, "caller", log.DefaultCaller, "service.name", "billing-scheduler")
 }
