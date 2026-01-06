@@ -18,11 +18,11 @@ require (
 	google.golang.org/protobuf v1.36.10
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.1
-	xinyuan_tech/payment-service v0.0.0
+	payment-service v0.0.0
 )
 
 // 使用本地 payment-service 模块（在 go.work 中管理）
-replace xinyuan_tech/payment-service => ../payment-service
+replace payment-service => ../payment-service
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

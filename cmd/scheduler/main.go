@@ -11,6 +11,7 @@ import (
 	"billing-service/internal/conf"
 
 	"github.com/gaoyong06/go-pkg/logger"
+	pkgutils "github.com/gaoyong06/go-pkg/utils"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
@@ -34,20 +35,13 @@ func main() {
 	// 根据 mode 自动选择配置文件
 	configPath := flagconf
 	if configPath == "" {
-		if runMode == "release" {
-			configPath = "configs/config_release.yaml"
-		} else {
-			configPath = "configs/config_debug.yaml"
-		}
-	} else {
-		// 如果指定的配置文件不存在，则回退到默认配置文件
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			if runMode == "release" {
-				configPath = "configs/config_release.yaml"
-			} else {
-				configPath = "configs/config_debug.yaml"
-			}
-		}
+		// 使用 go-pkg/utils 中的通用配置文件路径解析函数
+		// 支持从不同目录运行（项目根目录、cmd/scheduler 目录等）
+		configPath = pkgutils.FindConfigFileWithMode(runMode, []string{
+			"configs",       // 从项目根目录运行
+			"../../configs", // 从 cmd/scheduler 目录运行
+			"../configs",    // 从 cmd 目录运行
+		})
 	}
 
 	// 初始化配置
@@ -69,14 +63,14 @@ func main() {
 
 	// 初始化日志 (使用 go-pkg/logger)
 	logConfig := &logger.Config{
-		Level:        "info",
-		Format:       "json",
-		Output:       "stdout",
-		FilePath:     "logs/billing-scheduler.log",
-		MaxSize:      100,
-		MaxAge:       30,
-		MaxBackups:   10,
-		Compress:     true,
+		Level:         "info",
+		Format:        "json",
+		Output:        "stdout",
+		FilePath:      "logs/billing-scheduler.log",
+		MaxSize:       100,
+		MaxAge:        30,
+		MaxBackups:    10,
+		Compress:      true,
 		EnableConsole: true,
 	}
 

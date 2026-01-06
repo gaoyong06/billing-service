@@ -10,6 +10,7 @@ CONFIG_FILE := configs/config.yaml
 HTTP_PORT := 8107
 GRPC_PORT := 9107
 TEST_CONFIG := test/api/api-test-config.yaml
+RUN_MODE := debug
 
 include ../devops-tools/Makefile.common
 

@@ -7,7 +7,7 @@ import (
 	"billing-service/internal/conf"
 	"billing-service/internal/constants"
 	billingErrors "billing-service/internal/errors"
-	paymentv1 "xinyuan_tech/payment-service/api/payment/v1"
+	paymentv1 "payment-service/api/payment/v1"
 
 	pkgErrors "github.com/gaoyong06/go-pkg/errors"
 	"github.com/go-kratos/kratos/v2/log"
