@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"billing-service/internal/conf"
@@ -80,6 +81,11 @@ func main() {
 	var bc conf.Bootstrap
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
+	}
+
+	// 验证配置
+	if err := bc.Validate(); err != nil {
+		panic(fmt.Sprintf("config validation failed: %v", err))
 	}
 
 	// 初始化日志 (使用 go-pkg/logger)
