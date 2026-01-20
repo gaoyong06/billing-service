@@ -65,7 +65,8 @@ RUN addgroup -g 1000 app && \
 WORKDIR /app
 
 # 从构建阶段复制二进制文件
-COPY --from=builder /workspace/billing-service/server .
+RUN mkdir -p bin
+COPY --from=builder /workspace/billing-service/server ./bin/
 COPY --from=builder /workspace/billing-service/configs ./configs
 
 # 创建日志目录
@@ -78,4 +79,4 @@ USER app
 EXPOSE 8107 9107
 
 # 启动服务
-CMD ["./server", "-conf", "configs/config.yaml"]
+CMD ["./bin/server", "-mode", "release"]
