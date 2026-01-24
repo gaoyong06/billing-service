@@ -6,7 +6,7 @@ info:
     title: ""
     version: 0.0.1
 paths:
-    /api/v1/billing/account:
+    /billing/v1/billing/account:
         get:
             tags:
                 - BillingService
@@ -30,7 +30,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/v1/billing/recharge:
+    /billing/v1/billing/recharge:
         post:
             tags:
                 - BillingService
@@ -55,7 +55,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/v1/billing/records:
+    /billing/v1/billing/records:
         get:
             tags:
                 - BillingService
@@ -89,7 +89,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/v1/billing/stats/month:
+    /billing/v1/billing/stats/month:
         get:
             tags:
                 - BillingService
@@ -117,7 +117,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/v1/billing/stats/summary:
+    /billing/v1/billing/stats/summary:
         get:
             tags:
                 - BillingService
@@ -141,7 +141,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/v1/billing/stats/today:
+    /billing/v1/billing/stats/today:
         get:
             tags:
                 - BillingService
@@ -169,7 +169,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /internal/v1/billing/callback:
+    /billing/v1/internal/callback:
         post:
             tags:
                 - BillingInternalService
@@ -194,7 +194,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /internal/v1/billing/check:
+    /billing/v1/internal/check:
         post:
             tags:
                 - BillingInternalService
@@ -219,7 +219,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /internal/v1/billing/deduct:
+    /billing/v1/internal/deduct:
         post:
             tags:
                 - BillingInternalService

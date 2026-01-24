@@ -91,7 +91,7 @@ payment_service:
   # 支付成功后的返回 URL（用户支付完成后跳转的页面）
   return_url: https://www.paopaopaike.com/callback
   # 支付回调通知 URL（Payment Service 支付完成后回调此地址）
-  notify_url: https://api.paopaopaike.com/internal/v1/billing/callback
+  notify_url: https://api.paopaopaike.com/billing/v1/internal/callback
 
 # 定时任务配置
 scheduler:

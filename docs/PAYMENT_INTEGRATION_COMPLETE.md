@@ -121,7 +121,7 @@ payment_service:
   grpc_addr: 127.0.0.1:9101      # payment-service 的 gRPC 地址
   timeout: 5s                     # 调用超时时间
   return_url: http://localhost:3000/callback  # 前端回调地址（可选）
-  notify_url: http://localhost:8107/internal/v1/billing/callback  # 后端回调地址
+  notify_url: http://localhost:8107/billing/v1/internal/callback  # 后端回调地址
 ```
 
 **配置说明**:

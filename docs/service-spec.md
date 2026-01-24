@@ -28,15 +28,15 @@ service BillingService {
 ```protobuf
 service BillingInternalService {
     // 检查并预扣费 (Check & Reserve)
-    // POST /internal/v1/billing/check
+    // POST /billing/v1/internal/check
     rpc CheckQuota(CheckQuotaRequest) returns (CheckQuotaReply);
 
     // 确认扣费 (Commit) - 异步或同步
-    // POST /internal/v1/billing/deduct
+    // POST /billing/v1/internal/deduct
     rpc DeductQuota(DeductQuotaRequest) returns (DeductQuotaReply);
 
     // 充值回调 (来自 Payment Service)
-    // POST /internal/v1/billing/callback
+    // POST /billing/v1/internal/callback
     rpc RechargeCallback(RechargeCallbackRequest) returns (RechargeCallbackReply);
 }
 ```

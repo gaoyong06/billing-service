@@ -43,12 +43,12 @@ type BillingServiceHTTPServer interface {
 
 func RegisterBillingServiceHTTPServer(s *http.Server, srv BillingServiceHTTPServer) {
 	r := s.Route("/")
-	r.GET("/api/v1/billing/account", _BillingService_GetAccount0_HTTP_Handler(srv))
-	r.POST("/api/v1/billing/recharge", _BillingService_Recharge0_HTTP_Handler(srv))
-	r.GET("/api/v1/billing/records", _BillingService_ListRecords0_HTTP_Handler(srv))
-	r.GET("/api/v1/billing/stats/today", _BillingService_GetStatsToday0_HTTP_Handler(srv))
-	r.GET("/api/v1/billing/stats/month", _BillingService_GetStatsMonth0_HTTP_Handler(srv))
-	r.GET("/api/v1/billing/stats/summary", _BillingService_GetStatsSummary0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/account", _BillingService_GetAccount0_HTTP_Handler(srv))
+	r.POST("/billing/v1/billing/recharge", _BillingService_Recharge0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/records", _BillingService_ListRecords0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/stats/today", _BillingService_GetStatsToday0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/stats/month", _BillingService_GetStatsMonth0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/stats/summary", _BillingService_GetStatsSummary0_HTTP_Handler(srv))
 }
 
 func _BillingService_GetAccount0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
@@ -194,7 +194,7 @@ func NewBillingServiceHTTPClient(client *http.Client) BillingServiceHTTPClient {
 // GetAccount 获取账户资产信息 (余额 + 剩余配额)
 func (c *BillingServiceHTTPClientImpl) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...http.CallOption) (*GetAccountReply, error) {
 	var out GetAccountReply
-	pattern := "/api/v1/billing/account"
+	pattern := "/billing/v1/billing/account"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetAccount))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -208,7 +208,7 @@ func (c *BillingServiceHTTPClientImpl) GetAccount(ctx context.Context, in *GetAc
 // GetStatsMonth 获取本月调用统计
 func (c *BillingServiceHTTPClientImpl) GetStatsMonth(ctx context.Context, in *GetStatsMonthRequest, opts ...http.CallOption) (*GetStatsReply, error) {
 	var out GetStatsReply
-	pattern := "/api/v1/billing/stats/month"
+	pattern := "/billing/v1/billing/stats/month"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetStatsMonth))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -222,7 +222,7 @@ func (c *BillingServiceHTTPClientImpl) GetStatsMonth(ctx context.Context, in *Ge
 // GetStatsSummary 获取汇总统计（所有服务）
 func (c *BillingServiceHTTPClientImpl) GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...http.CallOption) (*GetStatsSummaryReply, error) {
 	var out GetStatsSummaryReply
-	pattern := "/api/v1/billing/stats/summary"
+	pattern := "/billing/v1/billing/stats/summary"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetStatsSummary))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -236,7 +236,7 @@ func (c *BillingServiceHTTPClientImpl) GetStatsSummary(ctx context.Context, in *
 // GetStatsToday 获取今日调用统计
 func (c *BillingServiceHTTPClientImpl) GetStatsToday(ctx context.Context, in *GetStatsTodayRequest, opts ...http.CallOption) (*GetStatsReply, error) {
 	var out GetStatsReply
-	pattern := "/api/v1/billing/stats/today"
+	pattern := "/billing/v1/billing/stats/today"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetStatsToday))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -250,7 +250,7 @@ func (c *BillingServiceHTTPClientImpl) GetStatsToday(ctx context.Context, in *Ge
 // ListRecords 获取消费流水
 func (c *BillingServiceHTTPClientImpl) ListRecords(ctx context.Context, in *ListRecordsRequest, opts ...http.CallOption) (*ListRecordsReply, error) {
 	var out ListRecordsReply
-	pattern := "/api/v1/billing/records"
+	pattern := "/billing/v1/billing/records"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceListRecords))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -264,7 +264,7 @@ func (c *BillingServiceHTTPClientImpl) ListRecords(ctx context.Context, in *List
 // Recharge 发起充值 (返回支付链接)
 func (c *BillingServiceHTTPClientImpl) Recharge(ctx context.Context, in *RechargeRequest, opts ...http.CallOption) (*RechargeReply, error) {
 	var out RechargeReply
-	pattern := "/api/v1/billing/recharge"
+	pattern := "/billing/v1/billing/recharge"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationBillingServiceRecharge))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -290,9 +290,9 @@ type BillingInternalServiceHTTPServer interface {
 
 func RegisterBillingInternalServiceHTTPServer(s *http.Server, srv BillingInternalServiceHTTPServer) {
 	r := s.Route("/")
-	r.POST("/internal/v1/billing/check", _BillingInternalService_CheckQuota0_HTTP_Handler(srv))
-	r.POST("/internal/v1/billing/deduct", _BillingInternalService_DeductQuota0_HTTP_Handler(srv))
-	r.POST("/internal/v1/billing/callback", _BillingInternalService_RechargeCallback0_HTTP_Handler(srv))
+	r.POST("/billing/v1/internal/check", _BillingInternalService_CheckQuota0_HTTP_Handler(srv))
+	r.POST("/billing/v1/internal/deduct", _BillingInternalService_DeductQuota0_HTTP_Handler(srv))
+	r.POST("/billing/v1/internal/callback", _BillingInternalService_RechargeCallback0_HTTP_Handler(srv))
 }
 
 func _BillingInternalService_CheckQuota0_HTTP_Handler(srv BillingInternalServiceHTTPServer) func(ctx http.Context) error {
@@ -381,7 +381,7 @@ func NewBillingInternalServiceHTTPClient(client *http.Client) BillingInternalSer
 // CheckQuota 检查并预扣费 (Check & Reserve)
 func (c *BillingInternalServiceHTTPClientImpl) CheckQuota(ctx context.Context, in *CheckQuotaRequest, opts ...http.CallOption) (*CheckQuotaReply, error) {
 	var out CheckQuotaReply
-	pattern := "/internal/v1/billing/check"
+	pattern := "/billing/v1/internal/check"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationBillingInternalServiceCheckQuota))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -395,7 +395,7 @@ func (c *BillingInternalServiceHTTPClientImpl) CheckQuota(ctx context.Context, i
 // DeductQuota 确认扣费 (Commit)
 func (c *BillingInternalServiceHTTPClientImpl) DeductQuota(ctx context.Context, in *DeductQuotaRequest, opts ...http.CallOption) (*DeductQuotaReply, error) {
 	var out DeductQuotaReply
-	pattern := "/internal/v1/billing/deduct"
+	pattern := "/billing/v1/internal/deduct"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationBillingInternalServiceDeductQuota))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -409,7 +409,7 @@ func (c *BillingInternalServiceHTTPClientImpl) DeductQuota(ctx context.Context, 
 // RechargeCallback 充值回调 (来自 Payment Service)
 func (c *BillingInternalServiceHTTPClientImpl) RechargeCallback(ctx context.Context, in *RechargeCallbackRequest, opts ...http.CallOption) (*RechargeCallbackReply, error) {
 	var out RechargeCallbackReply
-	pattern := "/internal/v1/billing/callback"
+	pattern := "/billing/v1/internal/callback"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationBillingInternalServiceRechargeCallback))
 	opts = append(opts, http.PathTemplate(pattern))

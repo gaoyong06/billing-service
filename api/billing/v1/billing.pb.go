@@ -1366,20 +1366,20 @@ const file_billing_proto_rawDesc = "" +
 	"totalCount\x18\x02 \x01(\x05R\n" +
 	"totalCount\x12\x1c\n" +
 	"\ttotalCost\x18\x03 \x01(\x01R\ttotalCost\x124\n" +
-	"\bservices\x18\x04 \x03(\v2\x18.billing.v1.ServiceStatsR\bservices2\xb8\x05\n" +
-	"\x0eBillingService\x12i\n" +
+	"\bservices\x18\x04 \x03(\v2\x18.billing.v1.ServiceStatsR\bservices2\xd1\x05\n" +
+	"\x0eBillingService\x12m\n" +
 	"\n" +
-	"GetAccount\x12\x1d.billing.v1.GetAccountRequest\x1a\x1b.billing.v1.GetAccountReply\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/v1/billing/account\x12g\n" +
-	"\bRecharge\x12\x1b.billing.v1.RechargeRequest\x1a\x19.billing.v1.RechargeReply\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/billing/recharge\x12l\n" +
-	"\vListRecords\x12\x1e.billing.v1.ListRecordsRequest\x1a\x1c.billing.v1.ListRecordsReply\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/v1/billing/records\x12q\n" +
-	"\rGetStatsToday\x12 .billing.v1.GetStatsTodayRequest\x1a\x19.billing.v1.GetStatsReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/api/v1/billing/stats/today\x12q\n" +
-	"\rGetStatsMonth\x12 .billing.v1.GetStatsMonthRequest\x1a\x19.billing.v1.GetStatsReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/api/v1/billing/stats/month\x12~\n" +
-	"\x0fGetStatsSummary\x12\".billing.v1.GetStatsSummaryRequest\x1a .billing.v1.GetStatsSummaryReply\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/billing/stats/summary2\x85\x03\n" +
+	"GetAccount\x12\x1d.billing.v1.GetAccountRequest\x1a\x1b.billing.v1.GetAccountReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/billing/v1/billing/account\x12k\n" +
+	"\bRecharge\x12\x1b.billing.v1.RechargeRequest\x1a\x19.billing.v1.RechargeReply\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/billing/v1/billing/recharge\x12p\n" +
+	"\vListRecords\x12\x1e.billing.v1.ListRecordsRequest\x1a\x1c.billing.v1.ListRecordsReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/billing/v1/billing/records\x12u\n" +
+	"\rGetStatsToday\x12 .billing.v1.GetStatsTodayRequest\x1a\x19.billing.v1.GetStatsReply\"'\x82\xd3\xe4\x93\x02!\x12\x1f/billing/v1/billing/stats/today\x12u\n" +
+	"\rGetStatsMonth\x12 .billing.v1.GetStatsMonthRequest\x1a\x19.billing.v1.GetStatsReply\"'\x82\xd3\xe4\x93\x02!\x12\x1f/billing/v1/billing/stats/month\x12\x82\x01\n" +
+	"\x0fGetStatsSummary\x12\".billing.v1.GetStatsSummaryRequest\x1a .billing.v1.GetStatsSummaryReply\")\x82\xd3\xe4\x93\x02#\x12!/billing/v1/billing/stats/summary2\x85\x03\n" +
 	"\x16BillingInternalService\x12o\n" +
 	"\n" +
-	"CheckQuota\x12\x1d.billing.v1.CheckQuotaRequest\x1a\x1b.billing.v1.CheckQuotaReply\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/internal/v1/billing/check\x12s\n" +
-	"\vDeductQuota\x12\x1e.billing.v1.DeductQuotaRequest\x1a\x1c.billing.v1.DeductQuotaReply\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/internal/v1/billing/deduct\x12\x84\x01\n" +
-	"\x10RechargeCallback\x12#.billing.v1.RechargeCallbackRequest\x1a!.billing.v1.RechargeCallbackReply\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/internal/v1/billing/callbackB#Z!billing-service/api/billing/v1;v1b\x06proto3"
+	"CheckQuota\x12\x1d.billing.v1.CheckQuotaRequest\x1a\x1b.billing.v1.CheckQuotaReply\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/billing/v1/internal/check\x12s\n" +
+	"\vDeductQuota\x12\x1e.billing.v1.DeductQuotaRequest\x1a\x1c.billing.v1.DeductQuotaReply\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/billing/v1/internal/deduct\x12\x84\x01\n" +
+	"\x10RechargeCallback\x12#.billing.v1.RechargeCallbackRequest\x1a!.billing.v1.RechargeCallbackReply\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/billing/v1/internal/callbackB#Z!billing-service/api/billing/v1;v1b\x06proto3"
 
 var (
 	file_billing_proto_rawDescOnce sync.Once

@@ -13,14 +13,14 @@ service BillingService {
   // 获取账户资产信息 (余额 + 剩余配额)
   rpc GetAccount(GetAccountRequest) returns (GetAccountReply) {
     option (google.api.http) = {
-      get: "/api/v1/billing/account"
+      get: "/billing/v1/billing/account"
     };
   }
 
   // 发起充值 (返回支付链接)
   rpc Recharge(RechargeRequest) returns (RechargeReply) {
     option (google.api.http) = {
-      post: "/api/v1/billing/recharge"
+      post: "/billing/v1/billing/recharge"
       body: "*"
     };
   }
@@ -28,28 +28,28 @@ service BillingService {
   // 获取消费流水
   rpc ListRecords(ListRecordsRequest) returns (ListRecordsReply) {
     option (google.api.http) = {
-      get: "/api/v1/billing/records"
+      get: "/billing/v1/billing/records"
     };
   }
 
   // 获取今日调用统计
   rpc GetStatsToday(GetStatsTodayRequest) returns (GetStatsReply) {
     option (google.api.http) = {
-      get: "/api/v1/billing/stats/today"
+      get: "/billing/v1/billing/stats/today"
     };
   }
 
   // 获取本月调用统计
   rpc GetStatsMonth(GetStatsMonthRequest) returns (GetStatsReply) {
     option (google.api.http) = {
-      get: "/api/v1/billing/stats/month"
+      get: "/billing/v1/billing/stats/month"
     };
   }
 
   // 获取汇总统计（所有服务）
   rpc GetStatsSummary(GetStatsSummaryRequest) returns (GetStatsSummaryReply) {
     option (google.api.http) = {
-      get: "/api/v1/billing/stats/summary"
+      get: "/billing/v1/billing/stats/summary"
     };
   }
 }
@@ -60,7 +60,7 @@ service BillingInternalService {
   // 检查并预扣费 (Check & Reserve)
   rpc CheckQuota(CheckQuotaRequest) returns (CheckQuotaReply) {
     option (google.api.http) = {
-      post: "/internal/v1/billing/check"
+      post: "/billing/v1/internal/check"
       body: "*"
     };
   }
@@ -68,7 +68,7 @@ service BillingInternalService {
   // 确认扣费 (Commit)
   rpc DeductQuota(DeductQuotaRequest) returns (DeductQuotaReply) {
     option (google.api.http) = {
-      post: "/internal/v1/billing/deduct"
+      post: "/billing/v1/internal/deduct"
       body: "*"
     };
   }
@@ -76,7 +76,7 @@ service BillingInternalService {
   // 充值回调 (来自 Payment Service)
   rpc RechargeCallback(RechargeCallbackRequest) returns (RechargeCallbackReply) {
     option (google.api.http) = {
-      post: "/internal/v1/billing/callback"
+      post: "/billing/v1/internal/callback"
       body: "*"
     };
   }

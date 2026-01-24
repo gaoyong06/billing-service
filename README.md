@@ -108,7 +108,7 @@ DevShare 平台的财务中心，负责管理开发者的钱包、配额与账�
     ▼
 ┌─────────────────────────────────────────────────────────┐
 │ 5. Payment Service 回调 Billing Service                 │
-│    POST /internal/v1/billing/callback                    │
+│    POST /billing/v1/internal/callback                    │
 │    - payment_order_id                                    │
 │    - amount                                              │
 │    - status: SUCCESS                                     │

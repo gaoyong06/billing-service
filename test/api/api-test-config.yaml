@@ -125,7 +125,7 @@ scenarios:
           idempotency_order_id: $.data.orderId
 
       - name: 步骤2-第一次充值回调（成功）
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤1-创建充值订单]
         body:
@@ -152,7 +152,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-第二次充值回调（幂等性测试 - 应该成功但不重复充值）
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤3-验证余额已增加]
         body:
@@ -185,7 +185,7 @@ scenarios:
     description: 测试免费额度充足时的配额检查
     steps:
       - name: 检查配额-免费额度充足
-        endpoint: /internal/v1/billing/check
+        endpoint: /billing/v1/internal/check
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -218,7 +218,7 @@ scenarios:
           balance_test_order_id: $.data.orderId
 
       - name: 步骤2-充值回调
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤1-先充值]
         body:
@@ -233,7 +233,7 @@ scenarios:
             $.success: true
 
       - name: 步骤3-检查配额-余额充足
-        endpoint: /internal/v1/billing/check
+        endpoint: /billing/v1/internal/check
         method: POST
         dependencies: [步骤2-充值回调]
         body:
@@ -252,7 +252,7 @@ scenarios:
     description: 测试免费额度和余额都不足时的配额检查
     steps:
       - name: 检查配额-余额不足
-        endpoint: /internal/v1/billing/check
+        endpoint: /billing/v1/internal/check
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -270,7 +270,7 @@ scenarios:
     description: 测试扣费流程（使用免费额度）
     steps:
       - name: 步骤1-检查配额
-        endpoint: /internal/v1/billing/check
+        endpoint: /billing/v1/internal/check
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -283,7 +283,7 @@ scenarios:
             $.success: true
 
       - name: 步骤2-扣费（使用免费额度）
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤1-检查配额]
         body:
@@ -334,7 +334,7 @@ scenarios:
           deduct_test_order_id: $.data.orderId
 
       - name: 步骤2-充值回调
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤1-充值]
         body:
@@ -349,7 +349,7 @@ scenarios:
             $.success: true
 
       - name: 步骤3-扣费（使用余额）
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤2-充值回调]
         body:
@@ -411,7 +411,7 @@ scenarios:
           integration_order_id: $.data.orderId
 
       - name: 步骤3-充值回调
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤2-创建充值订单]
         body:
@@ -438,7 +438,7 @@ scenarios:
             $.success: true
 
       - name: 步骤5-扣费测试
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤4-验证余额已增加]
         body:
@@ -539,7 +539,7 @@ scenarios:
     description: 测试充值回调时订单不存在的情况
     steps:
       - name: 充值回调-订单不存在
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         body:
           order_id: "non_existent_order_12345"
@@ -556,7 +556,7 @@ scenarios:
     description: 测试余额不足时的扣费失败
     steps:
       - name: 扣费-余额不足
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -626,7 +626,7 @@ scenarios:
           concurrent_order_id: $.data.orderId
 
       - name: 步骤2-充值回调
-        endpoint: /internal/v1/billing/callback
+        endpoint: /billing/v1/internal/callback
         method: POST
         dependencies: [步骤1-准备余额]
         body:
@@ -641,7 +641,7 @@ scenarios:
             $.success: true
 
       - name: 步骤3-并发扣费1
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤2-充值回调]
         body:
@@ -656,7 +656,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-并发扣费2
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤2-充值回调]
         body:
@@ -671,7 +671,7 @@ scenarios:
             $.success: true
 
       - name: 步骤5-并发扣费3
-        endpoint: /internal/v1/billing/deduct
+        endpoint: /billing/v1/internal/deduct
         method: POST
         dependencies: [步骤2-充值回调]
         body:
