@@ -119,7 +119,7 @@ which api-tester
 
 1. 检查服务是否运行：
    ```bash
-   curl http://localhost:8107/api/v1/billing/account?user_id=test
+   curl http://localhost:8107/billing/v1/billing/account?user_id=test
    ```
 
 2. 检查配置文件中的 `base_url` 是否正确

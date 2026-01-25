@@ -59,7 +59,7 @@ scenarios:
     description: 测试新用户获取账户信息（余额为0，无配额记录）
     steps:
       - name: 获取账户信息
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -77,7 +77,7 @@ scenarios:
     description: 测试创建充值订单并获取支付链接
     steps:
       - name: 创建充值订单
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -94,7 +94,7 @@ scenarios:
           recharge_payment_url: $.data.paymentUrl
 
       - name: 验证账户余额未变化（充值前）
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -110,7 +110,7 @@ scenarios:
     description: 测试充值回调的幂等性保证（重复调用只充值一次）
     steps:
       - name: 步骤1-创建充值订单
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id_2}}"
@@ -140,7 +140,7 @@ scenarios:
             $.success: true
 
       - name: 步骤3-验证余额已增加
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id_2}}"
@@ -167,7 +167,7 @@ scenarios:
             $.success: true
 
       - name: 步骤5-验证余额未重复增加（幂等性验证）
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id_2}}"
@@ -203,7 +203,7 @@ scenarios:
     description: 测试免费额度不足但余额充足时的配额检查
     steps:
       - name: 步骤1-先充值
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id_3}}"
@@ -301,7 +301,7 @@ scenarios:
           deduct_record_id: $.data.recordId
 
       - name: 步骤3-验证扣费记录
-        endpoint: /api/v1/billing/records
+        endpoint: /billing/v1/billing/records
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -319,7 +319,7 @@ scenarios:
     description: 测试扣费流程（使用余额）
     steps:
       - name: 步骤1-充值
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id_3}}"
@@ -365,7 +365,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-验证余额已扣减
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id_3}}"
@@ -383,7 +383,7 @@ scenarios:
     description: 测试完整的充值流程（创建订单 -> 回调 -> 验证余额 -> 扣费）
     steps:
       - name: 步骤1-获取初始账户信息
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -394,7 +394,7 @@ scenarios:
             $.success: true
 
       - name: 步骤2-创建充值订单
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         dependencies: [步骤1-获取初始账户信息]
         body:
@@ -426,7 +426,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-验证余额已增加
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -453,7 +453,7 @@ scenarios:
             $.success: true
 
       - name: 步骤6-验证余额已扣减
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -465,7 +465,7 @@ scenarios:
             $.success: true
 
       - name: 步骤7-查看消费记录
-        endpoint: /api/v1/billing/records
+        endpoint: /billing/v1/billing/records
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -485,7 +485,7 @@ scenarios:
     description: 测试获取今日调用统计
     steps:
       - name: 获取今日统计
-        endpoint: /api/v1/billing/stats/today
+        endpoint: /billing/v1/billing/stats/today
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -503,7 +503,7 @@ scenarios:
     description: 测试获取本月调用统计
     steps:
       - name: 获取本月统计
-        endpoint: /api/v1/billing/stats/month
+        endpoint: /billing/v1/billing/stats/month
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -521,7 +521,7 @@ scenarios:
     description: 测试获取所有服务的汇总统计
     steps:
       - name: 获取汇总统计
-        endpoint: /api/v1/billing/stats/summary
+        endpoint: /billing/v1/billing/stats/summary
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -575,7 +575,7 @@ scenarios:
     description: 测试最小金额充值
     steps:
       - name: 创建最小金额充值订单
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -592,7 +592,7 @@ scenarios:
     description: 测试最大金额充值
     steps:
       - name: 创建最大金额充值订单
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id}}"
@@ -611,7 +611,7 @@ scenarios:
     description: 测试高并发场景下的扣费（验证分布式锁和幂等性）
     steps:
       - name: 步骤1-准备余额
-        endpoint: /api/v1/billing/recharge
+        endpoint: /billing/v1/billing/recharge
         method: POST
         body:
           user_id: "{{.test_user_id_3}}"
@@ -686,7 +686,7 @@ scenarios:
             $.success: true
 
       - name: 步骤6-验证余额正确
-        endpoint: /api/v1/billing/account
+        endpoint: /billing/v1/billing/account
         method: GET
         query_params:
           user_id: "{{.test_user_id_3}}"

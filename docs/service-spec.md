@@ -11,15 +11,15 @@
 ```protobuf
 service BillingService {
     // 获取账户资产信息 (余额 + 剩余配额)
-    // GET /api/v1/billing/account
+    // GET /billing/v1/billing/account
     rpc GetAccount(GetAccountRequest) returns (GetAccountReply);
 
     // 发起充值 (返回支付链接)
-    // POST /api/v1/billing/recharge
+    // POST /billing/v1/billing/recharge
     rpc Recharge(RechargeRequest) returns (RechargeReply);
 
     // 获取消费流水
-    // GET /api/v1/billing/records
+    // GET /billing/v1/billing/records
     rpc ListRecords(ListRecordsRequest) returns (ListRecordsReply);
 }
 ```

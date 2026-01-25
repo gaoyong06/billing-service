@@ -192,9 +192,9 @@ billing-service/
 
 ### 管理接口 (面向前端/开发者)
 
-- `GET /api/v1/billing/account` - 获取账户资产信息
-- `POST /api/v1/billing/recharge` - 发起充值
-- `GET /api/v1/billing/records` - 获取消费流水
+- `GET /billing/v1/billing/account` - 获取账户资产信息
+- `POST /billing/v1/billing/recharge` - 发起充值
+- `GET /billing/v1/billing/records` - 获取消费流水
 
 ### 内部接口 (面向 Gateway/Payment)
 
