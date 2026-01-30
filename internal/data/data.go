@@ -86,6 +86,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	// RocketMQ Producer
 	var mq rocketmq.Producer
 	if c.Rocketmq != nil && c.Rocketmq.Enabled {
+		log.Infof("Initializing RocketMQ Producer with NameServers: %v", c.Rocketmq.NameServers)
 		p, err := rocketmq.NewProducer(
 			producer.WithNsResolver(primitive.NewPassthroughResolver(c.Rocketmq.NameServers)),
 			producer.WithRetry(int(c.Rocketmq.RetryTimes)),
