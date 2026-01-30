@@ -66,6 +66,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	// Redis（配置连接池以优化高频调用场景）
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         c.Redis.Addr,
+		Password:     c.Redis.Password,
 		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
 		WriteTimeout: c.Redis.WriteTimeout.AsDuration(),
 		// 连接池配置（优化高频调用）
