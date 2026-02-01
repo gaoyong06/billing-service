@@ -30,6 +30,7 @@ type Bootstrap struct {
 	PaymentService *PaymentService        `protobuf:"bytes,4,opt,name=payment_service,json=paymentService,proto3" json:"payment_service,omitempty"`
 	Scheduler      *Scheduler             `protobuf:"bytes,5,opt,name=scheduler,proto3" json:"scheduler,omitempty"`
 	Log            *Log                   `protobuf:"bytes,6,opt,name=log,proto3" json:"log,omitempty"`
+	RunMode        string                 `protobuf:"bytes,7,opt,name=run_mode,json=runMode,proto3" json:"run_mode,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -104,6 +105,13 @@ func (x *Bootstrap) GetLog() *Log {
 		return x.Log
 	}
 	return nil
+}
+
+func (x *Bootstrap) GetRunMode() string {
+	if x != nil {
+		return x.RunMode
+	}
+	return ""
 }
 
 type Log struct {
@@ -334,8 +342,6 @@ type Billing struct {
 	BalanceLowThreshold float64 `protobuf:"fixed64,3,opt,name=balance_low_threshold,json=balanceLowThreshold,proto3" json:"balance_low_threshold,omitempty"`
 	// 配额低阈值（百分比），当剩余配额低于此百分比时触发告警
 	QuotaLowPercentThreshold float64 `protobuf:"fixed64,4,opt,name=quota_low_percent_threshold,json=quotaLowPercentThreshold,proto3" json:"quota_low_percent_threshold,omitempty"`
-	// 开发模式开关，开启后跳过余额检查，扣费操作始终返回成功（默认：true）
-	DevMode bool `protobuf:"varint,5,opt,name=dev_mode,json=devMode,proto3" json:"dev_mode,omitempty"`
 	// 免费应用白名单（app_id 列表），这些应用的所有调用都不扣费（用于官方应用等）
 	FreeAppIds    []string `protobuf:"bytes,6,rep,name=free_app_ids,json=freeAppIds,proto3" json:"free_app_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -398,13 +404,6 @@ func (x *Billing) GetQuotaLowPercentThreshold() float64 {
 		return x.QuotaLowPercentThreshold
 	}
 	return 0
-}
-
-func (x *Billing) GetDevMode() bool {
-	if x != nil {
-		return x.DevMode
-	}
-	return false
 }
 
 func (x *Billing) GetFreeAppIds() []string {
@@ -915,14 +914,15 @@ var File_internal_conf_conf_proto protoreflect.FileDescriptor
 const file_internal_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"\x18internal/conf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xa9\x02\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xc4\x02\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12-\n" +
 	"\abilling\x18\x03 \x01(\v2\x13.kratos.api.BillingR\abilling\x12C\n" +
 	"\x0fpayment_service\x18\x04 \x01(\v2\x1a.kratos.api.PaymentServiceR\x0epaymentService\x123\n" +
 	"\tscheduler\x18\x05 \x01(\v2\x15.kratos.api.SchedulerR\tscheduler\x12!\n" +
-	"\x03log\x18\x06 \x01(\v2\x0f.kratos.api.LogR\x03log\"\x96\x02\n" +
+	"\x03log\x18\x06 \x01(\v2\x0f.kratos.api.LogR\x03log\x12\x19\n" +
+	"\brun_mode\x18\a \x01(\tR\arunMode\"\x96\x02\n" +
 	"\x03Log\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x16\n" +
 	"\x06format\x18\x02 \x01(\tR\x06format\x12\x16\n" +
@@ -966,14 +966,13 @@ const file_internal_conf_conf_proto_rawDesc = "" +
 	"\vretry_times\x18\x04 \x01(\x05R\n" +
 	"retryTimes\x12<\n" +
 	"\fsend_timeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\vsendTimeout\x12\x18\n" +
-	"\aenabled\x18\x06 \x01(\bR\aenabled\"\xb2\x03\n" +
+	"\aenabled\x18\x06 \x01(\bR\aenabled\"\x97\x03\n" +
 	"\aBilling\x127\n" +
 	"\x06prices\x18\x01 \x03(\v2\x1f.kratos.api.Billing.PricesEntryR\x06prices\x12D\n" +
 	"\vfree_quotas\x18\x02 \x03(\v2#.kratos.api.Billing.FreeQuotasEntryR\n" +
 	"freeQuotas\x122\n" +
 	"\x15balance_low_threshold\x18\x03 \x01(\x01R\x13balanceLowThreshold\x12=\n" +
-	"\x1bquota_low_percent_threshold\x18\x04 \x01(\x01R\x18quotaLowPercentThreshold\x12\x19\n" +
-	"\bdev_mode\x18\x05 \x01(\bR\adevMode\x12 \n" +
+	"\x1bquota_low_percent_threshold\x18\x04 \x01(\x01R\x18quotaLowPercentThreshold\x12 \n" +
 	"\ffree_app_ids\x18\x06 \x03(\tR\n" +
 	"freeAppIds\x1a9\n" +
 	"\vPricesEntry\x12\x10\n" +

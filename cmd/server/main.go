@@ -82,6 +82,8 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+	// 将启动参数中的 mode 注入到配置中
+	bc.RunMode = runMode
 
 	// 验证配置
 	if err := bc.Validate(); err != nil {
@@ -140,6 +142,9 @@ func main() {
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID(),
 	)
+
+	// Log that the service is starting and log file path
+	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-service starting", "log_file", logConfig.FilePath, "run_mode", runMode)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, &bc, loggerInstance)
 	if err != nil {

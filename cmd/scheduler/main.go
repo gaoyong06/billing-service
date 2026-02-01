@@ -60,6 +60,8 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+	// 将启动参数中的 mode 注入到配置中
+	bc.RunMode = runMode
 
 	// 初始化日志 (使用 go-pkg/logger)
 	logConfig := &logger.Config{
@@ -111,6 +113,9 @@ func main() {
 	)
 
 	logHelper := log.NewHelper(loggerInstance)
+
+	// Log that the service is starting and log file path
+	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-scheduler starting", "log_file", logConfig.FilePath, "run_mode", runMode)
 
 	// 初始化应用
 	app, cleanup, err := wireApp(&bc)

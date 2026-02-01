@@ -37,8 +37,8 @@ func NewBillingConfig(c *conf.Bootstrap) *BillingConfig {
 		if c.Billing.QuotaLowPercentThreshold > 0 {
 			config.QuotaLowPercentThreshold = c.Billing.QuotaLowPercentThreshold
 		}
-		// 从配置读取开发模式开关，如果未配置则使用默认值 true
-		config.DevMode = c.Billing.DevMode
+		// 从 RunMode 判断是否开启开发模式 (mode=debug 时开启)
+		config.DevMode = (c.RunMode == "debug")
 		// 从配置读取免费应用白名单
 		if c.Billing.GetFreeAppIds() != nil {
 			config.FreeAppIDs = c.Billing.GetFreeAppIds()

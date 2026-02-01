@@ -12,6 +12,7 @@ message Bootstrap {
   PaymentService payment_service = 4;
   Scheduler scheduler = 5;
   Log log = 6;
+  string run_mode = 7;
 }
 
 message Log {
@@ -74,8 +75,6 @@ message Billing {
   double balance_low_threshold = 3;
   // 配额低阈值（百分比），当剩余配额低于此百分比时触发告警
   double quota_low_percent_threshold = 4;
-  // 开发模式开关，开启后跳过余额检查，扣费操作始终返回成功（默认：true）
-  bool dev_mode = 5;
   // 免费应用白名单（app_id 列表），这些应用的所有调用都不扣费（用于官方应用等）
   repeated string free_app_ids = 6;
 }
