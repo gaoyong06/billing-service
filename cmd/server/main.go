@@ -89,16 +89,43 @@ func main() {
 	}
 
 	// 初始化日志 (使用 go-pkg/logger)
+	// 优先使用配置文件中的日志配置，如果未配置则使用默认值
 	logConfig := &logger.Config{
 		Level:         "info",
 		Format:        "json",
-		Output:        "stdout",
+		Output:        "file", // 默认为 file，生产环境安全
 		FilePath:      "logs/billing-service.log",
 		MaxSize:       100,
 		MaxAge:        30,
 		MaxBackups:    10,
 		Compress:      true,
 		EnableConsole: true,
+	}
+
+	if bc.Log != nil {
+		if bc.Log.Level != "" {
+			logConfig.Level = bc.Log.Level
+		}
+		if bc.Log.Format != "" {
+			logConfig.Format = bc.Log.Format
+		}
+		if bc.Log.Output != "" {
+			logConfig.Output = bc.Log.Output
+		}
+		if bc.Log.ServerFilePath != "" {
+			logConfig.FilePath = bc.Log.ServerFilePath
+		}
+		if bc.Log.MaxSize != 0 {
+			logConfig.MaxSize = int(bc.Log.MaxSize)
+		}
+		if bc.Log.MaxAge != 0 {
+			logConfig.MaxAge = int(bc.Log.MaxAge)
+		}
+		if bc.Log.MaxBackups != 0 {
+			logConfig.MaxBackups = int(bc.Log.MaxBackups)
+		}
+		// bool 类型无法区分默认 false 还是显式 false，这里直接赋值，或者认为是可选配置
+		logConfig.Compress = bc.Log.Compress
 	}
 
 	loggerInstance := logger.NewLogger(logConfig)

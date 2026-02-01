@@ -11,6 +11,19 @@ message Bootstrap {
   Billing billing = 3;
   PaymentService payment_service = 4;
   Scheduler scheduler = 5;
+  Log log = 6;
+}
+
+message Log {
+  string level = 1;
+  string format = 2;
+  string output = 3;
+  string server_file_path = 4;
+  string scheduler_file_path = 9;
+  int32 max_size = 5;
+  int32 max_age = 6;
+  int32 max_backups = 7;
+  bool compress = 8;
 }
 
 message Server {

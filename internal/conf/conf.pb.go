@@ -29,6 +29,7 @@ type Bootstrap struct {
 	Billing        *Billing               `protobuf:"bytes,3,opt,name=billing,proto3" json:"billing,omitempty"`
 	PaymentService *PaymentService        `protobuf:"bytes,4,opt,name=payment_service,json=paymentService,proto3" json:"payment_service,omitempty"`
 	Scheduler      *Scheduler             `protobuf:"bytes,5,opt,name=scheduler,proto3" json:"scheduler,omitempty"`
+	Log            *Log                   `protobuf:"bytes,6,opt,name=log,proto3" json:"log,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -98,6 +99,121 @@ func (x *Bootstrap) GetScheduler() *Scheduler {
 	return nil
 }
 
+func (x *Bootstrap) GetLog() *Log {
+	if x != nil {
+		return x.Log
+	}
+	return nil
+}
+
+type Log struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Level             string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
+	Format            string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
+	Output            string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	ServerFilePath    string                 `protobuf:"bytes,4,opt,name=server_file_path,json=serverFilePath,proto3" json:"server_file_path,omitempty"`
+	SchedulerFilePath string                 `protobuf:"bytes,9,opt,name=scheduler_file_path,json=schedulerFilePath,proto3" json:"scheduler_file_path,omitempty"`
+	MaxSize           int32                  `protobuf:"varint,5,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	MaxAge            int32                  `protobuf:"varint,6,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	MaxBackups        int32                  `protobuf:"varint,7,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	Compress          bool                   `protobuf:"varint,8,opt,name=compress,proto3" json:"compress,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *Log) Reset() {
+	*x = Log{}
+	mi := &file_internal_conf_conf_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log) ProtoMessage() {}
+
+func (x *Log) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_conf_conf_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log.ProtoReflect.Descriptor instead.
+func (*Log) Descriptor() ([]byte, []int) {
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Log) GetLevel() string {
+	if x != nil {
+		return x.Level
+	}
+	return ""
+}
+
+func (x *Log) GetFormat() string {
+	if x != nil {
+		return x.Format
+	}
+	return ""
+}
+
+func (x *Log) GetOutput() string {
+	if x != nil {
+		return x.Output
+	}
+	return ""
+}
+
+func (x *Log) GetServerFilePath() string {
+	if x != nil {
+		return x.ServerFilePath
+	}
+	return ""
+}
+
+func (x *Log) GetSchedulerFilePath() string {
+	if x != nil {
+		return x.SchedulerFilePath
+	}
+	return ""
+}
+
+func (x *Log) GetMaxSize() int32 {
+	if x != nil {
+		return x.MaxSize
+	}
+	return 0
+}
+
+func (x *Log) GetMaxAge() int32 {
+	if x != nil {
+		return x.MaxAge
+	}
+	return 0
+}
+
+func (x *Log) GetMaxBackups() int32 {
+	if x != nil {
+		return x.MaxBackups
+	}
+	return 0
+}
+
+func (x *Log) GetCompress() bool {
+	if x != nil {
+		return x.Compress
+	}
+	return false
+}
+
 type Server struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Http          *Server_HTTP           `protobuf:"bytes,1,opt,name=http,proto3" json:"http,omitempty"`
@@ -108,7 +224,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_internal_conf_conf_proto_msgTypes[1]
+	mi := &file_internal_conf_conf_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -120,7 +236,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[1]
+	mi := &file_internal_conf_conf_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -133,7 +249,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{1}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Server) GetHttp() *Server_HTTP {
@@ -161,7 +277,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_internal_conf_conf_proto_msgTypes[2]
+	mi := &file_internal_conf_conf_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -173,7 +289,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[2]
+	mi := &file_internal_conf_conf_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -186,7 +302,7 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Data) GetDatabase() *Data_Database {
@@ -228,7 +344,7 @@ type Billing struct {
 
 func (x *Billing) Reset() {
 	*x = Billing{}
-	mi := &file_internal_conf_conf_proto_msgTypes[3]
+	mi := &file_internal_conf_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -240,7 +356,7 @@ func (x *Billing) String() string {
 func (*Billing) ProtoMessage() {}
 
 func (x *Billing) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[3]
+	mi := &file_internal_conf_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +369,7 @@ func (x *Billing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Billing.ProtoReflect.Descriptor instead.
 func (*Billing) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{3}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Billing) GetPrices() map[string]float64 {
@@ -310,7 +426,7 @@ type PaymentService struct {
 
 func (x *PaymentService) Reset() {
 	*x = PaymentService{}
-	mi := &file_internal_conf_conf_proto_msgTypes[4]
+	mi := &file_internal_conf_conf_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +438,7 @@ func (x *PaymentService) String() string {
 func (*PaymentService) ProtoMessage() {}
 
 func (x *PaymentService) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[4]
+	mi := &file_internal_conf_conf_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +451,7 @@ func (x *PaymentService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PaymentService.ProtoReflect.Descriptor instead.
 func (*PaymentService) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{4}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PaymentService) GetGrpcAddr() string {
@@ -375,7 +491,7 @@ type Scheduler struct {
 
 func (x *Scheduler) Reset() {
 	*x = Scheduler{}
-	mi := &file_internal_conf_conf_proto_msgTypes[5]
+	mi := &file_internal_conf_conf_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -387,7 +503,7 @@ func (x *Scheduler) String() string {
 func (*Scheduler) ProtoMessage() {}
 
 func (x *Scheduler) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[5]
+	mi := &file_internal_conf_conf_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,7 +516,7 @@ func (x *Scheduler) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Scheduler.ProtoReflect.Descriptor instead.
 func (*Scheduler) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{5}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Scheduler) GetFreeQuotaResetTask() *Scheduler_FreeQuotaResetTask {
@@ -421,7 +537,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_internal_conf_conf_proto_msgTypes[6]
+	mi := &file_internal_conf_conf_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -433,7 +549,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[6]
+	mi := &file_internal_conf_conf_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -446,7 +562,7 @@ func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_HTTP.ProtoReflect.Descriptor instead.
 func (*Server_HTTP) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{1, 0}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *Server_HTTP) GetNetwork() string {
@@ -481,7 +597,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_internal_conf_conf_proto_msgTypes[7]
+	mi := &file_internal_conf_conf_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -493,7 +609,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[7]
+	mi := &file_internal_conf_conf_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -506,7 +622,7 @@ func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_GRPC.ProtoReflect.Descriptor instead.
 func (*Server_GRPC) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{1, 1}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2, 1}
 }
 
 func (x *Server_GRPC) GetNetwork() string {
@@ -540,7 +656,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_internal_conf_conf_proto_msgTypes[8]
+	mi := &file_internal_conf_conf_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -552,7 +668,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[8]
+	mi := &file_internal_conf_conf_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -565,7 +681,7 @@ func (x *Data_Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Database.ProtoReflect.Descriptor instead.
 func (*Data_Database) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2, 0}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *Data_Database) GetDriver() string {
@@ -595,7 +711,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_internal_conf_conf_proto_msgTypes[9]
+	mi := &file_internal_conf_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -607,7 +723,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[9]
+	mi := &file_internal_conf_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +736,7 @@ func (x *Data_Redis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Redis.ProtoReflect.Descriptor instead.
 func (*Data_Redis) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2, 1}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{3, 1}
 }
 
 func (x *Data_Redis) GetNetwork() string {
@@ -672,7 +788,7 @@ type Data_RocketMQ struct {
 
 func (x *Data_RocketMQ) Reset() {
 	*x = Data_RocketMQ{}
-	mi := &file_internal_conf_conf_proto_msgTypes[10]
+	mi := &file_internal_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +800,7 @@ func (x *Data_RocketMQ) String() string {
 func (*Data_RocketMQ) ProtoMessage() {}
 
 func (x *Data_RocketMQ) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[10]
+	mi := &file_internal_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +813,7 @@ func (x *Data_RocketMQ) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_RocketMQ.ProtoReflect.Descriptor instead.
 func (*Data_RocketMQ) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{2, 2}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{3, 2}
 }
 
 func (x *Data_RocketMQ) GetNameServers() []string {
@@ -752,7 +868,7 @@ type Scheduler_FreeQuotaResetTask struct {
 
 func (x *Scheduler_FreeQuotaResetTask) Reset() {
 	*x = Scheduler_FreeQuotaResetTask{}
-	mi := &file_internal_conf_conf_proto_msgTypes[13]
+	mi := &file_internal_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -764,7 +880,7 @@ func (x *Scheduler_FreeQuotaResetTask) String() string {
 func (*Scheduler_FreeQuotaResetTask) ProtoMessage() {}
 
 func (x *Scheduler_FreeQuotaResetTask) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_conf_conf_proto_msgTypes[13]
+	mi := &file_internal_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -777,7 +893,7 @@ func (x *Scheduler_FreeQuotaResetTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Scheduler_FreeQuotaResetTask.ProtoReflect.Descriptor instead.
 func (*Scheduler_FreeQuotaResetTask) Descriptor() ([]byte, []int) {
-	return file_internal_conf_conf_proto_rawDescGZIP(), []int{5, 0}
+	return file_internal_conf_conf_proto_rawDescGZIP(), []int{6, 0}
 }
 
 func (x *Scheduler_FreeQuotaResetTask) GetCron() string {
@@ -799,13 +915,25 @@ var File_internal_conf_conf_proto protoreflect.FileDescriptor
 const file_internal_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"\x18internal/conf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\x86\x02\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xa9\x02\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12-\n" +
 	"\abilling\x18\x03 \x01(\v2\x13.kratos.api.BillingR\abilling\x12C\n" +
 	"\x0fpayment_service\x18\x04 \x01(\v2\x1a.kratos.api.PaymentServiceR\x0epaymentService\x123\n" +
-	"\tscheduler\x18\x05 \x01(\v2\x15.kratos.api.SchedulerR\tscheduler\"\xb8\x02\n" +
+	"\tscheduler\x18\x05 \x01(\v2\x15.kratos.api.SchedulerR\tscheduler\x12!\n" +
+	"\x03log\x18\x06 \x01(\v2\x0f.kratos.api.LogR\x03log\"\x96\x02\n" +
+	"\x03Log\x12\x14\n" +
+	"\x05level\x18\x01 \x01(\tR\x05level\x12\x16\n" +
+	"\x06format\x18\x02 \x01(\tR\x06format\x12\x16\n" +
+	"\x06output\x18\x03 \x01(\tR\x06output\x12(\n" +
+	"\x10server_file_path\x18\x04 \x01(\tR\x0eserverFilePath\x12.\n" +
+	"\x13scheduler_file_path\x18\t \x01(\tR\x11schedulerFilePath\x12\x19\n" +
+	"\bmax_size\x18\x05 \x01(\x05R\amaxSize\x12\x17\n" +
+	"\amax_age\x18\x06 \x01(\x05R\x06maxAge\x12\x1f\n" +
+	"\vmax_backups\x18\a \x01(\x05R\n" +
+	"maxBackups\x12\x1a\n" +
+	"\bcompress\x18\b \x01(\bR\bcompress\"\xb8\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x1ai\n" +
@@ -879,49 +1007,51 @@ func file_internal_conf_conf_proto_rawDescGZIP() []byte {
 	return file_internal_conf_conf_proto_rawDescData
 }
 
-var file_internal_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_internal_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_internal_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),                    // 0: kratos.api.Bootstrap
-	(*Server)(nil),                       // 1: kratos.api.Server
-	(*Data)(nil),                         // 2: kratos.api.Data
-	(*Billing)(nil),                      // 3: kratos.api.Billing
-	(*PaymentService)(nil),               // 4: kratos.api.PaymentService
-	(*Scheduler)(nil),                    // 5: kratos.api.Scheduler
-	(*Server_HTTP)(nil),                  // 6: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),                  // 7: kratos.api.Server.GRPC
-	(*Data_Database)(nil),                // 8: kratos.api.Data.Database
-	(*Data_Redis)(nil),                   // 9: kratos.api.Data.Redis
-	(*Data_RocketMQ)(nil),                // 10: kratos.api.Data.RocketMQ
-	nil,                                  // 11: kratos.api.Billing.PricesEntry
-	nil,                                  // 12: kratos.api.Billing.FreeQuotasEntry
-	(*Scheduler_FreeQuotaResetTask)(nil), // 13: kratos.api.Scheduler.FreeQuotaResetTask
-	(*durationpb.Duration)(nil),          // 14: google.protobuf.Duration
+	(*Log)(nil),                          // 1: kratos.api.Log
+	(*Server)(nil),                       // 2: kratos.api.Server
+	(*Data)(nil),                         // 3: kratos.api.Data
+	(*Billing)(nil),                      // 4: kratos.api.Billing
+	(*PaymentService)(nil),               // 5: kratos.api.PaymentService
+	(*Scheduler)(nil),                    // 6: kratos.api.Scheduler
+	(*Server_HTTP)(nil),                  // 7: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),                  // 8: kratos.api.Server.GRPC
+	(*Data_Database)(nil),                // 9: kratos.api.Data.Database
+	(*Data_Redis)(nil),                   // 10: kratos.api.Data.Redis
+	(*Data_RocketMQ)(nil),                // 11: kratos.api.Data.RocketMQ
+	nil,                                  // 12: kratos.api.Billing.PricesEntry
+	nil,                                  // 13: kratos.api.Billing.FreeQuotasEntry
+	(*Scheduler_FreeQuotaResetTask)(nil), // 14: kratos.api.Scheduler.FreeQuotaResetTask
+	(*durationpb.Duration)(nil),          // 15: google.protobuf.Duration
 }
 var file_internal_conf_conf_proto_depIdxs = []int32{
-	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
-	2,  // 1: kratos.api.Bootstrap.data:type_name -> kratos.api.Data
-	3,  // 2: kratos.api.Bootstrap.billing:type_name -> kratos.api.Billing
-	4,  // 3: kratos.api.Bootstrap.payment_service:type_name -> kratos.api.PaymentService
-	5,  // 4: kratos.api.Bootstrap.scheduler:type_name -> kratos.api.Scheduler
-	6,  // 5: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
-	7,  // 6: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
-	8,  // 7: kratos.api.Data.database:type_name -> kratos.api.Data.Database
-	9,  // 8: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	10, // 9: kratos.api.Data.rocketmq:type_name -> kratos.api.Data.RocketMQ
-	11, // 10: kratos.api.Billing.prices:type_name -> kratos.api.Billing.PricesEntry
-	12, // 11: kratos.api.Billing.free_quotas:type_name -> kratos.api.Billing.FreeQuotasEntry
-	14, // 12: kratos.api.PaymentService.timeout:type_name -> google.protobuf.Duration
-	13, // 13: kratos.api.Scheduler.free_quota_reset_task:type_name -> kratos.api.Scheduler.FreeQuotaResetTask
-	14, // 14: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	14, // 15: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	14, // 16: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	14, // 17: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	14, // 18: kratos.api.Data.RocketMQ.send_timeout:type_name -> google.protobuf.Duration
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	2,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
+	3,  // 1: kratos.api.Bootstrap.data:type_name -> kratos.api.Data
+	4,  // 2: kratos.api.Bootstrap.billing:type_name -> kratos.api.Billing
+	5,  // 3: kratos.api.Bootstrap.payment_service:type_name -> kratos.api.PaymentService
+	6,  // 4: kratos.api.Bootstrap.scheduler:type_name -> kratos.api.Scheduler
+	1,  // 5: kratos.api.Bootstrap.log:type_name -> kratos.api.Log
+	7,  // 6: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
+	8,  // 7: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
+	9,  // 8: kratos.api.Data.database:type_name -> kratos.api.Data.Database
+	10, // 9: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
+	11, // 10: kratos.api.Data.rocketmq:type_name -> kratos.api.Data.RocketMQ
+	12, // 11: kratos.api.Billing.prices:type_name -> kratos.api.Billing.PricesEntry
+	13, // 12: kratos.api.Billing.free_quotas:type_name -> kratos.api.Billing.FreeQuotasEntry
+	15, // 13: kratos.api.PaymentService.timeout:type_name -> google.protobuf.Duration
+	14, // 14: kratos.api.Scheduler.free_quota_reset_task:type_name -> kratos.api.Scheduler.FreeQuotaResetTask
+	15, // 15: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	15, // 16: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	15, // 17: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	15, // 18: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	15, // 19: kratos.api.Data.RocketMQ.send_timeout:type_name -> google.protobuf.Duration
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_internal_conf_conf_proto_init() }
@@ -935,7 +1065,7 @@ func file_internal_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_conf_conf_proto_rawDesc), len(file_internal_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

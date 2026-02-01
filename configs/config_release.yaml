@@ -17,6 +17,18 @@ server:
     # gRPC 请求超时时间
     timeout: 1s
 
+# 日志配置
+log:
+  level: info
+  format: json
+  output: file
+  server_file_path: logs/billing-service.log
+  scheduler_file_path: logs/billing-scheduler.log
+  max_size: 100
+  max_age: 30
+  max_backups: 10
+  compress: true
+
 # 数据层配置
 data:
   # 数据库配置

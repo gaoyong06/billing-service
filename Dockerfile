@@ -39,13 +39,18 @@ RUN go mod edit -replace github.com/gaoyong06/go-pkg=/workspace/go-pkg || true
 # 生成 proto 和 wire 代码（如果需要）
 RUN make api wire || true
 
-# 构建二进制文件（包含 wire_gen.go 如果存在）
+# 构建 server 二进制文件
 RUN if [ -f cmd/server/wire_gen.go ]; then \
       CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server cmd/server/main.go cmd/server/wire_gen.go; \
-    elif [ -f cmd/scheduler/wire_gen.go ]; then \
-      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server cmd/scheduler/main.go cmd/scheduler/wire_gen.go; \
     else \
       CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server cmd/server/main.go; \
+    fi
+
+# 构建 scheduler 二进制文件
+RUN if [ -f cmd/scheduler/wire_gen.go ]; then \
+      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o scheduler cmd/scheduler/main.go cmd/scheduler/wire_gen.go; \
+    else \
+      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o scheduler cmd/scheduler/main.go; \
     fi
 
 # Stage 2: 运行阶段
@@ -65,9 +70,10 @@ RUN addgroup -g 1000 app && \
 WORKDIR /app
 
 # 从构建阶段复制二进制文件
-RUN mkdir -p bin
+RUN mkdir -p bin configs
 COPY --from=builder /workspace/billing-service/server ./bin/
-COPY --from=builder /workspace/billing-service/configs ./configs
+COPY --from=builder /workspace/billing-service/scheduler ./bin/
+COPY --from=builder /workspace/billing-service/configs/config_release.yaml ./configs/
 
 # 创建日志目录
 RUN mkdir -p logs && chown -R app:app /app

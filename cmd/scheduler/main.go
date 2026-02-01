@@ -65,13 +65,40 @@ func main() {
 	logConfig := &logger.Config{
 		Level:         "info",
 		Format:        "json",
-		Output:        "stdout",
+		Output:        "file", // 默认为 file
 		FilePath:      "logs/billing-scheduler.log",
 		MaxSize:       100,
 		MaxAge:        30,
 		MaxBackups:    10,
 		Compress:      true,
 		EnableConsole: true,
+	}
+
+	// 如果配置文件中有日志配置，则覆盖默认配置
+	// 注意：为了区分日志文件，我们保留 FilePath 为 billing-scheduler.log，不使用配置文件中的 file_path
+	if bc.Log != nil {
+		if bc.Log.Level != "" {
+			logConfig.Level = bc.Log.Level
+		}
+		if bc.Log.Format != "" {
+			logConfig.Format = bc.Log.Format
+		}
+		if bc.Log.Output != "" {
+			logConfig.Output = bc.Log.Output
+		}
+		if bc.Log.SchedulerFilePath != "" {
+			logConfig.FilePath = bc.Log.SchedulerFilePath
+		}
+		if bc.Log.MaxSize != 0 {
+			logConfig.MaxSize = int(bc.Log.MaxSize)
+		}
+		if bc.Log.MaxAge != 0 {
+			logConfig.MaxAge = int(bc.Log.MaxAge)
+		}
+		if bc.Log.MaxBackups != 0 {
+			logConfig.MaxBackups = int(bc.Log.MaxBackups)
+		}
+		logConfig.Compress = bc.Log.Compress
 	}
 
 	loggerInstance := logger.NewLogger(logConfig)
