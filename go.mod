@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/apache/rocketmq-client-go/v2 v2.1.2
-	github.com/gaoyong06/go-pkg v0.0.0-20251209115358-dd8e0341f984
+	github.com/gaoyong06/go-pkg v0.0.0-20260105101952-4ec82d3d2399
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.14.1
@@ -63,6 +63,8 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect

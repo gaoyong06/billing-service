@@ -30,11 +30,11 @@ RUN go mod download
 # 复制服务源代码
 COPY billing-service/ .
 
-# 更新 go.mod（确保依赖关系正确）
-RUN go mod tidy
-
-# 重新设置 replace 指令（go mod tidy 可能会移除 replace）
+# 重新设置 replace 指令（go mod tidy 可能会移除 replace，或者 COPY 覆盖了 go.mod）
 RUN go mod edit -replace github.com/gaoyong06/go-pkg=/workspace/go-pkg || true
+
+# 更新 go.mod（确保依赖关系正确，必须在 replace 之后执行以确保 go.sum 包含本地依赖的 checksum）
+RUN go mod tidy
 
 # 生成 proto 和 wire 代码（如果需要）
 RUN make api wire || true
