@@ -130,21 +130,17 @@ func main() {
 		logConfig.Compress = bc.Log.Compress
 	}
 
-	loggerInstance := logger.NewLogger(logConfig)
+	loggerInstance, logPath := logger.InitLogger(logConfig, id, Name, Version)
 
-	// 添加基本字段
+	// 添加 tracing 字段
+	// InitLogger 已包含 ts, caller, service.id/name/version
 	loggerInstance = log.With(loggerInstance,
-		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
-		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID(),
 	)
 
 	// Log that the service is starting and log file path
-	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-service starting", "log_file", logConfig.FilePath, "run_mode", runMode)
+	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-service starting", "log_file", logPath, "run_mode", runMode)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, &bc, loggerInstance)
 	if err != nil {

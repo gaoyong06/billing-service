@@ -20,8 +20,11 @@ import (
 )
 
 var (
+	Name     = "billing-scheduler"
+	Version  = "v1.0.0"
 	flagconf string
 	runMode  string
+	id, _    = os.Hostname()
 )
 
 func init() {
@@ -103,19 +106,12 @@ func main() {
 		logConfig.Compress = bc.Log.Compress
 	}
 
-	loggerInstance := logger.NewLogger(logConfig)
-
-	// 添加基本字段
-	loggerInstance = log.With(loggerInstance,
-		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
-		"service.name", "billing-scheduler",
-	)
+	loggerInstance, logPath := logger.InitLogger(logConfig, id, Name, Version)
 
 	logHelper := log.NewHelper(loggerInstance)
 
 	// Log that the service is starting and log file path
-	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-scheduler starting", "log_file", logConfig.FilePath, "run_mode", runMode)
+	_ = loggerInstance.Log(log.LevelInfo, "msg", "billing-scheduler starting", "log_file", logPath, "run_mode", runMode)
 
 	// 初始化应用
 	app, cleanup, err := wireApp(&bc)
