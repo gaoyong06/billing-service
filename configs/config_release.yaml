@@ -22,8 +22,8 @@ log:
   level: info
   format: json
   output: file
-  server_file_path: logs/billing-service.log
-  scheduler_file_path: logs/billing-scheduler.log
+  server_file_path: /app/logs/billing-service.log
+  scheduler_file_path: /app/logs/billing-scheduler.log
   max_size: 100
   max_age: 30
   max_backups: 10
