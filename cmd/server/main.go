@@ -132,6 +132,9 @@ func main() {
 
 	loggerInstance, logPath := logger.InitLogger(logConfig, id, Name, Version)
 
+	// 设置为 Kratos 全局 Logger，供中间件使用
+	log.SetLogger(loggerInstance)
+
 	// 添加 tracing 字段
 	// InitLogger 已包含 ts, caller, service.id/name/version
 	loggerInstance = log.With(loggerInstance,
