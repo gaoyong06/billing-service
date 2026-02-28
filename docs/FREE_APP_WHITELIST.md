@@ -29,9 +29,15 @@ billing:
    - 返回原因：`"free_app"`
 
 2. **DeductQuota（扣费）**：
-   - 如果 `app_id` 在白名单中，直接返回成功，不进行任何扣费操作
+   - 如果 `app_id` 在白名单中，**不扣费**，但会**按次记录用量**到免费额度表（`user_id + app_id + service + month`）
+   - 免费应用的配额行总额度为「无限」（内部使用 `UnlimitedQuota` 常量），已用额度随调用递增，便于统计与前端展示
    - 生成一个特殊的 `record_id`（格式：`free_{timestamp}_{app_id}`）用于日志追踪
    - 记录指标：`DeductQuotaTotal` 标签为 `free`
+
+3. **配额查询接口（已拆分为两个独立 API）**：
+   - **GetAccountQuota**（开发者维度）：`GET /billing/v1/billing/account-quota?userId=xxx`，返回账户余额与汇总配额（app_id 为空）。
+   - **GetAppQuota**（应用维度）：`GET /billing/v1/billing/app-quota?userId=xxx&appId=yyy`，返回指定应用的配额与用量；当该应用在白名单时，响应 `isFreeApp=true`，各配额 `isUnlimited=true`，前端可展示「已用 xxx / 无限制」及「免费应用」标识。
+   - 在官方后台（如 atseeker.com）费用中心应调用 **GetAppQuota** 并传入当前应用 `appId`，即可看到正确的调用量与「无限制」展示。
 
 ## 行业最佳实践
 
@@ -92,6 +98,16 @@ billing:
 
 1. 编辑配置文件，删除对应的 `app_id`
 2. 重启服务
+
+## 前端对接说明（Dashboard 展示）
+
+- **开发者维度**（总览）：调用 `GET /billing/v1/billing/account-quota?userId=xxx`。
+- **应用维度**（当前应用费用中心）：调用 `GET /billing/v1/billing/app-quota?userId=xxx&appId=yyy`，其中 `appId` 为当前登录应用（如从 getAppConfig().appId 获取）。
+- **GetAppQuota 响应字段**：
+  - `isFreeApp`：是否为免费应用（白名单），可展示「免费应用」标签
+  - `quotas[].isUnlimited`：该服务是否为无限额度（免费应用下为 true）
+  - `quotas[].usedQuota`：已使用调用量（免费应用也会正确累加）
+  - `quotas[].totalQuota`：总配额；当 `isUnlimited=true` 时前端宜展示为「无限制」而非具体数字
 
 ## 注意事项
 

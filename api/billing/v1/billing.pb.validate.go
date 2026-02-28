@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on GetAccountRequest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *GetAccountRequest) Validate() error {
+// Validate checks the field values on GetAccountQuotaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetAccountQuotaRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on GetAccountRequest with the rules
+// ValidateAll checks the field values on GetAccountQuotaRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// GetAccountRequestMultiError, or nil if none found.
-func (m *GetAccountRequest) ValidateAll() error {
+// GetAccountQuotaRequestMultiError, or nil if none found.
+func (m *GetAccountQuotaRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *GetAccountRequest) validate(all bool) error {
+func (m *GetAccountQuotaRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -60,19 +60,19 @@ func (m *GetAccountRequest) validate(all bool) error {
 	// no validation rules for UserId
 
 	if len(errors) > 0 {
-		return GetAccountRequestMultiError(errors)
+		return GetAccountQuotaRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// GetAccountRequestMultiError is an error wrapping multiple validation errors
-// returned by GetAccountRequest.ValidateAll() if the designated constraints
-// aren't met.
-type GetAccountRequestMultiError []error
+// GetAccountQuotaRequestMultiError is an error wrapping multiple validation
+// errors returned by GetAccountQuotaRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetAccountQuotaRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m GetAccountRequestMultiError) Error() string {
+func (m GetAccountQuotaRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -81,11 +81,11 @@ func (m GetAccountRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m GetAccountRequestMultiError) AllErrors() []error { return m }
+func (m GetAccountQuotaRequestMultiError) AllErrors() []error { return m }
 
-// GetAccountRequestValidationError is the validation error returned by
-// GetAccountRequest.Validate if the designated constraints aren't met.
-type GetAccountRequestValidationError struct {
+// GetAccountQuotaRequestValidationError is the validation error returned by
+// GetAccountQuotaRequest.Validate if the designated constraints aren't met.
+type GetAccountQuotaRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -93,24 +93,24 @@ type GetAccountRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetAccountRequestValidationError) Field() string { return e.field }
+func (e GetAccountQuotaRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetAccountRequestValidationError) Reason() string { return e.reason }
+func (e GetAccountQuotaRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetAccountRequestValidationError) Cause() error { return e.cause }
+func (e GetAccountQuotaRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetAccountRequestValidationError) Key() bool { return e.key }
+func (e GetAccountQuotaRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetAccountRequestValidationError) ErrorName() string {
-	return "GetAccountRequestValidationError"
+func (e GetAccountQuotaRequestValidationError) ErrorName() string {
+	return "GetAccountQuotaRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e GetAccountRequestValidationError) Error() string {
+func (e GetAccountQuotaRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -122,14 +122,14 @@ func (e GetAccountRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetAccountRequest.%s: %s%s",
+		"invalid %sGetAccountQuotaRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetAccountRequestValidationError{}
+var _ error = GetAccountQuotaRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -137,24 +137,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetAccountRequestValidationError{}
+} = GetAccountQuotaRequestValidationError{}
 
-// Validate checks the field values on GetAccountReply with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *GetAccountReply) Validate() error {
+// Validate checks the field values on GetAccountQuotaReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetAccountQuotaReply) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on GetAccountReply with the rules
+// ValidateAll checks the field values on GetAccountQuotaReply with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// GetAccountReplyMultiError, or nil if none found.
-func (m *GetAccountReply) ValidateAll() error {
+// GetAccountQuotaReplyMultiError, or nil if none found.
+func (m *GetAccountQuotaReply) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *GetAccountReply) validate(all bool) error {
+func (m *GetAccountQuotaReply) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -172,7 +172,7 @@ func (m *GetAccountReply) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, GetAccountReplyValidationError{
+					errors = append(errors, GetAccountQuotaReplyValidationError{
 						field:  fmt.Sprintf("Quotas[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -180,7 +180,7 @@ func (m *GetAccountReply) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, GetAccountReplyValidationError{
+					errors = append(errors, GetAccountQuotaReplyValidationError{
 						field:  fmt.Sprintf("Quotas[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -189,7 +189,7 @@ func (m *GetAccountReply) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return GetAccountReplyValidationError{
+				return GetAccountQuotaReplyValidationError{
 					field:  fmt.Sprintf("Quotas[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -200,19 +200,19 @@ func (m *GetAccountReply) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return GetAccountReplyMultiError(errors)
+		return GetAccountQuotaReplyMultiError(errors)
 	}
 
 	return nil
 }
 
-// GetAccountReplyMultiError is an error wrapping multiple validation errors
-// returned by GetAccountReply.ValidateAll() if the designated constraints
-// aren't met.
-type GetAccountReplyMultiError []error
+// GetAccountQuotaReplyMultiError is an error wrapping multiple validation
+// errors returned by GetAccountQuotaReply.ValidateAll() if the designated
+// constraints aren't met.
+type GetAccountQuotaReplyMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m GetAccountReplyMultiError) Error() string {
+func (m GetAccountQuotaReplyMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -221,11 +221,11 @@ func (m GetAccountReplyMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m GetAccountReplyMultiError) AllErrors() []error { return m }
+func (m GetAccountQuotaReplyMultiError) AllErrors() []error { return m }
 
-// GetAccountReplyValidationError is the validation error returned by
-// GetAccountReply.Validate if the designated constraints aren't met.
-type GetAccountReplyValidationError struct {
+// GetAccountQuotaReplyValidationError is the validation error returned by
+// GetAccountQuotaReply.Validate if the designated constraints aren't met.
+type GetAccountQuotaReplyValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -233,22 +233,24 @@ type GetAccountReplyValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetAccountReplyValidationError) Field() string { return e.field }
+func (e GetAccountQuotaReplyValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetAccountReplyValidationError) Reason() string { return e.reason }
+func (e GetAccountQuotaReplyValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetAccountReplyValidationError) Cause() error { return e.cause }
+func (e GetAccountQuotaReplyValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetAccountReplyValidationError) Key() bool { return e.key }
+func (e GetAccountQuotaReplyValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetAccountReplyValidationError) ErrorName() string { return "GetAccountReplyValidationError" }
+func (e GetAccountQuotaReplyValidationError) ErrorName() string {
+	return "GetAccountQuotaReplyValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e GetAccountReplyValidationError) Error() string {
+func (e GetAccountQuotaReplyValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -260,14 +262,14 @@ func (e GetAccountReplyValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetAccountReply.%s: %s%s",
+		"invalid %sGetAccountQuotaReply.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetAccountReplyValidationError{}
+var _ error = GetAccountQuotaReplyValidationError{}
 
 var _ interface {
 	Field() string
@@ -275,7 +277,253 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetAccountReplyValidationError{}
+} = GetAccountQuotaReplyValidationError{}
+
+// Validate checks the field values on GetAppQuotaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetAppQuotaRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetAppQuotaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetAppQuotaRequestMultiError, or nil if none found.
+func (m *GetAppQuotaRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetAppQuotaRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for AppId
+
+	if len(errors) > 0 {
+		return GetAppQuotaRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetAppQuotaRequestMultiError is an error wrapping multiple validation errors
+// returned by GetAppQuotaRequest.ValidateAll() if the designated constraints
+// aren't met.
+type GetAppQuotaRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetAppQuotaRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetAppQuotaRequestMultiError) AllErrors() []error { return m }
+
+// GetAppQuotaRequestValidationError is the validation error returned by
+// GetAppQuotaRequest.Validate if the designated constraints aren't met.
+type GetAppQuotaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetAppQuotaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetAppQuotaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetAppQuotaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetAppQuotaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetAppQuotaRequestValidationError) ErrorName() string {
+	return "GetAppQuotaRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetAppQuotaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetAppQuotaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetAppQuotaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetAppQuotaRequestValidationError{}
+
+// Validate checks the field values on GetAppQuotaReply with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetAppQuotaReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetAppQuotaReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetAppQuotaReplyMultiError, or nil if none found.
+func (m *GetAppQuotaReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetAppQuotaReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Balance
+
+	for idx, item := range m.GetQuotas() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetAppQuotaReplyValidationError{
+						field:  fmt.Sprintf("Quotas[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetAppQuotaReplyValidationError{
+						field:  fmt.Sprintf("Quotas[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetAppQuotaReplyValidationError{
+					field:  fmt.Sprintf("Quotas[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for IsFreeApp
+
+	if len(errors) > 0 {
+		return GetAppQuotaReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetAppQuotaReplyMultiError is an error wrapping multiple validation errors
+// returned by GetAppQuotaReply.ValidateAll() if the designated constraints
+// aren't met.
+type GetAppQuotaReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetAppQuotaReplyMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetAppQuotaReplyMultiError) AllErrors() []error { return m }
+
+// GetAppQuotaReplyValidationError is the validation error returned by
+// GetAppQuotaReply.Validate if the designated constraints aren't met.
+type GetAppQuotaReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetAppQuotaReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetAppQuotaReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetAppQuotaReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetAppQuotaReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetAppQuotaReplyValidationError) ErrorName() string { return "GetAppQuotaReplyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetAppQuotaReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetAppQuotaReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetAppQuotaReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetAppQuotaReplyValidationError{}
 
 // Validate checks the field values on FreeQuota with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -306,6 +554,8 @@ func (m *FreeQuota) validate(all bool) error {
 	// no validation rules for UsedQuota
 
 	// no validation rules for ResetMonth
+
+	// no validation rules for IsUnlimited
 
 	if len(errors) > 0 {
 		return FreeQuotaMultiError(errors)
@@ -862,7 +1112,7 @@ func (m *BillingRecord) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Id
+	// no validation rules for BillingRecordId
 
 	// no validation rules for AppId
 
@@ -1837,22 +2087,22 @@ var _ interface {
 	ErrorName() string
 } = GetStatsMonthRequestValidationError{}
 
-// Validate checks the field values on GetStatsSummaryRequest with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on GetMonthlyUsageSummaryRequest with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *GetStatsSummaryRequest) Validate() error {
+func (m *GetMonthlyUsageSummaryRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on GetStatsSummaryRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// GetStatsSummaryRequestMultiError, or nil if none found.
-func (m *GetStatsSummaryRequest) ValidateAll() error {
+// ValidateAll checks the field values on GetMonthlyUsageSummaryRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// GetMonthlyUsageSummaryRequestMultiError, or nil if none found.
+func (m *GetMonthlyUsageSummaryRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *GetStatsSummaryRequest) validate(all bool) error {
+func (m *GetMonthlyUsageSummaryRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1862,19 +2112,19 @@ func (m *GetStatsSummaryRequest) validate(all bool) error {
 	// no validation rules for UserId
 
 	if len(errors) > 0 {
-		return GetStatsSummaryRequestMultiError(errors)
+		return GetMonthlyUsageSummaryRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// GetStatsSummaryRequestMultiError is an error wrapping multiple validation
-// errors returned by GetStatsSummaryRequest.ValidateAll() if the designated
-// constraints aren't met.
-type GetStatsSummaryRequestMultiError []error
+// GetMonthlyUsageSummaryRequestMultiError is an error wrapping multiple
+// validation errors returned by GetMonthlyUsageSummaryRequest.ValidateAll()
+// if the designated constraints aren't met.
+type GetMonthlyUsageSummaryRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m GetStatsSummaryRequestMultiError) Error() string {
+func (m GetMonthlyUsageSummaryRequestMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1883,11 +2133,12 @@ func (m GetStatsSummaryRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m GetStatsSummaryRequestMultiError) AllErrors() []error { return m }
+func (m GetMonthlyUsageSummaryRequestMultiError) AllErrors() []error { return m }
 
-// GetStatsSummaryRequestValidationError is the validation error returned by
-// GetStatsSummaryRequest.Validate if the designated constraints aren't met.
-type GetStatsSummaryRequestValidationError struct {
+// GetMonthlyUsageSummaryRequestValidationError is the validation error
+// returned by GetMonthlyUsageSummaryRequest.Validate if the designated
+// constraints aren't met.
+type GetMonthlyUsageSummaryRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1895,24 +2146,24 @@ type GetStatsSummaryRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetStatsSummaryRequestValidationError) Field() string { return e.field }
+func (e GetMonthlyUsageSummaryRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetStatsSummaryRequestValidationError) Reason() string { return e.reason }
+func (e GetMonthlyUsageSummaryRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetStatsSummaryRequestValidationError) Cause() error { return e.cause }
+func (e GetMonthlyUsageSummaryRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetStatsSummaryRequestValidationError) Key() bool { return e.key }
+func (e GetMonthlyUsageSummaryRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetStatsSummaryRequestValidationError) ErrorName() string {
-	return "GetStatsSummaryRequestValidationError"
+func (e GetMonthlyUsageSummaryRequestValidationError) ErrorName() string {
+	return "GetMonthlyUsageSummaryRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e GetStatsSummaryRequestValidationError) Error() string {
+func (e GetMonthlyUsageSummaryRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1924,14 +2175,14 @@ func (e GetStatsSummaryRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetStatsSummaryRequest.%s: %s%s",
+		"invalid %sGetMonthlyUsageSummaryRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetStatsSummaryRequestValidationError{}
+var _ error = GetMonthlyUsageSummaryRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -1939,7 +2190,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetStatsSummaryRequestValidationError{}
+} = GetMonthlyUsageSummaryRequestValidationError{}
 
 // Validate checks the field values on GetStatsReply with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -2164,22 +2415,22 @@ var _ interface {
 	ErrorName() string
 } = ServiceStatsValidationError{}
 
-// Validate checks the field values on GetStatsSummaryReply with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on GetMonthlyUsageSummaryReply with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *GetStatsSummaryReply) Validate() error {
+func (m *GetMonthlyUsageSummaryReply) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on GetStatsSummaryReply with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on GetMonthlyUsageSummaryReply with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// GetStatsSummaryReplyMultiError, or nil if none found.
-func (m *GetStatsSummaryReply) ValidateAll() error {
+// GetMonthlyUsageSummaryReplyMultiError, or nil if none found.
+func (m *GetMonthlyUsageSummaryReply) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *GetStatsSummaryReply) validate(all bool) error {
+func (m *GetMonthlyUsageSummaryReply) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2199,7 +2450,7 @@ func (m *GetStatsSummaryReply) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, GetStatsSummaryReplyValidationError{
+					errors = append(errors, GetMonthlyUsageSummaryReplyValidationError{
 						field:  fmt.Sprintf("Services[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -2207,7 +2458,7 @@ func (m *GetStatsSummaryReply) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, GetStatsSummaryReplyValidationError{
+					errors = append(errors, GetMonthlyUsageSummaryReplyValidationError{
 						field:  fmt.Sprintf("Services[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -2216,7 +2467,7 @@ func (m *GetStatsSummaryReply) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return GetStatsSummaryReplyValidationError{
+				return GetMonthlyUsageSummaryReplyValidationError{
 					field:  fmt.Sprintf("Services[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2227,19 +2478,19 @@ func (m *GetStatsSummaryReply) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return GetStatsSummaryReplyMultiError(errors)
+		return GetMonthlyUsageSummaryReplyMultiError(errors)
 	}
 
 	return nil
 }
 
-// GetStatsSummaryReplyMultiError is an error wrapping multiple validation
-// errors returned by GetStatsSummaryReply.ValidateAll() if the designated
-// constraints aren't met.
-type GetStatsSummaryReplyMultiError []error
+// GetMonthlyUsageSummaryReplyMultiError is an error wrapping multiple
+// validation errors returned by GetMonthlyUsageSummaryReply.ValidateAll() if
+// the designated constraints aren't met.
+type GetMonthlyUsageSummaryReplyMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m GetStatsSummaryReplyMultiError) Error() string {
+func (m GetMonthlyUsageSummaryReplyMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2248,11 +2499,12 @@ func (m GetStatsSummaryReplyMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m GetStatsSummaryReplyMultiError) AllErrors() []error { return m }
+func (m GetMonthlyUsageSummaryReplyMultiError) AllErrors() []error { return m }
 
-// GetStatsSummaryReplyValidationError is the validation error returned by
-// GetStatsSummaryReply.Validate if the designated constraints aren't met.
-type GetStatsSummaryReplyValidationError struct {
+// GetMonthlyUsageSummaryReplyValidationError is the validation error returned
+// by GetMonthlyUsageSummaryReply.Validate if the designated constraints
+// aren't met.
+type GetMonthlyUsageSummaryReplyValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2260,24 +2512,24 @@ type GetStatsSummaryReplyValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetStatsSummaryReplyValidationError) Field() string { return e.field }
+func (e GetMonthlyUsageSummaryReplyValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetStatsSummaryReplyValidationError) Reason() string { return e.reason }
+func (e GetMonthlyUsageSummaryReplyValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetStatsSummaryReplyValidationError) Cause() error { return e.cause }
+func (e GetMonthlyUsageSummaryReplyValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetStatsSummaryReplyValidationError) Key() bool { return e.key }
+func (e GetMonthlyUsageSummaryReplyValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetStatsSummaryReplyValidationError) ErrorName() string {
-	return "GetStatsSummaryReplyValidationError"
+func (e GetMonthlyUsageSummaryReplyValidationError) ErrorName() string {
+	return "GetMonthlyUsageSummaryReplyValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e GetStatsSummaryReplyValidationError) Error() string {
+func (e GetMonthlyUsageSummaryReplyValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2289,14 +2541,14 @@ func (e GetStatsSummaryReplyValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetStatsSummaryReply.%s: %s%s",
+		"invalid %sGetMonthlyUsageSummaryReply.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetStatsSummaryReplyValidationError{}
+var _ error = GetMonthlyUsageSummaryReplyValidationError{}
 
 var _ interface {
 	Field() string
@@ -2304,4 +2556,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetStatsSummaryReplyValidationError{}
+} = GetMonthlyUsageSummaryReplyValidationError{}

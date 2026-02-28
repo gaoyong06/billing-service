@@ -23,27 +23,28 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetAccountRequest struct {
+// 开发者维度
+type GetAccountQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetAccountRequest) Reset() {
-	*x = GetAccountRequest{}
+func (x *GetAccountQuotaRequest) Reset() {
+	*x = GetAccountQuotaRequest{}
 	mi := &file_billing_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetAccountRequest) String() string {
+func (x *GetAccountQuotaRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAccountRequest) ProtoMessage() {}
+func (*GetAccountQuotaRequest) ProtoMessage() {}
 
-func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
+func (x *GetAccountQuotaRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_billing_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,19 +56,19 @@ func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAccountRequest.ProtoReflect.Descriptor instead.
-func (*GetAccountRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAccountQuotaRequest.ProtoReflect.Descriptor instead.
+func (*GetAccountQuotaRequest) Descriptor() ([]byte, []int) {
 	return file_billing_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetAccountRequest) GetUserId() string {
+func (x *GetAccountQuotaRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-type GetAccountReply struct {
+type GetAccountQuotaReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	Balance       float64                `protobuf:"fixed64,2,opt,name=balance,proto3" json:"balance,omitempty"`
@@ -76,20 +77,20 @@ type GetAccountReply struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetAccountReply) Reset() {
-	*x = GetAccountReply{}
+func (x *GetAccountQuotaReply) Reset() {
+	*x = GetAccountQuotaReply{}
 	mi := &file_billing_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetAccountReply) String() string {
+func (x *GetAccountQuotaReply) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAccountReply) ProtoMessage() {}
+func (*GetAccountQuotaReply) ProtoMessage() {}
 
-func (x *GetAccountReply) ProtoReflect() protoreflect.Message {
+func (x *GetAccountQuotaReply) ProtoReflect() protoreflect.Message {
 	mi := &file_billing_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -101,45 +102,168 @@ func (x *GetAccountReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAccountReply.ProtoReflect.Descriptor instead.
-func (*GetAccountReply) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAccountQuotaReply.ProtoReflect.Descriptor instead.
+func (*GetAccountQuotaReply) Descriptor() ([]byte, []int) {
 	return file_billing_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetAccountReply) GetUserId() string {
+func (x *GetAccountQuotaReply) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *GetAccountReply) GetBalance() float64 {
+func (x *GetAccountQuotaReply) GetBalance() float64 {
 	if x != nil {
 		return x.Balance
 	}
 	return 0
 }
 
-func (x *GetAccountReply) GetQuotas() []*FreeQuota {
+func (x *GetAccountQuotaReply) GetQuotas() []*FreeQuota {
 	if x != nil {
 		return x.Quotas
 	}
 	return nil
 }
 
-type FreeQuota struct {
+// 应用维度
+type GetAppQuotaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
-	TotalQuota    int32                  `protobuf:"varint,2,opt,name=totalQuota,proto3" json:"totalQuota,omitempty"`
-	UsedQuota     int32                  `protobuf:"varint,3,opt,name=usedQuota,proto3" json:"usedQuota,omitempty"`
-	ResetMonth    string                 `protobuf:"bytes,4,opt,name=resetMonth,proto3" json:"resetMonth,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	AppId         string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAppQuotaRequest) Reset() {
+	*x = GetAppQuotaRequest{}
+	mi := &file_billing_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAppQuotaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppQuotaRequest) ProtoMessage() {}
+
+func (x *GetAppQuotaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppQuotaRequest.ProtoReflect.Descriptor instead.
+func (*GetAppQuotaRequest) Descriptor() ([]byte, []int) {
+	return file_billing_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetAppQuotaRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetAppQuotaRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+type GetAppQuotaReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	Balance       float64                `protobuf:"fixed64,2,opt,name=balance,proto3" json:"balance,omitempty"`
+	Quotas        []*FreeQuota           `protobuf:"bytes,3,rep,name=quotas,proto3" json:"quotas,omitempty"`
+	IsFreeApp     bool                   `protobuf:"varint,4,opt,name=isFreeApp,proto3" json:"isFreeApp,omitempty"` // 是否为免费应用（白名单），前端可展示「免费应用」标识
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAppQuotaReply) Reset() {
+	*x = GetAppQuotaReply{}
+	mi := &file_billing_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAppQuotaReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppQuotaReply) ProtoMessage() {}
+
+func (x *GetAppQuotaReply) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppQuotaReply.ProtoReflect.Descriptor instead.
+func (*GetAppQuotaReply) Descriptor() ([]byte, []int) {
+	return file_billing_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetAppQuotaReply) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetAppQuotaReply) GetBalance() float64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+func (x *GetAppQuotaReply) GetQuotas() []*FreeQuota {
+	if x != nil {
+		return x.Quotas
+	}
+	return nil
+}
+
+func (x *GetAppQuotaReply) GetIsFreeApp() bool {
+	if x != nil {
+		return x.IsFreeApp
+	}
+	return false
+}
+
+type FreeQuota struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	ServiceName string                 `protobuf:"bytes,1,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	TotalQuota  int32                  `protobuf:"varint,2,opt,name=totalQuota,proto3" json:"totalQuota,omitempty"`
+	UsedQuota   int32                  `protobuf:"varint,3,opt,name=usedQuota,proto3" json:"usedQuota,omitempty"`
+	ResetMonth  string                 `protobuf:"bytes,4,opt,name=resetMonth,proto3" json:"resetMonth,omitempty"`
+	// 是否为无限额度（如免费应用），前端可展示为「已用 / 无限制」
+	IsUnlimited   bool `protobuf:"varint,5,opt,name=isUnlimited,proto3" json:"isUnlimited,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FreeQuota) Reset() {
 	*x = FreeQuota{}
-	mi := &file_billing_proto_msgTypes[2]
+	mi := &file_billing_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +275,7 @@ func (x *FreeQuota) String() string {
 func (*FreeQuota) ProtoMessage() {}
 
 func (x *FreeQuota) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[2]
+	mi := &file_billing_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +288,7 @@ func (x *FreeQuota) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FreeQuota.ProtoReflect.Descriptor instead.
 func (*FreeQuota) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{2}
+	return file_billing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *FreeQuota) GetServiceName() string {
@@ -195,6 +319,13 @@ func (x *FreeQuota) GetResetMonth() string {
 	return ""
 }
 
+func (x *FreeQuota) GetIsUnlimited() bool {
+	if x != nil {
+		return x.IsUnlimited
+	}
+	return false
+}
+
 type RechargeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -207,7 +338,7 @@ type RechargeRequest struct {
 
 func (x *RechargeRequest) Reset() {
 	*x = RechargeRequest{}
-	mi := &file_billing_proto_msgTypes[3]
+	mi := &file_billing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -219,7 +350,7 @@ func (x *RechargeRequest) String() string {
 func (*RechargeRequest) ProtoMessage() {}
 
 func (x *RechargeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[3]
+	mi := &file_billing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -232,7 +363,7 @@ func (x *RechargeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RechargeRequest.ProtoReflect.Descriptor instead.
 func (*RechargeRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{3}
+	return file_billing_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RechargeRequest) GetUserId() string {
@@ -273,7 +404,7 @@ type RechargeReply struct {
 
 func (x *RechargeReply) Reset() {
 	*x = RechargeReply{}
-	mi := &file_billing_proto_msgTypes[4]
+	mi := &file_billing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +416,7 @@ func (x *RechargeReply) String() string {
 func (*RechargeReply) ProtoMessage() {}
 
 func (x *RechargeReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[4]
+	mi := &file_billing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +429,7 @@ func (x *RechargeReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RechargeReply.ProtoReflect.Descriptor instead.
 func (*RechargeReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{4}
+	return file_billing_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RechargeReply) GetRechargeOrderId() string {
@@ -326,7 +457,7 @@ type ListRecordsRequest struct {
 
 func (x *ListRecordsRequest) Reset() {
 	*x = ListRecordsRequest{}
-	mi := &file_billing_proto_msgTypes[5]
+	mi := &file_billing_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +469,7 @@ func (x *ListRecordsRequest) String() string {
 func (*ListRecordsRequest) ProtoMessage() {}
 
 func (x *ListRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[5]
+	mi := &file_billing_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +482,7 @@ func (x *ListRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecordsRequest.ProtoReflect.Descriptor instead.
 func (*ListRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{5}
+	return file_billing_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListRecordsRequest) GetUserId() string {
@@ -385,7 +516,7 @@ type ListRecordsReply struct {
 
 func (x *ListRecordsReply) Reset() {
 	*x = ListRecordsReply{}
-	mi := &file_billing_proto_msgTypes[6]
+	mi := &file_billing_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +528,7 @@ func (x *ListRecordsReply) String() string {
 func (*ListRecordsReply) ProtoMessage() {}
 
 func (x *ListRecordsReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[6]
+	mi := &file_billing_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +541,7 @@ func (x *ListRecordsReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecordsReply.ProtoReflect.Descriptor instead.
 func (*ListRecordsReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{6}
+	return file_billing_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListRecordsReply) GetRecords() []*BillingRecord {
@@ -428,21 +559,21 @@ func (x *ListRecordsReply) GetTotal() int32 {
 }
 
 type BillingRecord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	AppId         string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"` // 应用ID（用于按应用统计成本）
-	ServiceName   string                 `protobuf:"bytes,3,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
-	Type          int32                  `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"` // 1:免费额度, 2:余额扣费
-	Amount        float64                `protobuf:"fixed64,5,opt,name=amount,proto3" json:"amount,omitempty"`
-	Count         int32                  `protobuf:"varint,6,opt,name=count,proto3" json:"count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	BillingRecordId string                 `protobuf:"bytes,1,opt,name=billingRecordId,proto3" json:"billingRecordId,omitempty"` // 对应表 billing_record.billing_record_id
+	AppId           string                 `protobuf:"bytes,2,opt,name=appId,proto3" json:"appId,omitempty"`                     // 应用ID（用于按应用统计成本）
+	ServiceName     string                 `protobuf:"bytes,3,opt,name=serviceName,proto3" json:"serviceName,omitempty"`
+	Type            int32                  `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"` // 1:免费额度, 2:余额扣费
+	Amount          float64                `protobuf:"fixed64,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Count           int32                  `protobuf:"varint,6,opt,name=count,proto3" json:"count,omitempty"`
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *BillingRecord) Reset() {
 	*x = BillingRecord{}
-	mi := &file_billing_proto_msgTypes[7]
+	mi := &file_billing_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -454,7 +585,7 @@ func (x *BillingRecord) String() string {
 func (*BillingRecord) ProtoMessage() {}
 
 func (x *BillingRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[7]
+	mi := &file_billing_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,12 +598,12 @@ func (x *BillingRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillingRecord.ProtoReflect.Descriptor instead.
 func (*BillingRecord) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{7}
+	return file_billing_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *BillingRecord) GetId() string {
+func (x *BillingRecord) GetBillingRecordId() string {
 	if x != nil {
-		return x.Id
+		return x.BillingRecordId
 	}
 	return ""
 }
@@ -531,7 +662,7 @@ type CheckQuotaRequest struct {
 
 func (x *CheckQuotaRequest) Reset() {
 	*x = CheckQuotaRequest{}
-	mi := &file_billing_proto_msgTypes[8]
+	mi := &file_billing_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -543,7 +674,7 @@ func (x *CheckQuotaRequest) String() string {
 func (*CheckQuotaRequest) ProtoMessage() {}
 
 func (x *CheckQuotaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[8]
+	mi := &file_billing_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -556,7 +687,7 @@ func (x *CheckQuotaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckQuotaRequest.ProtoReflect.Descriptor instead.
 func (*CheckQuotaRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{8}
+	return file_billing_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CheckQuotaRequest) GetUserId() string {
@@ -597,7 +728,7 @@ type CheckQuotaReply struct {
 
 func (x *CheckQuotaReply) Reset() {
 	*x = CheckQuotaReply{}
-	mi := &file_billing_proto_msgTypes[9]
+	mi := &file_billing_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -609,7 +740,7 @@ func (x *CheckQuotaReply) String() string {
 func (*CheckQuotaReply) ProtoMessage() {}
 
 func (x *CheckQuotaReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[9]
+	mi := &file_billing_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -622,7 +753,7 @@ func (x *CheckQuotaReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckQuotaReply.ProtoReflect.Descriptor instead.
 func (*CheckQuotaReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{9}
+	return file_billing_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CheckQuotaReply) GetAllowed() bool {
@@ -652,7 +783,7 @@ type DeductQuotaRequest struct {
 
 func (x *DeductQuotaRequest) Reset() {
 	*x = DeductQuotaRequest{}
-	mi := &file_billing_proto_msgTypes[10]
+	mi := &file_billing_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -664,7 +795,7 @@ func (x *DeductQuotaRequest) String() string {
 func (*DeductQuotaRequest) ProtoMessage() {}
 
 func (x *DeductQuotaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[10]
+	mi := &file_billing_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -677,7 +808,7 @@ func (x *DeductQuotaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeductQuotaRequest.ProtoReflect.Descriptor instead.
 func (*DeductQuotaRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{10}
+	return file_billing_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeductQuotaRequest) GetUserId() string {
@@ -725,7 +856,7 @@ type DeductQuotaReply struct {
 
 func (x *DeductQuotaReply) Reset() {
 	*x = DeductQuotaReply{}
-	mi := &file_billing_proto_msgTypes[11]
+	mi := &file_billing_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -737,7 +868,7 @@ func (x *DeductQuotaReply) String() string {
 func (*DeductQuotaReply) ProtoMessage() {}
 
 func (x *DeductQuotaReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[11]
+	mi := &file_billing_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -750,7 +881,7 @@ func (x *DeductQuotaReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeductQuotaReply.ProtoReflect.Descriptor instead.
 func (*DeductQuotaReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{11}
+	return file_billing_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeductQuotaReply) GetSuccess() bool {
@@ -779,7 +910,7 @@ type RechargeCallbackRequest struct {
 
 func (x *RechargeCallbackRequest) Reset() {
 	*x = RechargeCallbackRequest{}
-	mi := &file_billing_proto_msgTypes[12]
+	mi := &file_billing_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -791,7 +922,7 @@ func (x *RechargeCallbackRequest) String() string {
 func (*RechargeCallbackRequest) ProtoMessage() {}
 
 func (x *RechargeCallbackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[12]
+	mi := &file_billing_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -804,7 +935,7 @@ func (x *RechargeCallbackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RechargeCallbackRequest.ProtoReflect.Descriptor instead.
 func (*RechargeCallbackRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{12}
+	return file_billing_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RechargeCallbackRequest) GetRechargeOrderId() string {
@@ -844,7 +975,7 @@ type RechargeCallbackReply struct {
 
 func (x *RechargeCallbackReply) Reset() {
 	*x = RechargeCallbackReply{}
-	mi := &file_billing_proto_msgTypes[13]
+	mi := &file_billing_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -856,7 +987,7 @@ func (x *RechargeCallbackReply) String() string {
 func (*RechargeCallbackReply) ProtoMessage() {}
 
 func (x *RechargeCallbackReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[13]
+	mi := &file_billing_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -869,7 +1000,7 @@ func (x *RechargeCallbackReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RechargeCallbackReply.ProtoReflect.Descriptor instead.
 func (*RechargeCallbackReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{13}
+	return file_billing_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RechargeCallbackReply) GetSuccess() bool {
@@ -890,7 +1021,7 @@ type GetStatsTodayRequest struct {
 
 func (x *GetStatsTodayRequest) Reset() {
 	*x = GetStatsTodayRequest{}
-	mi := &file_billing_proto_msgTypes[14]
+	mi := &file_billing_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -902,7 +1033,7 @@ func (x *GetStatsTodayRequest) String() string {
 func (*GetStatsTodayRequest) ProtoMessage() {}
 
 func (x *GetStatsTodayRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[14]
+	mi := &file_billing_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -915,7 +1046,7 @@ func (x *GetStatsTodayRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsTodayRequest.ProtoReflect.Descriptor instead.
 func (*GetStatsTodayRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{14}
+	return file_billing_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetStatsTodayRequest) GetUserId() string {
@@ -942,7 +1073,7 @@ type GetStatsMonthRequest struct {
 
 func (x *GetStatsMonthRequest) Reset() {
 	*x = GetStatsMonthRequest{}
-	mi := &file_billing_proto_msgTypes[15]
+	mi := &file_billing_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -954,7 +1085,7 @@ func (x *GetStatsMonthRequest) String() string {
 func (*GetStatsMonthRequest) ProtoMessage() {}
 
 func (x *GetStatsMonthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[15]
+	mi := &file_billing_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -967,7 +1098,7 @@ func (x *GetStatsMonthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsMonthRequest.ProtoReflect.Descriptor instead.
 func (*GetStatsMonthRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{15}
+	return file_billing_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetStatsMonthRequest) GetUserId() string {
@@ -984,28 +1115,29 @@ func (x *GetStatsMonthRequest) GetServiceName() string {
 	return ""
 }
 
-type GetStatsSummaryRequest struct {
+// 本月用量汇总请求（用户维度）
+type GetMonthlyUsageSummaryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetStatsSummaryRequest) Reset() {
-	*x = GetStatsSummaryRequest{}
-	mi := &file_billing_proto_msgTypes[16]
+func (x *GetMonthlyUsageSummaryRequest) Reset() {
+	*x = GetMonthlyUsageSummaryRequest{}
+	mi := &file_billing_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetStatsSummaryRequest) String() string {
+func (x *GetMonthlyUsageSummaryRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetStatsSummaryRequest) ProtoMessage() {}
+func (*GetMonthlyUsageSummaryRequest) ProtoMessage() {}
 
-func (x *GetStatsSummaryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[16]
+func (x *GetMonthlyUsageSummaryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1016,12 +1148,12 @@ func (x *GetStatsSummaryRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetStatsSummaryRequest.ProtoReflect.Descriptor instead.
-func (*GetStatsSummaryRequest) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{16}
+// Deprecated: Use GetMonthlyUsageSummaryRequest.ProtoReflect.Descriptor instead.
+func (*GetMonthlyUsageSummaryRequest) Descriptor() ([]byte, []int) {
+	return file_billing_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *GetStatsSummaryRequest) GetUserId() string {
+func (x *GetMonthlyUsageSummaryRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
@@ -1043,7 +1175,7 @@ type GetStatsReply struct {
 
 func (x *GetStatsReply) Reset() {
 	*x = GetStatsReply{}
-	mi := &file_billing_proto_msgTypes[17]
+	mi := &file_billing_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1187,7 @@ func (x *GetStatsReply) String() string {
 func (*GetStatsReply) ProtoMessage() {}
 
 func (x *GetStatsReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[17]
+	mi := &file_billing_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1200,7 @@ func (x *GetStatsReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsReply.ProtoReflect.Descriptor instead.
 func (*GetStatsReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{17}
+	return file_billing_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetStatsReply) GetUserId() string {
@@ -1133,7 +1265,7 @@ type ServiceStats struct {
 
 func (x *ServiceStats) Reset() {
 	*x = ServiceStats{}
-	mi := &file_billing_proto_msgTypes[18]
+	mi := &file_billing_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1145,7 +1277,7 @@ func (x *ServiceStats) String() string {
 func (*ServiceStats) ProtoMessage() {}
 
 func (x *ServiceStats) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[18]
+	mi := &file_billing_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1158,7 +1290,7 @@ func (x *ServiceStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceStats.ProtoReflect.Descriptor instead.
 func (*ServiceStats) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{18}
+	return file_billing_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ServiceStats) GetServiceName() string {
@@ -1196,31 +1328,32 @@ func (x *ServiceStats) GetPaidCount() int32 {
 	return 0
 }
 
-type GetStatsSummaryReply struct {
+// 本月用量汇总响应：用户维度、本月消费流水汇总（与 GetAppQuota 的「配额与剩余」不同）
+type GetMonthlyUsageSummaryReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	TotalCount    int32                  `protobuf:"varint,2,opt,name=totalCount,proto3" json:"totalCount,omitempty"` // 所有服务总调用次数
-	TotalCost     float64                `protobuf:"fixed64,3,opt,name=totalCost,proto3" json:"totalCost,omitempty"`  // 所有服务总费用
-	Services      []*ServiceStats        `protobuf:"bytes,4,rep,name=services,proto3" json:"services,omitempty"`      // 各服务统计
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=totalCount,proto3" json:"totalCount,omitempty"` // 本月所有服务总调用次数
+	TotalCost     float64                `protobuf:"fixed64,3,opt,name=totalCost,proto3" json:"totalCost,omitempty"`  // 本月所有服务总费用（余额扣费部分）
+	Services      []*ServiceStats        `protobuf:"bytes,4,rep,name=services,proto3" json:"services,omitempty"`      // 各服务本月统计（totalCount/totalCost/freeCount/paidCount）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetStatsSummaryReply) Reset() {
-	*x = GetStatsSummaryReply{}
-	mi := &file_billing_proto_msgTypes[19]
+func (x *GetMonthlyUsageSummaryReply) Reset() {
+	*x = GetMonthlyUsageSummaryReply{}
+	mi := &file_billing_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetStatsSummaryReply) String() string {
+func (x *GetMonthlyUsageSummaryReply) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetStatsSummaryReply) ProtoMessage() {}
+func (*GetMonthlyUsageSummaryReply) ProtoMessage() {}
 
-func (x *GetStatsSummaryReply) ProtoReflect() protoreflect.Message {
-	mi := &file_billing_proto_msgTypes[19]
+func (x *GetMonthlyUsageSummaryReply) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1231,33 +1364,33 @@ func (x *GetStatsSummaryReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetStatsSummaryReply.ProtoReflect.Descriptor instead.
-func (*GetStatsSummaryReply) Descriptor() ([]byte, []int) {
-	return file_billing_proto_rawDescGZIP(), []int{19}
+// Deprecated: Use GetMonthlyUsageSummaryReply.ProtoReflect.Descriptor instead.
+func (*GetMonthlyUsageSummaryReply) Descriptor() ([]byte, []int) {
+	return file_billing_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *GetStatsSummaryReply) GetUserId() string {
+func (x *GetMonthlyUsageSummaryReply) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *GetStatsSummaryReply) GetTotalCount() int32 {
+func (x *GetMonthlyUsageSummaryReply) GetTotalCount() int32 {
 	if x != nil {
 		return x.TotalCount
 	}
 	return 0
 }
 
-func (x *GetStatsSummaryReply) GetTotalCost() float64 {
+func (x *GetMonthlyUsageSummaryReply) GetTotalCost() float64 {
 	if x != nil {
 		return x.TotalCost
 	}
 	return 0
 }
 
-func (x *GetStatsSummaryReply) GetServices() []*ServiceStats {
+func (x *GetMonthlyUsageSummaryReply) GetServices() []*ServiceStats {
 	if x != nil {
 		return x.Services
 	}
@@ -1269,13 +1402,21 @@ var File_billing_proto protoreflect.FileDescriptor
 const file_billing_proto_rawDesc = "" +
 	"\n" +
 	"\rbilling.proto\x12\n" +
-	"billing.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n" +
-	"\x11GetAccountRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\"r\n" +
-	"\x0fGetAccountReply\x12\x16\n" +
+	"billing.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"0\n" +
+	"\x16GetAccountQuotaRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\"w\n" +
+	"\x14GetAccountQuotaReply\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
 	"\abalance\x18\x02 \x01(\x01R\abalance\x12-\n" +
-	"\x06quotas\x18\x03 \x03(\v2\x15.billing.v1.FreeQuotaR\x06quotas\"\x8b\x01\n" +
+	"\x06quotas\x18\x03 \x03(\v2\x15.billing.v1.FreeQuotaR\x06quotas\"B\n" +
+	"\x12GetAppQuotaRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05appId\x18\x02 \x01(\tR\x05appId\"\x91\x01\n" +
+	"\x10GetAppQuotaReply\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
+	"\abalance\x18\x02 \x01(\x01R\abalance\x12-\n" +
+	"\x06quotas\x18\x03 \x03(\v2\x15.billing.v1.FreeQuotaR\x06quotas\x12\x1c\n" +
+	"\tisFreeApp\x18\x04 \x01(\bR\tisFreeApp\"\xad\x01\n" +
 	"\tFreeQuota\x12 \n" +
 	"\vserviceName\x18\x01 \x01(\tR\vserviceName\x12\x1e\n" +
 	"\n" +
@@ -1284,7 +1425,8 @@ const file_billing_proto_rawDesc = "" +
 	"\tusedQuota\x18\x03 \x01(\x05R\tusedQuota\x12\x1e\n" +
 	"\n" +
 	"resetMonth\x18\x04 \x01(\tR\n" +
-	"resetMonth\"\x83\x01\n" +
+	"resetMonth\x12 \n" +
+	"\visUnlimited\x18\x05 \x01(\bR\visUnlimited\"\x83\x01\n" +
 	"\x0fRechargeRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12$\n" +
@@ -1301,9 +1443,9 @@ const file_billing_proto_rawDesc = "" +
 	"\bpageSize\x18\x03 \x01(\x05R\bpageSize\"]\n" +
 	"\x10ListRecordsReply\x123\n" +
 	"\arecords\x18\x01 \x03(\v2\x19.billing.v1.BillingRecordR\arecords\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\xd3\x01\n" +
-	"\rBillingRecord\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xed\x01\n" +
+	"\rBillingRecord\x12(\n" +
+	"\x0fbillingRecordId\x18\x01 \x01(\tR\x0fbillingRecordId\x12\x14\n" +
 	"\x05appId\x18\x02 \x01(\tR\x05appId\x12 \n" +
 	"\vserviceName\x18\x03 \x01(\tR\vserviceName\x12\x12\n" +
 	"\x04type\x18\x04 \x01(\x05R\x04type\x12\x16\n" +
@@ -1339,8 +1481,8 @@ const file_billing_proto_rawDesc = "" +
 	"\vserviceName\x18\x02 \x01(\tR\vserviceName\"P\n" +
 	"\x14GetStatsMonthRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
-	"\vserviceName\x18\x02 \x01(\tR\vserviceName\"0\n" +
-	"\x16GetStatsSummaryRequest\x12\x16\n" +
+	"\vserviceName\x18\x02 \x01(\tR\vserviceName\"7\n" +
+	"\x1dGetMonthlyUsageSummaryRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\"\xdb\x01\n" +
 	"\rGetStatsReply\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
@@ -1359,22 +1501,22 @@ const file_billing_proto_rawDesc = "" +
 	"totalCount\x12\x1c\n" +
 	"\ttotalCost\x18\x03 \x01(\x01R\ttotalCost\x12\x1c\n" +
 	"\tfreeCount\x18\x04 \x01(\x05R\tfreeCount\x12\x1c\n" +
-	"\tpaidCount\x18\x05 \x01(\x05R\tpaidCount\"\xa2\x01\n" +
-	"\x14GetStatsSummaryReply\x12\x16\n" +
+	"\tpaidCount\x18\x05 \x01(\x05R\tpaidCount\"\xa9\x01\n" +
+	"\x1bGetMonthlyUsageSummaryReply\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x1e\n" +
 	"\n" +
 	"totalCount\x18\x02 \x01(\x05R\n" +
 	"totalCount\x12\x1c\n" +
 	"\ttotalCost\x18\x03 \x01(\x01R\ttotalCost\x124\n" +
-	"\bservices\x18\x04 \x03(\v2\x18.billing.v1.ServiceStatsR\bservices2\xd1\x05\n" +
-	"\x0eBillingService\x12m\n" +
-	"\n" +
-	"GetAccount\x12\x1d.billing.v1.GetAccountRequest\x1a\x1b.billing.v1.GetAccountReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/billing/v1/billing/account\x12k\n" +
+	"\bservices\x18\x04 \x03(\v2\x18.billing.v1.ServiceStatsR\bservices2\xfe\x06\n" +
+	"\x0eBillingService\x12\x82\x01\n" +
+	"\x0fGetAccountQuota\x12\".billing.v1.GetAccountQuotaRequest\x1a .billing.v1.GetAccountQuotaReply\")\x82\xd3\xe4\x93\x02#\x12!/billing/v1/billing/account-quota\x12r\n" +
+	"\vGetAppQuota\x12\x1e.billing.v1.GetAppQuotaRequest\x1a\x1c.billing.v1.GetAppQuotaReply\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/billing/v1/billing/app-quota\x12k\n" +
 	"\bRecharge\x12\x1b.billing.v1.RechargeRequest\x1a\x19.billing.v1.RechargeReply\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/billing/v1/billing/recharge\x12p\n" +
 	"\vListRecords\x12\x1e.billing.v1.ListRecordsRequest\x1a\x1c.billing.v1.ListRecordsReply\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/billing/v1/billing/records\x12u\n" +
 	"\rGetStatsToday\x12 .billing.v1.GetStatsTodayRequest\x1a\x19.billing.v1.GetStatsReply\"'\x82\xd3\xe4\x93\x02!\x12\x1f/billing/v1/billing/stats/today\x12u\n" +
-	"\rGetStatsMonth\x12 .billing.v1.GetStatsMonthRequest\x1a\x19.billing.v1.GetStatsReply\"'\x82\xd3\xe4\x93\x02!\x12\x1f/billing/v1/billing/stats/month\x12\x82\x01\n" +
-	"\x0fGetStatsSummary\x12\".billing.v1.GetStatsSummaryRequest\x1a .billing.v1.GetStatsSummaryReply\")\x82\xd3\xe4\x93\x02#\x12!/billing/v1/billing/stats/summary2\x85\x03\n" +
+	"\rGetStatsMonth\x12 .billing.v1.GetStatsMonthRequest\x1a\x19.billing.v1.GetStatsReply\"'\x82\xd3\xe4\x93\x02!\x12\x1f/billing/v1/billing/stats/month\x12\xa5\x01\n" +
+	"\x16GetMonthlyUsageSummary\x12).billing.v1.GetMonthlyUsageSummaryRequest\x1a'.billing.v1.GetMonthlyUsageSummaryReply\"7\x82\xd3\xe4\x93\x021\x12//billing/v1/billing/stats/monthly-usage-summary2\x85\x03\n" +
 	"\x16BillingInternalService\x12o\n" +
 	"\n" +
 	"CheckQuota\x12\x1d.billing.v1.CheckQuotaRequest\x1a\x1b.billing.v1.CheckQuotaReply\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/billing/v1/internal/check\x12s\n" +
@@ -1393,58 +1535,63 @@ func file_billing_proto_rawDescGZIP() []byte {
 	return file_billing_proto_rawDescData
 }
 
-var file_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_billing_proto_goTypes = []any{
-	(*GetAccountRequest)(nil),       // 0: billing.v1.GetAccountRequest
-	(*GetAccountReply)(nil),         // 1: billing.v1.GetAccountReply
-	(*FreeQuota)(nil),               // 2: billing.v1.FreeQuota
-	(*RechargeRequest)(nil),         // 3: billing.v1.RechargeRequest
-	(*RechargeReply)(nil),           // 4: billing.v1.RechargeReply
-	(*ListRecordsRequest)(nil),      // 5: billing.v1.ListRecordsRequest
-	(*ListRecordsReply)(nil),        // 6: billing.v1.ListRecordsReply
-	(*BillingRecord)(nil),           // 7: billing.v1.BillingRecord
-	(*CheckQuotaRequest)(nil),       // 8: billing.v1.CheckQuotaRequest
-	(*CheckQuotaReply)(nil),         // 9: billing.v1.CheckQuotaReply
-	(*DeductQuotaRequest)(nil),      // 10: billing.v1.DeductQuotaRequest
-	(*DeductQuotaReply)(nil),        // 11: billing.v1.DeductQuotaReply
-	(*RechargeCallbackRequest)(nil), // 12: billing.v1.RechargeCallbackRequest
-	(*RechargeCallbackReply)(nil),   // 13: billing.v1.RechargeCallbackReply
-	(*GetStatsTodayRequest)(nil),    // 14: billing.v1.GetStatsTodayRequest
-	(*GetStatsMonthRequest)(nil),    // 15: billing.v1.GetStatsMonthRequest
-	(*GetStatsSummaryRequest)(nil),  // 16: billing.v1.GetStatsSummaryRequest
-	(*GetStatsReply)(nil),           // 17: billing.v1.GetStatsReply
-	(*ServiceStats)(nil),            // 18: billing.v1.ServiceStats
-	(*GetStatsSummaryReply)(nil),    // 19: billing.v1.GetStatsSummaryReply
-	(*timestamppb.Timestamp)(nil),   // 20: google.protobuf.Timestamp
+	(*GetAccountQuotaRequest)(nil),        // 0: billing.v1.GetAccountQuotaRequest
+	(*GetAccountQuotaReply)(nil),          // 1: billing.v1.GetAccountQuotaReply
+	(*GetAppQuotaRequest)(nil),            // 2: billing.v1.GetAppQuotaRequest
+	(*GetAppQuotaReply)(nil),              // 3: billing.v1.GetAppQuotaReply
+	(*FreeQuota)(nil),                     // 4: billing.v1.FreeQuota
+	(*RechargeRequest)(nil),               // 5: billing.v1.RechargeRequest
+	(*RechargeReply)(nil),                 // 6: billing.v1.RechargeReply
+	(*ListRecordsRequest)(nil),            // 7: billing.v1.ListRecordsRequest
+	(*ListRecordsReply)(nil),              // 8: billing.v1.ListRecordsReply
+	(*BillingRecord)(nil),                 // 9: billing.v1.BillingRecord
+	(*CheckQuotaRequest)(nil),             // 10: billing.v1.CheckQuotaRequest
+	(*CheckQuotaReply)(nil),               // 11: billing.v1.CheckQuotaReply
+	(*DeductQuotaRequest)(nil),            // 12: billing.v1.DeductQuotaRequest
+	(*DeductQuotaReply)(nil),              // 13: billing.v1.DeductQuotaReply
+	(*RechargeCallbackRequest)(nil),       // 14: billing.v1.RechargeCallbackRequest
+	(*RechargeCallbackReply)(nil),         // 15: billing.v1.RechargeCallbackReply
+	(*GetStatsTodayRequest)(nil),          // 16: billing.v1.GetStatsTodayRequest
+	(*GetStatsMonthRequest)(nil),          // 17: billing.v1.GetStatsMonthRequest
+	(*GetMonthlyUsageSummaryRequest)(nil), // 18: billing.v1.GetMonthlyUsageSummaryRequest
+	(*GetStatsReply)(nil),                 // 19: billing.v1.GetStatsReply
+	(*ServiceStats)(nil),                  // 20: billing.v1.ServiceStats
+	(*GetMonthlyUsageSummaryReply)(nil),   // 21: billing.v1.GetMonthlyUsageSummaryReply
+	(*timestamppb.Timestamp)(nil),         // 22: google.protobuf.Timestamp
 }
 var file_billing_proto_depIdxs = []int32{
-	2,  // 0: billing.v1.GetAccountReply.quotas:type_name -> billing.v1.FreeQuota
-	7,  // 1: billing.v1.ListRecordsReply.records:type_name -> billing.v1.BillingRecord
-	20, // 2: billing.v1.BillingRecord.createdAt:type_name -> google.protobuf.Timestamp
-	18, // 3: billing.v1.GetStatsSummaryReply.services:type_name -> billing.v1.ServiceStats
-	0,  // 4: billing.v1.BillingService.GetAccount:input_type -> billing.v1.GetAccountRequest
-	3,  // 5: billing.v1.BillingService.Recharge:input_type -> billing.v1.RechargeRequest
-	5,  // 6: billing.v1.BillingService.ListRecords:input_type -> billing.v1.ListRecordsRequest
-	14, // 7: billing.v1.BillingService.GetStatsToday:input_type -> billing.v1.GetStatsTodayRequest
-	15, // 8: billing.v1.BillingService.GetStatsMonth:input_type -> billing.v1.GetStatsMonthRequest
-	16, // 9: billing.v1.BillingService.GetStatsSummary:input_type -> billing.v1.GetStatsSummaryRequest
-	8,  // 10: billing.v1.BillingInternalService.CheckQuota:input_type -> billing.v1.CheckQuotaRequest
-	10, // 11: billing.v1.BillingInternalService.DeductQuota:input_type -> billing.v1.DeductQuotaRequest
-	12, // 12: billing.v1.BillingInternalService.RechargeCallback:input_type -> billing.v1.RechargeCallbackRequest
-	1,  // 13: billing.v1.BillingService.GetAccount:output_type -> billing.v1.GetAccountReply
-	4,  // 14: billing.v1.BillingService.Recharge:output_type -> billing.v1.RechargeReply
-	6,  // 15: billing.v1.BillingService.ListRecords:output_type -> billing.v1.ListRecordsReply
-	17, // 16: billing.v1.BillingService.GetStatsToday:output_type -> billing.v1.GetStatsReply
-	17, // 17: billing.v1.BillingService.GetStatsMonth:output_type -> billing.v1.GetStatsReply
-	19, // 18: billing.v1.BillingService.GetStatsSummary:output_type -> billing.v1.GetStatsSummaryReply
-	9,  // 19: billing.v1.BillingInternalService.CheckQuota:output_type -> billing.v1.CheckQuotaReply
-	11, // 20: billing.v1.BillingInternalService.DeductQuota:output_type -> billing.v1.DeductQuotaReply
-	13, // 21: billing.v1.BillingInternalService.RechargeCallback:output_type -> billing.v1.RechargeCallbackReply
-	13, // [13:22] is the sub-list for method output_type
-	4,  // [4:13] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	4,  // 0: billing.v1.GetAccountQuotaReply.quotas:type_name -> billing.v1.FreeQuota
+	4,  // 1: billing.v1.GetAppQuotaReply.quotas:type_name -> billing.v1.FreeQuota
+	9,  // 2: billing.v1.ListRecordsReply.records:type_name -> billing.v1.BillingRecord
+	22, // 3: billing.v1.BillingRecord.createdAt:type_name -> google.protobuf.Timestamp
+	20, // 4: billing.v1.GetMonthlyUsageSummaryReply.services:type_name -> billing.v1.ServiceStats
+	0,  // 5: billing.v1.BillingService.GetAccountQuota:input_type -> billing.v1.GetAccountQuotaRequest
+	2,  // 6: billing.v1.BillingService.GetAppQuota:input_type -> billing.v1.GetAppQuotaRequest
+	5,  // 7: billing.v1.BillingService.Recharge:input_type -> billing.v1.RechargeRequest
+	7,  // 8: billing.v1.BillingService.ListRecords:input_type -> billing.v1.ListRecordsRequest
+	16, // 9: billing.v1.BillingService.GetStatsToday:input_type -> billing.v1.GetStatsTodayRequest
+	17, // 10: billing.v1.BillingService.GetStatsMonth:input_type -> billing.v1.GetStatsMonthRequest
+	18, // 11: billing.v1.BillingService.GetMonthlyUsageSummary:input_type -> billing.v1.GetMonthlyUsageSummaryRequest
+	10, // 12: billing.v1.BillingInternalService.CheckQuota:input_type -> billing.v1.CheckQuotaRequest
+	12, // 13: billing.v1.BillingInternalService.DeductQuota:input_type -> billing.v1.DeductQuotaRequest
+	14, // 14: billing.v1.BillingInternalService.RechargeCallback:input_type -> billing.v1.RechargeCallbackRequest
+	1,  // 15: billing.v1.BillingService.GetAccountQuota:output_type -> billing.v1.GetAccountQuotaReply
+	3,  // 16: billing.v1.BillingService.GetAppQuota:output_type -> billing.v1.GetAppQuotaReply
+	6,  // 17: billing.v1.BillingService.Recharge:output_type -> billing.v1.RechargeReply
+	8,  // 18: billing.v1.BillingService.ListRecords:output_type -> billing.v1.ListRecordsReply
+	19, // 19: billing.v1.BillingService.GetStatsToday:output_type -> billing.v1.GetStatsReply
+	19, // 20: billing.v1.BillingService.GetStatsMonth:output_type -> billing.v1.GetStatsReply
+	21, // 21: billing.v1.BillingService.GetMonthlyUsageSummary:output_type -> billing.v1.GetMonthlyUsageSummaryReply
+	11, // 22: billing.v1.BillingInternalService.CheckQuota:output_type -> billing.v1.CheckQuotaReply
+	13, // 23: billing.v1.BillingInternalService.DeductQuota:output_type -> billing.v1.DeductQuotaReply
+	15, // 24: billing.v1.BillingInternalService.RechargeCallback:output_type -> billing.v1.RechargeCallbackReply
+	15, // [15:25] is the sub-list for method output_type
+	5,  // [5:15] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_billing_proto_init() }
@@ -1458,7 +1605,7 @@ func file_billing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_billing_proto_rawDesc), len(file_billing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

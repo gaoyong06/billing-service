@@ -28,35 +28,63 @@ func NewBillingService(uc *biz.BillingUseCase, logger log.Logger) *BillingServic
 	}
 }
 
-// GetAccount 获取账户资产信息
-func (s *BillingService) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountReply, error) {
-	// 验证必填字段
+// GetAccountQuota 开发者维度：获取账户余额与汇总配额（app_id 为空）
+func (s *BillingService) GetAccountQuota(ctx context.Context, req *pb.GetAccountQuotaRequest) (*pb.GetAccountQuotaReply, error) {
 	if req.UserId == "" {
-		s.log.Warnf("GetAccount: userId is empty")
+		s.log.Warnf("GetAccountQuota: userId is empty")
 		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
 	}
-
-	balance, quotas, err := s.uc.GetAccount(ctx, req.UserId)
+	res, err := s.uc.GetAccount(ctx, req.UserId, "")
 	if err != nil {
-		s.log.Errorf("GetAccount failed: userId=%s, error=%v", req.UserId, err)
+		s.log.Errorf("GetAccountQuota failed: userId=%s, error=%v", req.UserId, err)
 		return nil, err
 	}
+	pbQuotas := buildFreeQuotaPb(res.Quotas)
+	return &pb.GetAccountQuotaReply{
+		UserId:  res.Balance.UserID,
+		Balance: res.Balance.Balance,
+		Quotas:  pbQuotas,
+	}, nil
+}
 
+// GetAppQuota 应用维度：获取指定应用的配额与用量（含 isFreeApp、isUnlimited）
+func (s *BillingService) GetAppQuota(ctx context.Context, req *pb.GetAppQuotaRequest) (*pb.GetAppQuotaReply, error) {
+	if req.UserId == "" {
+		s.log.Warnf("GetAppQuota: userId is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+	if req.AppId == "" {
+		s.log.Warnf("GetAppQuota: appId is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+	res, err := s.uc.GetAccount(ctx, req.UserId, req.AppId)
+	if err != nil {
+		s.log.Errorf("GetAppQuota failed: userId=%s, appId=%s, error=%v", req.UserId, req.AppId, err)
+		return nil, err
+	}
+	pbQuotas := buildFreeQuotaPb(res.Quotas)
+	return &pb.GetAppQuotaReply{
+		UserId:    res.Balance.UserID,
+		Balance:   res.Balance.Balance,
+		Quotas:    pbQuotas,
+		IsFreeApp: res.IsFreeApp,
+	}, nil
+}
+
+// buildFreeQuotaPb 将 biz 配额列表转为 pb，并设置 isUnlimited
+func buildFreeQuotaPb(quotas []*biz.FreeQuota) []*pb.FreeQuota {
 	pbQuotas := make([]*pb.FreeQuota, 0, len(quotas))
 	for _, q := range quotas {
+		isUnlimited := q.TotalQuota == constants.UnlimitedQuota
 		pbQuotas = append(pbQuotas, &pb.FreeQuota{
 			ServiceName: q.ServiceName,
 			TotalQuota:  int32(q.TotalQuota),
 			UsedQuota:   int32(q.UsedQuota),
 			ResetMonth:  q.ResetMonth,
+			IsUnlimited: isUnlimited,
 		})
 	}
-
-	return &pb.GetAccountReply{
-		UserId:  balance.UserID,
-		Balance: balance.Balance,
-		Quotas:  pbQuotas,
-	}, nil
+	return pbQuotas
 }
 
 // Recharge 发起充值
@@ -115,8 +143,8 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 			typeInt = 2
 		}
 		pbRecords = append(pbRecords, &pb.BillingRecord{
-			Id:          r.ID,
-			AppId:       r.AppID,
+			BillingRecordId: r.ID,
+			AppId:          r.AppID,
 			ServiceName: r.ServiceName,
 			Type:        typeInt,
 			Amount:      r.Amount,
@@ -220,8 +248,8 @@ func (s *BillingService) GetStatsMonth(ctx context.Context, req *pb.GetStatsMont
 	}, nil
 }
 
-// GetStatsSummary 获取汇总统计（所有服务）
-func (s *BillingService) GetStatsSummary(ctx context.Context, req *pb.GetStatsSummaryRequest) (*pb.GetStatsSummaryReply, error) {
+// GetMonthlyUsageSummary 获取本月用量汇总（用户维度：本月消费流水聚合，用于总览/报表；与 GetAppQuota 的配额与剩余不同）
+func (s *BillingService) GetMonthlyUsageSummary(ctx context.Context, req *pb.GetMonthlyUsageSummaryRequest) (*pb.GetMonthlyUsageSummaryReply, error) {
 	summary, err := s.uc.GetStatsSummary(ctx, req.UserId)
 	if err != nil {
 		return nil, err
@@ -238,7 +266,7 @@ func (s *BillingService) GetStatsSummary(ctx context.Context, req *pb.GetStatsSu
 		})
 	}
 
-	return &pb.GetStatsSummaryReply{
+	return &pb.GetMonthlyUsageSummaryReply{
 		UserId:     summary.UserID,
 		TotalCount: int32(summary.TotalCount),
 		TotalCost:  summary.TotalCost,

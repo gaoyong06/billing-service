@@ -6,12 +6,12 @@ info:
     title: ""
     version: 0.0.1
 paths:
-    /billing/v1/billing/account:
+    /billing/v1/billing/account-quota:
         get:
             tags:
                 - BillingService
-            description: 获取账户资产信息 (余额 + 剩余配额)
-            operationId: BillingService_GetAccount
+            description: 开发者维度：获取账户余额与汇总配额（app_id 为空）
+            operationId: BillingService_GetAccountQuota
             parameters:
                 - name: userId
                   in: query
@@ -23,7 +23,35 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetAccountReply'
+                                $ref: '#/components/schemas/GetAccountQuotaReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /billing/v1/billing/app-quota:
+        get:
+            tags:
+                - BillingService
+            description: 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+            operationId: BillingService_GetAppQuota
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: appId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetAppQuotaReply'
                 default:
                     description: Default error response
                     content:
@@ -117,12 +145,14 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /billing/v1/billing/stats/summary:
+    /billing/v1/billing/stats/monthly-usage-summary:
         get:
             tags:
                 - BillingService
-            description: 获取汇总统计（所有服务）
-            operationId: BillingService_GetStatsSummary
+            description: |-
+                获取本月用量汇总（用户维度）
+                 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+            operationId: BillingService_GetMonthlyUsageSummary
             parameters:
                 - name: userId
                   in: query
@@ -134,7 +164,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetStatsSummaryReply'
+                                $ref: '#/components/schemas/GetMonthlyUsageSummaryReply'
                 default:
                     description: Default error response
                     content:
@@ -249,7 +279,7 @@ components:
         BillingRecord:
             type: object
             properties:
-                id:
+                billingRecordId:
                     type: string
                 appId:
                     type: string
@@ -321,7 +351,10 @@ components:
                     format: int32
                 resetMonth:
                     type: string
-        GetAccountReply:
+                isUnlimited:
+                    type: boolean
+                    description: 是否为无限额度（如免费应用），前端可展示为「已用 / 无限制」
+        GetAccountQuotaReply:
             type: object
             properties:
                 userId:
@@ -333,6 +366,36 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/FreeQuota'
+        GetAppQuotaReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                balance:
+                    type: number
+                    format: double
+                quotas:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FreeQuota'
+                isFreeApp:
+                    type: boolean
+        GetMonthlyUsageSummaryReply:
+            type: object
+            properties:
+                userId:
+                    type: string
+                totalCount:
+                    type: integer
+                    format: int32
+                totalCost:
+                    type: number
+                    format: double
+                services:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ServiceStats'
+            description: 本月用量汇总响应：用户维度、本月消费流水汇总（与 GetAppQuota 的「配额与剩余」不同）
         GetStatsReply:
             type: object
             properties:
@@ -354,21 +417,6 @@ components:
                     format: int32
                 period:
                     type: string
-        GetStatsSummaryReply:
-            type: object
-            properties:
-                userId:
-                    type: string
-                totalCount:
-                    type: integer
-                    format: int32
-                totalCost:
-                    type: number
-                    format: double
-                services:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/ServiceStats'
         GoogleProtobufAny:
             type: object
             properties:

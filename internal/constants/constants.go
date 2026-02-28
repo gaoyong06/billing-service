@@ -80,6 +80,9 @@ const (
 	DeductTypeMixed = "mixed"
 )
 
+// 免费应用配额上限（用于「无限额度」展示与存储，仅做展示与防溢出）
+const UnlimitedQuota = 2147483647
+
 // 统计周期常量
 const (
 	// StatsPeriodToday 今日

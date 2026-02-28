@@ -10,10 +10,17 @@ option go_package = "billing-service/api/billing/v1;v1";
 // BillingService 计费服务（外部接口）
 // 面向前端/开发者的接口
 service BillingService {
-  // 获取账户资产信息 (余额 + 剩余配额)
-  rpc GetAccount(GetAccountRequest) returns (GetAccountReply) {
+  // 开发者维度：获取账户余额与汇总配额（app_id 为空）
+  rpc GetAccountQuota(GetAccountQuotaRequest) returns (GetAccountQuotaReply) {
     option (google.api.http) = {
-      get: "/billing/v1/billing/account"
+      get: "/billing/v1/billing/account-quota"
+    };
+  }
+
+  // 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+  rpc GetAppQuota(GetAppQuotaRequest) returns (GetAppQuotaReply) {
+    option (google.api.http) = {
+      get: "/billing/v1/billing/app-quota"
     };
   }
 
@@ -46,10 +53,11 @@ service BillingService {
     };
   }
 
-  // 获取汇总统计（所有服务）
-  rpc GetStatsSummary(GetStatsSummaryRequest) returns (GetStatsSummaryReply) {
+  // 获取本月用量汇总（用户维度）
+  // 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+  rpc GetMonthlyUsageSummary(GetMonthlyUsageSummaryRequest) returns (GetMonthlyUsageSummaryReply) {
     option (google.api.http) = {
-      get: "/billing/v1/billing/stats/summary"
+      get: "/billing/v1/billing/stats/monthly-usage-summary"
     };
   }
 }
@@ -82,14 +90,28 @@ service BillingInternalService {
   }
 }
 
-message GetAccountRequest {
+// 开发者维度
+message GetAccountQuotaRequest {
   string userId = 1;
 }
 
-message GetAccountReply {
+message GetAccountQuotaReply {
   string userId = 1;
   double balance = 2;
   repeated FreeQuota quotas = 3;
+}
+
+// 应用维度
+message GetAppQuotaRequest {
+  string userId = 1;
+  string appId = 2;
+}
+
+message GetAppQuotaReply {
+  string userId = 1;
+  double balance = 2;
+  repeated FreeQuota quotas = 3;
+  bool isFreeApp = 4; // 是否为免费应用（白名单），前端可展示「免费应用」标识
 }
 
 message FreeQuota {
@@ -97,6 +119,8 @@ message FreeQuota {
   int32 totalQuota = 2;
   int32 usedQuota = 3;
   string resetMonth = 4;
+  // 是否为无限额度（如免费应用），前端可展示为「已用 / 无限制」
+  bool isUnlimited = 5;
 }
 
 message RechargeRequest {
@@ -123,7 +147,7 @@ message ListRecordsReply {
 }
 
 message BillingRecord {
-  string id = 1;
+  string billingRecordId = 1; // 对应表 billing_record.billing_record_id
   string appId = 2; // 应用ID（用于按应用统计成本）
   string serviceName = 3;
   int32 type = 4; // 1:免费额度, 2:余额扣费
@@ -179,7 +203,8 @@ message GetStatsMonthRequest {
   string serviceName = 2; // 可选，不传则统计所有服务
 }
 
-message GetStatsSummaryRequest {
+// 本月用量汇总请求（用户维度）
+message GetMonthlyUsageSummaryRequest {
   string userId = 1;
 }
 
@@ -201,9 +226,10 @@ message ServiceStats {
   int32 paidCount = 5;    // 余额扣费次数
 }
 
-message GetStatsSummaryReply {
+// 本月用量汇总响应：用户维度、本月消费流水汇总（与 GetAppQuota 的「配额与剩余」不同）
+message GetMonthlyUsageSummaryReply {
   string userId = 1;
-  int32 totalCount = 2;   // 所有服务总调用次数
-  double totalCost = 3;   // 所有服务总费用
-  repeated ServiceStats services = 4; // 各服务统计
+  int32 totalCount = 2;   // 本月所有服务总调用次数
+  double totalCost = 3;   // 本月所有服务总费用（余额扣费部分）
+  repeated ServiceStats services = 4; // 各服务本月统计（totalCount/totalCost/freeCount/paidCount）
 }

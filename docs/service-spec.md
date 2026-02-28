@@ -10,9 +10,13 @@
 ### 2.1 管理接口 (面向前端/开发者)
 ```protobuf
 service BillingService {
-    // 获取账户资产信息 (余额 + 剩余配额)
-    // GET /billing/v1/billing/account
-    rpc GetAccount(GetAccountRequest) returns (GetAccountReply);
+    // 开发者维度：获取账户余额与汇总配额
+    // GET /billing/v1/billing/account-quota
+    rpc GetAccountQuota(GetAccountQuotaRequest) returns (GetAccountQuotaReply);
+
+    // 应用维度：获取指定应用的配额与用量（含 isFreeApp、isUnlimited）
+    // GET /billing/v1/billing/app-quota
+    rpc GetAppQuota(GetAppQuotaRequest) returns (GetAppQuotaReply);
 
     // 发起充值 (返回支付链接)
     // POST /billing/v1/billing/recharge

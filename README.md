@@ -192,7 +192,8 @@ billing-service/
 
 ### 管理接口 (面向前端/开发者)
 
-- `GET /billing/v1/billing/account` - 获取账户资产信息
+- `GET /billing/v1/billing/account-quota` - 开发者维度：获取账户余额与汇总配额
+- `GET /billing/v1/billing/app-quota` - 应用维度：获取指定应用的配额与用量
 - `POST /billing/v1/billing/recharge` - 发起充值
 - `GET /billing/v1/billing/records` - 获取消费流水
 

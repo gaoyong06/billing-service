@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"billing-service/internal/biz"
@@ -32,6 +34,23 @@ func NewFreeQuotaRepo(data *Data, logger log.Logger) biz.FreeQuotaRepo {
 	}
 }
 
+// parseQuotaCache 解析缓存值 "totalQuota,usedQuota"，解析成功返回 (total, used, true)；否则返回 (0, 0, false)
+func parseQuotaCache(s string) (total, used int, ok bool) {
+	parts := strings.SplitN(strings.TrimSpace(s), ",", 2)
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+	t, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+	u, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err1 != nil || err2 != nil {
+		return 0, 0, false
+	}
+	if t < 0 || u < 0 || u > t {
+		return 0, 0, false
+	}
+	return t, u, true
+}
+
 // GetFreeQuota 获取免费额度
 func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*biz.FreeQuota, error) {
 	// 记录配额查询指标
@@ -39,17 +58,22 @@ func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, appID, service
 		r.metrics.QuotaQueryTotal.Inc()
 	}
 
-	// 先尝试从 Redis 获取剩余配额
+	// 先尝试从 Redis 获取配额（格式 "totalQuota,usedQuota"）
 	quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
-	remainingStr, err := r.data.rdb.Get(ctx, quotaKey).Result()
+	cacheVal, err := r.data.rdb.Get(ctx, quotaKey).Result()
 	if err == nil {
-		// 从缓存获取成功
-		var remaining int
-		if _, err := fmt.Sscanf(remainingStr, "%d", &remaining); err == nil {
-			// 需要从配置获取总额度，这里简化处理，返回缓存值
-			// 实际应该从数据库获取完整信息或从配置获取总额度
-			// 为了简化，这里仍然查询数据库获取完整信息，但可以优化
+		total, used, ok := parseQuotaCache(cacheVal)
+		if ok {
+			return &biz.FreeQuota{
+				UserID:      userID,
+				AppID:       appID,
+				ServiceName: serviceName,
+				TotalQuota:  total,
+				UsedQuota:   used,
+				ResetMonth:  month,
+			}, nil
 		}
+		// 格式不符或解析失败，回源 DB
 	}
 
 	// 从数据库查询完整信息
@@ -72,14 +96,13 @@ func (r *freeQuotaRepo) GetFreeQuota(ctx context.Context, userID, appID, service
 		ResetMonth:  m.ResetMonth,
 	}
 
-	// 更新缓存（异步，不阻塞，设置超时避免长时间等待）
+	// 更新缓存：存 "totalQuota,usedQuota" 便于命中时直接返回完整配额（异步，不阻塞）
 	go func() {
 		cacheCtx, cacheCancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cacheCancel()
-		remaining := m.TotalQuota - m.UsedQuota
-		if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", remaining), 5*time.Minute).Err(); err != nil {
-			// 缓存更新失败不影响主流程，只记录日志（异步操作，使用默认 logger）
-			// 注意：这里不能使用 r.log，因为是在 goroutine 中
+		cacheVal := fmt.Sprintf("%d,%d", m.TotalQuota, m.UsedQuota)
+		if err := r.data.rdb.Set(cacheCtx, quotaKey, cacheVal, 5*time.Minute).Err(); err != nil {
+			// 缓存更新失败不影响主流程（异步操作，不使用 r.log）
 		}
 	}()
 
@@ -100,9 +123,9 @@ func (r *freeQuotaRepo) CreateFreeQuota(ctx context.Context, quota *biz.FreeQuot
 	return r.data.db.WithContext(ctx).Create(&m).Error
 }
 
-// UpdateFreeQuota 更新免费额度
-func (r *freeQuotaRepo) UpdateFreeQuota(ctx context.Context, quota *biz.FreeQuota) error {
+// IncrementUsedQuota 原子增加已使用配额（用于免费应用记录用量，避免读-改-写竞态）
+func (r *freeQuotaRepo) IncrementUsedQuota(ctx context.Context, userID, appID, serviceName, month string, count int) error {
 	return r.data.db.WithContext(ctx).Model(&model.FreeQuota{}).
-		Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", quota.UserID, quota.AppID, quota.ServiceName, quota.ResetMonth).
-		Update("used_quota", quota.UsedQuota).Error
+		Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", userID, appID, serviceName, month).
+		Update("used_quota", gorm.Expr("used_quota + ?", count)).Error
 }

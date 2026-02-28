@@ -23,7 +23,6 @@ type BillingRepo interface {
 	// 配额相关
 	GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*FreeQuota, error)
 	CreateFreeQuota(ctx context.Context, quota *FreeQuota) error
-	UpdateFreeQuota(ctx context.Context, quota *FreeQuota) error
 
 	// 记录相关
 	CreateBillingRecord(ctx context.Context, record *BillingRecord) error
@@ -134,17 +133,62 @@ func (uc *BillingUseCase) getOrCreateQuota(ctx context.Context, userID, appID, s
 	return quota, nil
 }
 
+// getOrCreateFreeAppQuota 获取或创建免费应用的配额行（总配额为无限，仅用于记录用量）
+func (uc *BillingUseCase) getOrCreateFreeAppQuota(ctx context.Context, userID, appID, serviceName, month string) (*FreeQuota, error) {
+	quota, err := uc.freeQuotaUseCase.GetQuota(ctx, userID, appID, serviceName, month)
+	if err != nil {
+		return nil, err
+	}
+	if quota != nil {
+		return quota, nil
+	}
+	quota = &FreeQuota{
+		UserID:      userID,
+		AppID:       appID,
+		ServiceName: serviceName,
+		TotalQuota:  constants.UnlimitedQuota,
+		UsedQuota:   0,
+		ResetMonth:  month,
+	}
+	if err := uc.freeQuotaUseCase.CreateQuota(ctx, quota); err != nil {
+		quota, err = uc.freeQuotaUseCase.GetQuota(ctx, userID, appID, serviceName, month)
+		if err != nil {
+			return nil, err
+		}
+		if quota == nil {
+			return nil, fmt.Errorf("failed to create/get free app quota for user=%s, app_id=%s, service=%s", userID, appID, serviceName)
+		}
+	}
+	return quota, nil
+}
+
+// recordFreeAppUsage 记录免费应用用量（总配额视为无限，只递增已用，不扣费）
+func (uc *BillingUseCase) recordFreeAppUsage(ctx context.Context, userID, appID, serviceName, month string, count int) error {
+	if _, err := uc.getOrCreateFreeAppQuota(ctx, userID, appID, serviceName, month); err != nil {
+		return err
+	}
+	return uc.freeQuotaUseCase.IncrementUsedQuota(ctx, userID, appID, serviceName, month, count)
+}
+
+// GetAccountResult 用于返回是否当前查询为免费应用（便于 API 层设置 is_free_app）
+type GetAccountResult struct {
+	Balance   *UserBalance
+	Quotas    []*FreeQuota
+	IsFreeApp bool
+}
+
 // GetAccount 获取账户信息（组合多个领域）
-func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserBalance, []*FreeQuota, error) {
+// appID 可选：为空时返回开发者级配额（app_id 为空）；非空时返回该应用的配额，且若为白名单应用则额度为无限并正确显示用量
+func (uc *BillingUseCase) GetAccount(ctx context.Context, userID, appID string) (*GetAccountResult, error) {
 	if userID == "" {
 		uc.log.Warnf("GetAccount: userID is empty")
-		return nil, nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
 	}
 
 	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
 		uc.log.Errorf("GetAccount failed to get balance: userID=%s, error=%v", userID, err)
-		return nil, nil, fmt.Errorf("failed to get user balance: %w", err)
+		return nil, fmt.Errorf("failed to get user balance: %w", err)
 	}
 	if balance == nil {
 		balance = &UserBalance{UserID: userID, Balance: 0}
@@ -152,22 +196,27 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID string) (*UserB
 
 	month := time.Now().Format(constants.TimeFormatMonth)
 	var quotas []*FreeQuota
-	// 注意：GetAccount 是开发者级别的查询，app_id 为空字符串（表示所有应用）
-	appID := ""
+	isFreeApp := uc.conf.IsFreeApp(appID)
+
 	for service := range uc.conf.FreeQuotas {
-		q, err := uc.getOrCreateQuota(ctx, userID, appID, service, month)
+		var q *FreeQuota
+		var err error
+		if isFreeApp {
+			q, err = uc.getOrCreateFreeAppQuota(ctx, userID, appID, service, month)
+		} else {
+			q, err = uc.getOrCreateQuota(ctx, userID, appID, service, month)
+		}
 		if err != nil {
 			uc.log.Warnf("Failed to get or create quota for user=%s, app_id=%s, service=%s, month=%s: %v", userID, appID, service, month, err)
-			continue // 忽略错误，继续处理其他服务
+			continue
 		}
 		if q == nil {
-			// 配置中没有该服务或创建失败，跳过
 			continue
 		}
 		quotas = append(quotas, q)
 	}
 
-	return balance, quotas, nil
+	return &GetAccountResult{Balance: balance, Quotas: quotas, IsFreeApp: isFreeApp}, nil
 }
 
 // CheckQuota 检查配额（跨领域逻辑）
@@ -279,12 +328,15 @@ func (uc *BillingUseCase) CheckQuota(ctx context.Context, userID, appID, service
 func (uc *BillingUseCase) DeductQuota(ctx context.Context, userID, appID, serviceName string, count int) (string, error) {
 	startTime := time.Now()
 
-	// 检查是否在免费应用白名单中（官方应用等不扣费）
+	// 免费应用白名单：不扣费，但记录用量（总配额视为无限，用于展示「已用/无限制」）
 	if uc.conf.IsFreeApp(appID) {
-		uc.log.Debugf("app_id=%s is in free app whitelist, skipping quota deduction", appID)
-		// 生成一个模拟的 recordID（用于日志追踪）
+		uc.log.Debugf("app_id=%s is in free app whitelist, recording usage without charge", appID)
+		month := time.Now().Format(constants.TimeFormatMonth)
+		if err := uc.recordFreeAppUsage(ctx, userID, appID, serviceName, month, count); err != nil {
+			uc.log.Warnf("recordFreeAppUsage failed: app_id=%s, service=%s, error=%v", appID, serviceName, err)
+			// 仍返回成功，避免影响调用方；用量未写入可后续排查
+		}
 		recordID := fmt.Sprintf("free_%d_%s", time.Now().Unix(), appID)
-		// 记录扣费指标（免费应用）
 		if uc.metrics != nil {
 			duration := time.Since(startTime).Seconds()
 			uc.metrics.DeductQuotaDuration.WithLabelValues(serviceName).Observe(duration)

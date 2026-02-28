@@ -20,7 +20,8 @@ type FreeQuota struct {
 type FreeQuotaRepo interface {
 	GetFreeQuota(ctx context.Context, userID, appID, serviceName, month string) (*FreeQuota, error)
 	CreateFreeQuota(ctx context.Context, quota *FreeQuota) error
-	UpdateFreeQuota(ctx context.Context, quota *FreeQuota) error
+	// IncrementUsedQuota 原子增加已使用配额（用于免费应用记录用量，避免读-改-写竞态）
+	IncrementUsedQuota(ctx context.Context, userID, appID, serviceName, month string, count int) error
 }
 
 // FreeQuotaUseCase 免费额度业务逻辑
@@ -49,7 +50,7 @@ func (uc *FreeQuotaUseCase) CreateQuota(ctx context.Context, quota *FreeQuota) e
 	return uc.repo.CreateFreeQuota(ctx, quota)
 }
 
-// UpdateQuota 更新免费额度
-func (uc *FreeQuotaUseCase) UpdateQuota(ctx context.Context, quota *FreeQuota) error {
-	return uc.repo.UpdateFreeQuota(ctx, quota)
+// IncrementUsedQuota 原子增加已使用配额
+func (uc *FreeQuotaUseCase) IncrementUsedQuota(ctx context.Context, userID, appID, serviceName, month string, count int) error {
+	return uc.repo.IncrementUsedQuota(ctx, userID, appID, serviceName, month, count)
 }

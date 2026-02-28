@@ -130,11 +130,6 @@ func (r *billingRepo) CreateFreeQuota(ctx context.Context, quota *biz.FreeQuota)
 	return r.freeQuotaRepo.CreateFreeQuota(ctx, quota)
 }
 
-// UpdateFreeQuota 更新免费额度
-func (r *billingRepo) UpdateFreeQuota(ctx context.Context, quota *biz.FreeQuota) error {
-	return r.freeQuotaRepo.UpdateFreeQuota(ctx, quota)
-}
-
 // ========== 消费记录相关 ==========
 
 // CreateBillingRecord 创建消费记录
@@ -386,7 +381,7 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, appID, serviceN
 	var recordID string
 	var needUpdateQuotaCache bool
 	var needUpdateBalanceCache bool
-	var quotaRemaining int
+	var cacheQuotaTotal, cacheQuotaNewUsed int // 用于事务提交后写配额缓存 "total,used"
 	var newBalance float64
 
 	err := r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -416,7 +411,8 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, appID, serviceN
 				}
 				// 记录需要更新的缓存信息
 				needUpdateQuotaCache = true
-				quotaRemaining = remaining - count
+				cacheQuotaTotal = quota.TotalQuota
+				cacheQuotaNewUsed = quota.UsedQuota + freeQuotaUsed
 			} else {
 				// 免费额度不足，先扣完免费额度，剩余部分扣余额
 				freeQuotaUsed = remaining
@@ -428,7 +424,8 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, appID, serviceN
 				}
 				// 记录需要更新的缓存信息
 				needUpdateQuotaCache = true
-				quotaRemaining = 0
+				cacheQuotaTotal = quota.TotalQuota
+				cacheQuotaNewUsed = quota.UsedQuota + freeQuotaUsed
 			}
 		} else {
 			// 没有免费额度或已用完，全部扣余额
@@ -527,8 +524,9 @@ func (r *billingRepo) deductQuotaDB(ctx context.Context, userID, appID, serviceN
 
 		if needUpdateQuotaCache {
 			quotaKey := fmt.Sprintf("%s%s:%s:%s:%s", constants.RedisKeyQuota, userID, appID, serviceName, month)
-			if err := r.data.rdb.Set(cacheCtx, quotaKey, fmt.Sprintf("%d", quotaRemaining), 5*time.Minute).Err(); err != nil {
-				// 缓存更新失败不影响主流程，只记录日志
+			// 与 free_quota_repo 一致：缓存格式为 "totalQuota,usedQuota"
+			cacheVal := fmt.Sprintf("%d,%d", cacheQuotaTotal, cacheQuotaNewUsed)
+			if err := r.data.rdb.Set(cacheCtx, quotaKey, cacheVal, 5*time.Minute).Err(); err != nil {
 				r.log.Warnf("failed to update quota cache: %v", err)
 			}
 		}

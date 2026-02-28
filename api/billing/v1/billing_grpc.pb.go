@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BillingService_GetAccount_FullMethodName      = "/billing.v1.BillingService/GetAccount"
-	BillingService_Recharge_FullMethodName        = "/billing.v1.BillingService/Recharge"
-	BillingService_ListRecords_FullMethodName     = "/billing.v1.BillingService/ListRecords"
-	BillingService_GetStatsToday_FullMethodName   = "/billing.v1.BillingService/GetStatsToday"
-	BillingService_GetStatsMonth_FullMethodName   = "/billing.v1.BillingService/GetStatsMonth"
-	BillingService_GetStatsSummary_FullMethodName = "/billing.v1.BillingService/GetStatsSummary"
+	BillingService_GetAccountQuota_FullMethodName        = "/billing.v1.BillingService/GetAccountQuota"
+	BillingService_GetAppQuota_FullMethodName            = "/billing.v1.BillingService/GetAppQuota"
+	BillingService_Recharge_FullMethodName               = "/billing.v1.BillingService/Recharge"
+	BillingService_ListRecords_FullMethodName            = "/billing.v1.BillingService/ListRecords"
+	BillingService_GetStatsToday_FullMethodName          = "/billing.v1.BillingService/GetStatsToday"
+	BillingService_GetStatsMonth_FullMethodName          = "/billing.v1.BillingService/GetStatsMonth"
+	BillingService_GetMonthlyUsageSummary_FullMethodName = "/billing.v1.BillingService/GetMonthlyUsageSummary"
 )
 
 // BillingServiceClient is the client API for BillingService service.
@@ -34,8 +35,10 @@ const (
 // BillingService 计费服务（外部接口）
 // 面向前端/开发者的接口
 type BillingServiceClient interface {
-	// 获取账户资产信息 (余额 + 剩余配额)
-	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountReply, error)
+	// 开发者维度：获取账户余额与汇总配额（app_id 为空）
+	GetAccountQuota(ctx context.Context, in *GetAccountQuotaRequest, opts ...grpc.CallOption) (*GetAccountQuotaReply, error)
+	// 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+	GetAppQuota(ctx context.Context, in *GetAppQuotaRequest, opts ...grpc.CallOption) (*GetAppQuotaReply, error)
 	// 发起充值 (返回支付链接)
 	Recharge(ctx context.Context, in *RechargeRequest, opts ...grpc.CallOption) (*RechargeReply, error)
 	// 获取消费流水
@@ -44,8 +47,9 @@ type BillingServiceClient interface {
 	GetStatsToday(ctx context.Context, in *GetStatsTodayRequest, opts ...grpc.CallOption) (*GetStatsReply, error)
 	// 获取本月调用统计
 	GetStatsMonth(ctx context.Context, in *GetStatsMonthRequest, opts ...grpc.CallOption) (*GetStatsReply, error)
-	// 获取汇总统计（所有服务）
-	GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...grpc.CallOption) (*GetStatsSummaryReply, error)
+	// 获取本月用量汇总（用户维度）
+	// 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+	GetMonthlyUsageSummary(ctx context.Context, in *GetMonthlyUsageSummaryRequest, opts ...grpc.CallOption) (*GetMonthlyUsageSummaryReply, error)
 }
 
 type billingServiceClient struct {
@@ -56,10 +60,20 @@ func NewBillingServiceClient(cc grpc.ClientConnInterface) BillingServiceClient {
 	return &billingServiceClient{cc}
 }
 
-func (c *billingServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountReply, error) {
+func (c *billingServiceClient) GetAccountQuota(ctx context.Context, in *GetAccountQuotaRequest, opts ...grpc.CallOption) (*GetAccountQuotaReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetAccountReply)
-	err := c.cc.Invoke(ctx, BillingService_GetAccount_FullMethodName, in, out, cOpts...)
+	out := new(GetAccountQuotaReply)
+	err := c.cc.Invoke(ctx, BillingService_GetAccountQuota_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) GetAppQuota(ctx context.Context, in *GetAppQuotaRequest, opts ...grpc.CallOption) (*GetAppQuotaReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAppQuotaReply)
+	err := c.cc.Invoke(ctx, BillingService_GetAppQuota_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +120,10 @@ func (c *billingServiceClient) GetStatsMonth(ctx context.Context, in *GetStatsMo
 	return out, nil
 }
 
-func (c *billingServiceClient) GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...grpc.CallOption) (*GetStatsSummaryReply, error) {
+func (c *billingServiceClient) GetMonthlyUsageSummary(ctx context.Context, in *GetMonthlyUsageSummaryRequest, opts ...grpc.CallOption) (*GetMonthlyUsageSummaryReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetStatsSummaryReply)
-	err := c.cc.Invoke(ctx, BillingService_GetStatsSummary_FullMethodName, in, out, cOpts...)
+	out := new(GetMonthlyUsageSummaryReply)
+	err := c.cc.Invoke(ctx, BillingService_GetMonthlyUsageSummary_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +137,10 @@ func (c *billingServiceClient) GetStatsSummary(ctx context.Context, in *GetStats
 // BillingService 计费服务（外部接口）
 // 面向前端/开发者的接口
 type BillingServiceServer interface {
-	// 获取账户资产信息 (余额 + 剩余配额)
-	GetAccount(context.Context, *GetAccountRequest) (*GetAccountReply, error)
+	// 开发者维度：获取账户余额与汇总配额（app_id 为空）
+	GetAccountQuota(context.Context, *GetAccountQuotaRequest) (*GetAccountQuotaReply, error)
+	// 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+	GetAppQuota(context.Context, *GetAppQuotaRequest) (*GetAppQuotaReply, error)
 	// 发起充值 (返回支付链接)
 	Recharge(context.Context, *RechargeRequest) (*RechargeReply, error)
 	// 获取消费流水
@@ -133,8 +149,9 @@ type BillingServiceServer interface {
 	GetStatsToday(context.Context, *GetStatsTodayRequest) (*GetStatsReply, error)
 	// 获取本月调用统计
 	GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error)
-	// 获取汇总统计（所有服务）
-	GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error)
+	// 获取本月用量汇总（用户维度）
+	// 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+	GetMonthlyUsageSummary(context.Context, *GetMonthlyUsageSummaryRequest) (*GetMonthlyUsageSummaryReply, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -145,8 +162,11 @@ type BillingServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBillingServiceServer struct{}
 
-func (UnimplementedBillingServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountReply, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetAccount not implemented")
+func (UnimplementedBillingServiceServer) GetAccountQuota(context.Context, *GetAccountQuotaRequest) (*GetAccountQuotaReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAccountQuota not implemented")
+}
+func (UnimplementedBillingServiceServer) GetAppQuota(context.Context, *GetAppQuotaRequest) (*GetAppQuotaReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAppQuota not implemented")
 }
 func (UnimplementedBillingServiceServer) Recharge(context.Context, *RechargeRequest) (*RechargeReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method Recharge not implemented")
@@ -160,8 +180,8 @@ func (UnimplementedBillingServiceServer) GetStatsToday(context.Context, *GetStat
 func (UnimplementedBillingServiceServer) GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStatsMonth not implemented")
 }
-func (UnimplementedBillingServiceServer) GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetStatsSummary not implemented")
+func (UnimplementedBillingServiceServer) GetMonthlyUsageSummary(context.Context, *GetMonthlyUsageSummaryRequest) (*GetMonthlyUsageSummaryReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMonthlyUsageSummary not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 func (UnimplementedBillingServiceServer) testEmbeddedByValue()                        {}
@@ -184,20 +204,38 @@ func RegisterBillingServiceServer(s grpc.ServiceRegistrar, srv BillingServiceSer
 	s.RegisterService(&BillingService_ServiceDesc, srv)
 }
 
-func _BillingService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAccountRequest)
+func _BillingService_GetAccountQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountQuotaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BillingServiceServer).GetAccount(ctx, in)
+		return srv.(BillingServiceServer).GetAccountQuota(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BillingService_GetAccount_FullMethodName,
+		FullMethod: BillingService_GetAccountQuota_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BillingServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
+		return srv.(BillingServiceServer).GetAccountQuota(ctx, req.(*GetAccountQuotaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_GetAppQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAppQuotaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetAppQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetAppQuota_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetAppQuota(ctx, req.(*GetAppQuotaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -274,20 +312,20 @@ func _BillingService_GetStatsMonth_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BillingService_GetStatsSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatsSummaryRequest)
+func _BillingService_GetMonthlyUsageSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMonthlyUsageSummaryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BillingServiceServer).GetStatsSummary(ctx, in)
+		return srv.(BillingServiceServer).GetMonthlyUsageSummary(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BillingService_GetStatsSummary_FullMethodName,
+		FullMethod: BillingService_GetMonthlyUsageSummary_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BillingServiceServer).GetStatsSummary(ctx, req.(*GetStatsSummaryRequest))
+		return srv.(BillingServiceServer).GetMonthlyUsageSummary(ctx, req.(*GetMonthlyUsageSummaryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -300,8 +338,12 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BillingServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetAccount",
-			Handler:    _BillingService_GetAccount_Handler,
+			MethodName: "GetAccountQuota",
+			Handler:    _BillingService_GetAccountQuota_Handler,
+		},
+		{
+			MethodName: "GetAppQuota",
+			Handler:    _BillingService_GetAppQuota_Handler,
 		},
 		{
 			MethodName: "Recharge",
@@ -320,8 +362,8 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BillingService_GetStatsMonth_Handler,
 		},
 		{
-			MethodName: "GetStatsSummary",
-			Handler:    _BillingService_GetStatsSummary_Handler,
+			MethodName: "GetMonthlyUsageSummary",
+			Handler:    _BillingService_GetMonthlyUsageSummary_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

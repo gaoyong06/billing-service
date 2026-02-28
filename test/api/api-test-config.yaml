@@ -59,7 +59,7 @@ scenarios:
     description: 测试新用户获取账户信息（余额为0，无配额记录）
     steps:
       - name: 获取账户信息
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -94,7 +94,7 @@ scenarios:
           recharge_payment_url: $.data.paymentUrl
 
       - name: 验证账户余额未变化（充值前）
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -140,7 +140,7 @@ scenarios:
             $.success: true
 
       - name: 步骤3-验证余额已增加
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id_2}}"
@@ -167,7 +167,7 @@ scenarios:
             $.success: true
 
       - name: 步骤5-验证余额未重复增加（幂等性验证）
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id_2}}"
@@ -365,7 +365,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-验证余额已扣减
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id_3}}"
@@ -383,7 +383,7 @@ scenarios:
     description: 测试完整的充值流程（创建订单 -> 回调 -> 验证余额 -> 扣费）
     steps:
       - name: 步骤1-获取初始账户信息
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -426,7 +426,7 @@ scenarios:
             $.success: true
 
       - name: 步骤4-验证余额已增加
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -453,7 +453,7 @@ scenarios:
             $.success: true
 
       - name: 步骤6-验证余额已扣减
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id}}"
@@ -686,7 +686,7 @@ scenarios:
             $.success: true
 
       - name: 步骤6-验证余额正确
-        endpoint: /billing/v1/billing/account
+        endpoint: /billing/v1/billing/account-quota
         method: GET
         query_params:
           user_id: "{{.test_user_id_3}}"

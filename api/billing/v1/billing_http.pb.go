@@ -19,20 +19,24 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
-const OperationBillingServiceGetAccount = "/billing.v1.BillingService/GetAccount"
+const OperationBillingServiceGetAccountQuota = "/billing.v1.BillingService/GetAccountQuota"
+const OperationBillingServiceGetAppQuota = "/billing.v1.BillingService/GetAppQuota"
+const OperationBillingServiceGetMonthlyUsageSummary = "/billing.v1.BillingService/GetMonthlyUsageSummary"
 const OperationBillingServiceGetStatsMonth = "/billing.v1.BillingService/GetStatsMonth"
-const OperationBillingServiceGetStatsSummary = "/billing.v1.BillingService/GetStatsSummary"
 const OperationBillingServiceGetStatsToday = "/billing.v1.BillingService/GetStatsToday"
 const OperationBillingServiceListRecords = "/billing.v1.BillingService/ListRecords"
 const OperationBillingServiceRecharge = "/billing.v1.BillingService/Recharge"
 
 type BillingServiceHTTPServer interface {
-	// GetAccount 获取账户资产信息 (余额 + 剩余配额)
-	GetAccount(context.Context, *GetAccountRequest) (*GetAccountReply, error)
+	// GetAccountQuota 开发者维度：获取账户余额与汇总配额（app_id 为空）
+	GetAccountQuota(context.Context, *GetAccountQuotaRequest) (*GetAccountQuotaReply, error)
+	// GetAppQuota 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+	GetAppQuota(context.Context, *GetAppQuotaRequest) (*GetAppQuotaReply, error)
+	// GetMonthlyUsageSummary 获取本月用量汇总（用户维度）
+	// 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+	GetMonthlyUsageSummary(context.Context, *GetMonthlyUsageSummaryRequest) (*GetMonthlyUsageSummaryReply, error)
 	// GetStatsMonth 获取本月调用统计
 	GetStatsMonth(context.Context, *GetStatsMonthRequest) (*GetStatsReply, error)
-	// GetStatsSummary 获取汇总统计（所有服务）
-	GetStatsSummary(context.Context, *GetStatsSummaryRequest) (*GetStatsSummaryReply, error)
 	// GetStatsToday 获取今日调用统计
 	GetStatsToday(context.Context, *GetStatsTodayRequest) (*GetStatsReply, error)
 	// ListRecords 获取消费流水
@@ -43,29 +47,49 @@ type BillingServiceHTTPServer interface {
 
 func RegisterBillingServiceHTTPServer(s *http.Server, srv BillingServiceHTTPServer) {
 	r := s.Route("/")
-	r.GET("/billing/v1/billing/account", _BillingService_GetAccount0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/account-quota", _BillingService_GetAccountQuota0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/app-quota", _BillingService_GetAppQuota0_HTTP_Handler(srv))
 	r.POST("/billing/v1/billing/recharge", _BillingService_Recharge0_HTTP_Handler(srv))
 	r.GET("/billing/v1/billing/records", _BillingService_ListRecords0_HTTP_Handler(srv))
 	r.GET("/billing/v1/billing/stats/today", _BillingService_GetStatsToday0_HTTP_Handler(srv))
 	r.GET("/billing/v1/billing/stats/month", _BillingService_GetStatsMonth0_HTTP_Handler(srv))
-	r.GET("/billing/v1/billing/stats/summary", _BillingService_GetStatsSummary0_HTTP_Handler(srv))
+	r.GET("/billing/v1/billing/stats/monthly-usage-summary", _BillingService_GetMonthlyUsageSummary0_HTTP_Handler(srv))
 }
 
-func _BillingService_GetAccount0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+func _BillingService_GetAccountQuota0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in GetAccountRequest
+		var in GetAccountQuotaRequest
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
-		http.SetOperation(ctx, OperationBillingServiceGetAccount)
+		http.SetOperation(ctx, OperationBillingServiceGetAccountQuota)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetAccount(ctx, req.(*GetAccountRequest))
+			return srv.GetAccountQuota(ctx, req.(*GetAccountQuotaRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
 			return err
 		}
-		reply := out.(*GetAccountReply)
+		reply := out.(*GetAccountQuotaReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _BillingService_GetAppQuota0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetAppQuotaRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationBillingServiceGetAppQuota)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetAppQuota(ctx, req.(*GetAppQuotaRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetAppQuotaReply)
 		return ctx.Result(200, reply)
 	}
 }
@@ -149,32 +173,35 @@ func _BillingService_GetStatsMonth0_HTTP_Handler(srv BillingServiceHTTPServer) f
 	}
 }
 
-func _BillingService_GetStatsSummary0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
+func _BillingService_GetMonthlyUsageSummary0_HTTP_Handler(srv BillingServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in GetStatsSummaryRequest
+		var in GetMonthlyUsageSummaryRequest
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
-		http.SetOperation(ctx, OperationBillingServiceGetStatsSummary)
+		http.SetOperation(ctx, OperationBillingServiceGetMonthlyUsageSummary)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetStatsSummary(ctx, req.(*GetStatsSummaryRequest))
+			return srv.GetMonthlyUsageSummary(ctx, req.(*GetMonthlyUsageSummaryRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
 			return err
 		}
-		reply := out.(*GetStatsSummaryReply)
+		reply := out.(*GetMonthlyUsageSummaryReply)
 		return ctx.Result(200, reply)
 	}
 }
 
 type BillingServiceHTTPClient interface {
-	// GetAccount 获取账户资产信息 (余额 + 剩余配额)
-	GetAccount(ctx context.Context, req *GetAccountRequest, opts ...http.CallOption) (rsp *GetAccountReply, err error)
+	// GetAccountQuota 开发者维度：获取账户余额与汇总配额（app_id 为空）
+	GetAccountQuota(ctx context.Context, req *GetAccountQuotaRequest, opts ...http.CallOption) (rsp *GetAccountQuotaReply, err error)
+	// GetAppQuota 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+	GetAppQuota(ctx context.Context, req *GetAppQuotaRequest, opts ...http.CallOption) (rsp *GetAppQuotaReply, err error)
+	// GetMonthlyUsageSummary 获取本月用量汇总（用户维度）
+	// 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+	GetMonthlyUsageSummary(ctx context.Context, req *GetMonthlyUsageSummaryRequest, opts ...http.CallOption) (rsp *GetMonthlyUsageSummaryReply, err error)
 	// GetStatsMonth 获取本月调用统计
 	GetStatsMonth(ctx context.Context, req *GetStatsMonthRequest, opts ...http.CallOption) (rsp *GetStatsReply, err error)
-	// GetStatsSummary 获取汇总统计（所有服务）
-	GetStatsSummary(ctx context.Context, req *GetStatsSummaryRequest, opts ...http.CallOption) (rsp *GetStatsSummaryReply, err error)
 	// GetStatsToday 获取今日调用统计
 	GetStatsToday(ctx context.Context, req *GetStatsTodayRequest, opts ...http.CallOption) (rsp *GetStatsReply, err error)
 	// ListRecords 获取消费流水
@@ -191,12 +218,41 @@ func NewBillingServiceHTTPClient(client *http.Client) BillingServiceHTTPClient {
 	return &BillingServiceHTTPClientImpl{client}
 }
 
-// GetAccount 获取账户资产信息 (余额 + 剩余配额)
-func (c *BillingServiceHTTPClientImpl) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...http.CallOption) (*GetAccountReply, error) {
-	var out GetAccountReply
-	pattern := "/billing/v1/billing/account"
+// GetAccountQuota 开发者维度：获取账户余额与汇总配额（app_id 为空）
+func (c *BillingServiceHTTPClientImpl) GetAccountQuota(ctx context.Context, in *GetAccountQuotaRequest, opts ...http.CallOption) (*GetAccountQuotaReply, error) {
+	var out GetAccountQuotaReply
+	pattern := "/billing/v1/billing/account-quota"
 	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation(OperationBillingServiceGetAccount))
+	opts = append(opts, http.Operation(OperationBillingServiceGetAccountQuota))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAppQuota 应用维度：获取指定应用的配额与用量（含免费应用「已用/无限制」与 isFreeApp）
+func (c *BillingServiceHTTPClientImpl) GetAppQuota(ctx context.Context, in *GetAppQuotaRequest, opts ...http.CallOption) (*GetAppQuotaReply, error) {
+	var out GetAppQuotaReply
+	pattern := "/billing/v1/billing/app-quota"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationBillingServiceGetAppQuota))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetMonthlyUsageSummary 获取本月用量汇总（用户维度）
+// 用途：基于 billing_record 流水聚合，返回该用户「本月」所有应用的总调用次数、总费用及各服务免费/付费次数；用于总览页、报表。与 GetAppQuota（单应用配额与剩余）不同。
+func (c *BillingServiceHTTPClientImpl) GetMonthlyUsageSummary(ctx context.Context, in *GetMonthlyUsageSummaryRequest, opts ...http.CallOption) (*GetMonthlyUsageSummaryReply, error) {
+	var out GetMonthlyUsageSummaryReply
+	pattern := "/billing/v1/billing/stats/monthly-usage-summary"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationBillingServiceGetMonthlyUsageSummary))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
@@ -211,20 +267,6 @@ func (c *BillingServiceHTTPClientImpl) GetStatsMonth(ctx context.Context, in *Ge
 	pattern := "/billing/v1/billing/stats/month"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationBillingServiceGetStatsMonth))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// GetStatsSummary 获取汇总统计（所有服务）
-func (c *BillingServiceHTTPClientImpl) GetStatsSummary(ctx context.Context, in *GetStatsSummaryRequest, opts ...http.CallOption) (*GetStatsSummaryReply, error) {
-	var out GetStatsSummaryReply
-	pattern := "/billing/v1/billing/stats/summary"
-	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation(OperationBillingServiceGetStatsSummary))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
