@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"billing-service/internal/constants"
@@ -177,40 +178,93 @@ type GetAccountResult struct {
 	IsFreeApp bool
 }
 
-// GetAccount 获取账户信息（组合多个领域）
-// appID 为空时（GetAccountQuota）：按用户+当月从 DB 列出所有 free_quota 记录，与数据库一致；非空时返回该应用的配额（按配置 getOrCreate），白名单应用则额度为无限
-func (uc *BillingUseCase) GetAccount(ctx context.Context, userID, appID string) (*GetAccountResult, error) {
+// aggregateQuotasByServiceName 按 service_name 聚合多条配额（同一服务多应用的用量合并为一行，避免账户概览重复展示）
+func aggregateQuotasByServiceName(list []*FreeQuota, month string) []*FreeQuota {
+	if len(list) == 0 {
+		return nil
+	}
+	type agg struct {
+		usedQuota  int
+		totalQuota int
+		userID     string
+	}
+	m := make(map[string]*agg)
+	for _, q := range list {
+		a, ok := m[q.ServiceName]
+		if !ok {
+			a = &agg{userID: q.UserID}
+			m[q.ServiceName] = a
+		}
+		a.usedQuota += q.UsedQuota
+		if q.TotalQuota >= constants.UnlimitedQuota {
+			a.totalQuota = constants.UnlimitedQuota
+		} else if a.totalQuota != constants.UnlimitedQuota {
+			a.totalQuota += q.TotalQuota
+		}
+	}
+	out := make([]*FreeQuota, 0, len(m))
+	for name, a := range m {
+		out = append(out, &FreeQuota{
+			UserID:      a.userID,
+			AppID:       "",
+			ServiceName: name,
+			TotalQuota:  a.totalQuota,
+			UsedQuota:   a.usedQuota,
+			ResetMonth:  month,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ServiceName < out[j].ServiceName })
+	return out
+}
+
+// GetAccountQuota 开发者维度：账户余额 + 当月全部免费额度（按 service_name 聚合，用于账户概览）
+func (uc *BillingUseCase) GetAccountQuota(ctx context.Context, userID string) (*GetAccountResult, error) {
 	if userID == "" {
-		uc.log.Warnf("GetAccount: userID is empty")
+		uc.log.Warnf("GetAccountQuota: userID is empty")
 		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
 	}
-
 	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
 	if err != nil {
-		uc.log.Errorf("GetAccount failed to get balance: userID=%s, error=%v", userID, err)
+		uc.log.Errorf("GetAccountQuota failed to get balance: userID=%s, error=%v", userID, err)
 		return nil, fmt.Errorf("failed to get user balance: %w", err)
 	}
 	if balance == nil {
 		balance = &UserBalance{UserID: userID, Balance: 0}
 	}
-
 	month := time.Now().Format(constants.TimeFormatMonth)
-	var quotas []*FreeQuota
-	isFreeApp := uc.conf.IsFreeApp(appID)
-
-	if appID == "" {
-		// 开发者维度（GetAccountQuota）：直接按用户+月份从 DB 列出所有配额，与数据库一致
-		quotas, err = uc.freeQuotaUseCase.ListByUserAndMonth(ctx, userID, month)
-		if err != nil {
-			uc.log.Errorf("GetAccount ListByUserAndMonth failed: userID=%s, month=%s, error=%v", userID, month, err)
-			return nil, fmt.Errorf("failed to list quotas: %w", err)
-		}
-		if quotas == nil {
-			quotas = []*FreeQuota{}
-		}
-		return &GetAccountResult{Balance: balance, Quotas: quotas, IsFreeApp: false}, nil
+	raw, err := uc.freeQuotaUseCase.ListByUserAndMonth(ctx, userID, month)
+	if err != nil {
+		uc.log.Errorf("GetAccountQuota ListByUserAndMonth failed: userID=%s, month=%s, error=%v", userID, month, err)
+		return nil, fmt.Errorf("failed to list quotas: %w", err)
 	}
+	if raw == nil {
+		raw = []*FreeQuota{}
+	}
+	quotas := aggregateQuotasByServiceName(raw, month)
+	return &GetAccountResult{Balance: balance, Quotas: quotas, IsFreeApp: false}, nil
+}
 
+// GetAppQuota 应用维度：指定应用的余额与配额（按配置 getOrCreate，白名单应用则额度为无限）
+func (uc *BillingUseCase) GetAppQuota(ctx context.Context, userID, appID string) (*GetAccountResult, error) {
+	if userID == "" {
+		uc.log.Warnf("GetAppQuota: userID is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+	if appID == "" {
+		uc.log.Warnf("GetAppQuota: appID is empty")
+		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
+	}
+	balance, err := uc.userBalanceUseCase.GetBalance(ctx, userID)
+	if err != nil {
+		uc.log.Errorf("GetAppQuota failed to get balance: userID=%s, error=%v", userID, err)
+		return nil, fmt.Errorf("failed to get user balance: %w", err)
+	}
+	if balance == nil {
+		balance = &UserBalance{UserID: userID, Balance: 0}
+	}
+	month := time.Now().Format(constants.TimeFormatMonth)
+	isFreeApp := uc.conf.IsFreeApp(appID)
+	var quotas []*FreeQuota
 	for service := range uc.conf.FreeQuotas {
 		var q *FreeQuota
 		var err error
@@ -228,7 +282,6 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID, appID string) 
 		}
 		quotas = append(quotas, q)
 	}
-
 	return &GetAccountResult{Balance: balance, Quotas: quotas, IsFreeApp: isFreeApp}, nil
 }
 

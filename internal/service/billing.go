@@ -34,7 +34,7 @@ func (s *BillingService) GetAccountQuota(ctx context.Context, req *pb.GetAccount
 		s.log.Warnf("GetAccountQuota: userId is empty")
 		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
 	}
-	res, err := s.uc.GetAccount(ctx, req.UserId, "")
+	res, err := s.uc.GetAccountQuota(ctx, req.UserId)
 	if err != nil {
 		s.log.Errorf("GetAccountQuota failed: userId=%s, error=%v", req.UserId, err)
 		return nil, err
@@ -57,7 +57,7 @@ func (s *BillingService) GetAppQuota(ctx context.Context, req *pb.GetAppQuotaReq
 		s.log.Warnf("GetAppQuota: appId is empty")
 		return nil, pkgErrors.NewBizErrorWithLang(ctx, pkgErrors.ErrCodeMissingRequiredField)
 	}
-	res, err := s.uc.GetAccount(ctx, req.UserId, req.AppId)
+	res, err := s.uc.GetAppQuota(ctx, req.UserId, req.AppId)
 	if err != nil {
 		s.log.Errorf("GetAppQuota failed: userId=%s, appId=%s, error=%v", req.UserId, req.AppId, err)
 		return nil, err
