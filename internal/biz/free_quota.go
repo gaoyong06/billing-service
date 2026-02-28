@@ -22,6 +22,8 @@ type FreeQuotaRepo interface {
 	CreateFreeQuota(ctx context.Context, quota *FreeQuota) error
 	// IncrementUsedQuota 原子增加已使用配额（用于免费应用记录用量，避免读-改-写竞态）
 	IncrementUsedQuota(ctx context.Context, userID, appID, serviceName, month string, count int) error
+	// ListByUserAndMonth 按用户与月份列出所有配额记录（不限 app_id，用于账户概览与 DB 一致）
+	ListByUserAndMonth(ctx context.Context, userID, month string) ([]*FreeQuota, error)
 }
 
 // FreeQuotaUseCase 免费额度业务逻辑
@@ -53,4 +55,9 @@ func (uc *FreeQuotaUseCase) CreateQuota(ctx context.Context, quota *FreeQuota) e
 // IncrementUsedQuota 原子增加已使用配额
 func (uc *FreeQuotaUseCase) IncrementUsedQuota(ctx context.Context, userID, appID, serviceName, month string, count int) error {
 	return uc.repo.IncrementUsedQuota(ctx, userID, appID, serviceName, month, count)
+}
+
+// ListByUserAndMonth 按用户与月份列出所有配额记录（不限 app_id）
+func (uc *FreeQuotaUseCase) ListByUserAndMonth(ctx context.Context, userID, month string) ([]*FreeQuota, error) {
+	return uc.repo.ListByUserAndMonth(ctx, userID, month)
 }

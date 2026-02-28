@@ -129,3 +129,26 @@ func (r *freeQuotaRepo) IncrementUsedQuota(ctx context.Context, userID, appID, s
 		Where("user_id = ? AND app_id = ? AND service_name = ? AND reset_month = ?", userID, appID, serviceName, month).
 		Update("used_quota", gorm.Expr("used_quota + ?", count)).Error
 }
+
+// ListByUserAndMonth 按用户与月份列出所有配额记录（不限 app_id，与 DB 一致供账户概览使用）
+func (r *freeQuotaRepo) ListByUserAndMonth(ctx context.Context, userID, month string) ([]*biz.FreeQuota, error) {
+	var list []model.FreeQuota
+	if err := r.data.db.WithContext(ctx).
+		Where("user_id = ? AND reset_month = ?", userID, month).
+		Order("service_name, app_id").
+		Find(&list).Error; err != nil {
+		return nil, err
+	}
+	out := make([]*biz.FreeQuota, 0, len(list))
+	for _, m := range list {
+		out = append(out, &biz.FreeQuota{
+			UserID:      m.UserID,
+			AppID:       m.AppID,
+			ServiceName: m.ServiceName,
+			TotalQuota:  m.TotalQuota,
+			UsedQuota:   m.UsedQuota,
+			ResetMonth:  m.ResetMonth,
+		})
+	}
+	return out, nil
+}

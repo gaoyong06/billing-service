@@ -28,7 +28,7 @@ func NewBillingService(uc *biz.BillingUseCase, logger log.Logger) *BillingServic
 	}
 }
 
-// GetAccountQuota 开发者维度：获取账户余额与汇总配额（app_id 为空）
+// GetAccountQuota 开发者维度：获取账户余额与当月全部免费额度（按 user_id + reset_month 从 DB 列出，与数据库一致，含各 app 的配额）
 func (s *BillingService) GetAccountQuota(ctx context.Context, req *pb.GetAccountQuotaRequest) (*pb.GetAccountQuotaReply, error) {
 	if req.UserId == "" {
 		s.log.Warnf("GetAccountQuota: userId is empty")

@@ -178,7 +178,7 @@ type GetAccountResult struct {
 }
 
 // GetAccount 获取账户信息（组合多个领域）
-// appID 可选：为空时返回开发者级配额（app_id 为空）；非空时返回该应用的配额，且若为白名单应用则额度为无限并正确显示用量
+// appID 为空时（GetAccountQuota）：按用户+当月从 DB 列出所有 free_quota 记录，与数据库一致；非空时返回该应用的配额（按配置 getOrCreate），白名单应用则额度为无限
 func (uc *BillingUseCase) GetAccount(ctx context.Context, userID, appID string) (*GetAccountResult, error) {
 	if userID == "" {
 		uc.log.Warnf("GetAccount: userID is empty")
@@ -197,6 +197,19 @@ func (uc *BillingUseCase) GetAccount(ctx context.Context, userID, appID string) 
 	month := time.Now().Format(constants.TimeFormatMonth)
 	var quotas []*FreeQuota
 	isFreeApp := uc.conf.IsFreeApp(appID)
+
+	if appID == "" {
+		// 开发者维度（GetAccountQuota）：直接按用户+月份从 DB 列出所有配额，与数据库一致
+		quotas, err = uc.freeQuotaUseCase.ListByUserAndMonth(ctx, userID, month)
+		if err != nil {
+			uc.log.Errorf("GetAccount ListByUserAndMonth failed: userID=%s, month=%s, error=%v", userID, month, err)
+			return nil, fmt.Errorf("failed to list quotas: %w", err)
+		}
+		if quotas == nil {
+			quotas = []*FreeQuota{}
+		}
+		return &GetAccountResult{Balance: balance, Quotas: quotas, IsFreeApp: false}, nil
+	}
 
 	for service := range uc.conf.FreeQuotas {
 		var q *FreeQuota
