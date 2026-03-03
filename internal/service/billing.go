@@ -144,12 +144,12 @@ func (s *BillingService) ListRecords(ctx context.Context, req *pb.ListRecordsReq
 		}
 		pbRecords = append(pbRecords, &pb.BillingRecord{
 			BillingRecordId: r.ID,
-			AppId:          r.AppID,
-			ServiceName: r.ServiceName,
-			Type:        typeInt,
-			Amount:      r.Amount,
-			Count:       int32(r.Count),
-			CreatedAt:   timestamppb.New(r.CreatedAt),
+			AppId:           r.AppID,
+			ServiceName:     r.ServiceName,
+			Type:            typeInt,
+			Amount:          r.Amount,
+			Count:           int32(r.Count),
+			CreatedAt:       timestamppb.New(r.CreatedAt),
 		})
 	}
 
