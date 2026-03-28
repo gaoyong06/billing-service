@@ -61,16 +61,16 @@ billing:
   # 各服务的单价配置（单位：元/次）
   # 当用户免费额度用完后，按此价格从余额中扣费
   prices:
-    passport: 0.01 # Passport 服务单价：0.01 元/次
-    payment: 0.10 # Payment 服务单价：0.10 元/次
-    asset: 0.05 # Asset 服务单价：0.05 元/次
+    passport-service: 0.01 # Passport 服务单价：0.01 元/次
+    payment-service: 0.10 # Payment 服务单价：0.10 元/次
+    asset-service: 0.05 # Asset 服务单价：0.05 元/次
 
   # 各服务的免费额度配置（单位：次/月）
   # 每月自动重置，用户首次调用时自动创建当月额度记录
   free_quotas:
-    passport: 10000 # Passport 服务免费额度：10000 次/月
-    payment: 1000 # Payment 服务免费额度：1000 次/月
-    asset: 1000 # Asset 服务免费额度：1000 次/月
+    passport-service: 10000 # Passport 服务免费额度：10000 次/月
+    payment-service: 1000 # Payment 服务免费额度：1000 次/月
+    asset-service: 1000 # Asset 服务免费额度：1000 次/月
 
   # 余额低阈值（单位：元）
   # 当用户余额低于此值时，会触发告警指标（BalanceLowAlert）
@@ -112,7 +112,6 @@ scheduler:
     cron: "0 0 0 1 * *"
     # 是否启用
     enabled: true
-
 
 
 
